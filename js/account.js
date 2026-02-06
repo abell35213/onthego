@@ -48,7 +48,8 @@ const Account = {
         // Disconnect buttons (delegated event)
         modal.addEventListener('click', (e) => {
             if (e.target.classList.contains('disconnect-btn')) {
-                const accountType = e.target.closest('.account-card').querySelector('h3').textContent.toLowerCase();
+                const accountCard = e.target.closest('.account-card');
+                const accountType = accountCard.getAttribute('data-account-type');
                 this.disconnectAccount(accountType);
             }
         });
@@ -169,18 +170,7 @@ const Account = {
         const notification = document.createElement('div');
         notification.className = 'notification';
         notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            background-color: var(--success-color);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 2000;
-            animation: slideIn 0.3s ease-out;
-        `;
+        notification.style.animation = 'slideIn 0.3s ease-out';
 
         document.body.appendChild(notification);
 
@@ -193,30 +183,3 @@ const Account = {
         }, 3000);
     }
 };
-
-// Add CSS animations for notifications
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);

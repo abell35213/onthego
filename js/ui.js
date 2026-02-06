@@ -299,7 +299,13 @@ const UI = {
             ${restaurant.tags && restaurant.tags.length > 0 ? `
             <div class="restaurant-tags">
                 ${restaurant.tags.map(tag => {
-                    const tagClass = tag.toLowerCase().replace(/\s+/g, '-').replace('good-for-business-meal', 'business');
+                    const tagClassMap = {
+                        'Good for Business Meal': 'business',
+                        'Chill': 'chill',
+                        'Fun': 'fun',
+                        'Local Spots': 'local'
+                    };
+                    const tagClass = tagClassMap[tag] || tag.toLowerCase().replace(/\s+/g, '-');
                     return `<span class="tag-badge ${tagClass}">${tag}</span>`;
                 }).join('')}
             </div>
