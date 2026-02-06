@@ -1,0 +1,577 @@
+<homepage.html -->
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>OnTheGo — Find the perfect spot while on the go for work.</title>
+    <meta name="description" content="Find the best places to visit when traveling on sales trips. Curated nearby restaurant, hangouts, and bars with socials, ratings, and delivery links." />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <style>
+        :root{
+            --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#6ee7b7; --glass: rgba(255,255,255,0.04);
+            --max-w:1100px; --radius:12px;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            color-scheme: dark;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0;
+            background:
+                radial-gradient(800px 400px at 10% 10%, rgba(110,231,183,0.06), transparent 8%),
+                radial-gradient(600px 300px at 90% 90%, rgba(99,102,241,0.04), transparent 8%),
+                var(--bg);
+            color:#e6eef8;padding:48px 20px;
+            -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;line-height:1.45;
+            display:flex;justify-content:center;align-items:flex-start;
+        }
+
+        .container{width:100%;max-width:var(--max-w)}
+        header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+        .brand{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit}
+        .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#60a5fa);display:flex;align-items:center;justify-content:center;font-weight:700;color:#042022;box-shadow:0 6px 18px rgba(2,6,23,0.6);}
+        nav{display:flex;gap:18px;align-items:center}
+        .nav-link{color:var(--muted);text-decoration:none;font-size:15px;padding:8px 10px;border-radius:8px}
+        .nav-link:hover{background:var(--glass);color:#fff}
+        .cta{background:linear-gradient(90deg,var(--accent),#60a5fa);color:#042022;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:600;box-shadow:0 8px 30px rgba(102,126,234,0.12)}
+        .hero{display:grid;grid-template-columns:1fr 420px;gap:28px;align-items:stretch}
+        @media (max-width:1000px){.hero{grid-template-columns:1fr;padding-bottom:22px}header{flex-wrap:wrap;row-gap:12px}nav{display:none}}
+        .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border:1px solid rgba(255,255,255,0.04);padding:28px;border-radius:var(--radius);box-shadow:0 10px 40px rgba(2,6,23,0.6)}
+        .headline{font-size:30px;margin:0 0 10px 0;line-height:1.05;font-weight:700;letter-spacing:-0.02em}
+        .sub{color:var(--muted);margin:0 0 18px 0;max-width:60ch}
+        .features{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px}
+        .feature{display:flex;gap:12px;align-items:flex-start}
+        .icon{width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;color:var(--accent);flex:0 0 44px;font-weight:700}
+        .lead-form{display:flex;gap:8px;margin-top:18px}
+        .lead-input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+        .lead-btn{padding:12px 16px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#60a5fa);color:#042022;font-weight:700}
+        .card-side{display:flex;flex-direction:column;gap:14px;justify-content:flex-start}
+        .small{font-size:13px;color:var(--muted)}
+        .muted{color:var(--muted)}
+        .field{display:flex;flex-direction:column;gap:6px}
+        .input, .select{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:14px}
+        .row{display:flex;gap:8px}
+        .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#60a5fa);color:#042022;font-weight:700;cursor:pointer}
+        .result{padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)}
+        .specs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+        .pill{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:999px;font-size:13px;color:var(--muted)}
+        .testimonials{display:flex;flex-direction:column;gap:12px;margin-top:18px}
+        .t{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,0.02);padding:10px;border-radius:10px}
+        .avatar{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#60a5fa,#6ee7b7);display:flex;align-items:center;justify-content:center;font-weight:700;color:#042022}
+        footer{margin-top:34px;color:var(--muted);text-align:center;font-size:14px}
+        .nearby-wrap{display:grid;grid-template-columns:360px 1fr;gap:18px;margin-top:18px}
+        @media (max-width:1000px){ .nearby-wrap{grid-template-columns:1fr} }
+        #map{height:420px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);overflow:hidden}
+        .place-list{display:flex;flex-direction:column;gap:12px;max-height:420px;overflow:auto;padding-right:6px}
+        .place{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);cursor:pointer}
+        .place .meta{flex:1}
+        .place .meta h4{margin:0 0 6px 0}
+        .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+        .tag{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px;font-size:12px;color:var(--muted)}
+        .links{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+        .link-btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:6px 8px;border-radius:8px;color:var(--muted);font-size:13px;text-decoration:none}
+        .link-btn:hover{border-color:rgba(255,255,255,0.12);color:#fff}
+        .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;padding:20px}
+        .modal{max-width:520px;width:100%;background:var(--card);padding:20px;border-radius:12px;border:1px solid rgba(255,255,255,0.04)}
+        .modal.show{display:block}
+        .row-stack{display:flex;gap:8px}
+        .note{font-size:13px;color:var(--muted);margin-top:8px}
+        .filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+        .filter-btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:999px;color:var(--muted);cursor:pointer}
+        .filter-btn.active{background:rgba(255,255,255,0.04);color:#fff;border-color:rgba(255,255,255,0.12)}
+        .hotel-pill{background:rgba(255,255,255,0.02);padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;gap:8px;align-items:center}
+        .distance{font-size:12px;color:var(--muted);margin-left:6px}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a class="brand" href="#">
+                <div class="logo">RS</div>
+                <div>
+                    <div style="font-weight:700">RoadStay</div>
+                    <div style="font-size:12px;color:var(--muted)">Short stays for sales trips</div>
+                </div>
+            </a>
+
+            <nav aria-label="Primary navigation">
+                <a class="nav-link" href="#features">Why RoadStay</a>
+                <a class="nav-link" href="#how">How it works</a>
+                <a class="nav-link" href="#nearby">Nearby spots</a>
+            </nav>
+
+            <a class="cta" href="#signup" id="openSignUp">Sign up</a>
+        </header>
+
+        <main class="hero" role="main">
+            <section class="card" aria-labelledby="hero-heading">
+                <h1 id="hero-heading" class="headline">Short stays, zero hassle — built for traveling salespeople</h1>
+                <p class="sub">In and out of a city for one or two nights? RoadStay finds quick options near your hotel, surfaces curated places with reviews, delivery links and social profiles.</p>
+
+                <form class="lead-form" id="newsletterForm" onsubmit="event.preventDefault(); handleQuickSignup();">
+                    <input class="lead-input" id="newsletterEmail" type="email" placeholder="Work email (ex: you@company.com)" required aria-label="Email">
+                    <button class="lead-btn" type="submit">Join waitlist</button>
+                </form>
+
+                <div class="features" id="features" aria-hidden="false">
+                    <div class="feature"><div class="icon">⚡</div><div><strong>Fast check-in</strong><span style="color:var(--muted);font-size:13px"> Book last-minute stays</span></div></div>
+                    <div class="feature"><div class="icon">📍</div><div><strong>Near your meetings</strong><span style="color:var(--muted);font-size:13px"> Filter by neighborhood and travel time</span></div></div>
+                    <div class="feature"><div class="icon">🔒</div><div><strong>Business-ready</strong><span style="color:var(--muted);font-size:13px"> Receipts and flexible check-out</span></div></div>
+                    <div class="feature"><div class="icon">🤝</div><div><strong>Team-friendly</strong><span style="color:var(--muted);font-size:13px"> Corporate profiles and itinerary sync</span></div></div>
+                </div>
+
+                <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                    <div class="pill">Perfect for overnight or two night trips</div>
+                    <div class="pill">Last-minute availability</div>
+                    <div class="pill">Receive corporate invoices</div>
+                </div>
+                <div style="margin-top:18px" id="how">
+                    <h3 style="margin:0 0 8px 0">How it works</h3>
+                    <ol style="margin:0 0 0 18px;color:var(--muted);font-size:14px">
+                        <li>Import hotel information from TripIt or Concur (or enter manually).</li>
+                        <li>OnTheGo centers the map at your hotel and shows the best spots nearby.</li>
+                        <li>Open reviews, socials, or order delivery via direct links (API proxies optional).</li>
+                    </ol>
+                </div>
+            </section>
+
+            <aside class="card card-side" aria-labelledby="quick-check">
+                <div>
+                    <h3 id="quick-check" style="margin:0 0 6px 0">Import reservation / hotel</h3>
+                    <p class="small muted" style="margin:0 0 12px 0">Connect TripIt or Concur to import your upcoming hotel automatically, or enter it manually.</p>
+
+                    <div class="row" style="margin-bottom:8px;gap:10px">
+                        <button id="btnTripIt" class="btn" type="button">Connect TripIt</button>
+                        <button id="btnConcur" class="btn" type="button" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)">Connect Concur</button>
+                    </div>
+
+                    <div style="margin-top:6px" class="field">
+                        <label class="small muted">Or enter hotel manually</label>
+                        <input id="manualHotel" class="input" type="text" placeholder="Hotel name or address" aria-label="Manual hotel">
+                        <div style="display:flex;gap:8px;margin-top:8px">
+                            <button id="useManual" class="btn" type="button">Use hotel</button>
+                            <button id="openManualModal" class="btn" type="button" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)">Advanced</button>
+                        </div>
+                        <div id="currentHotel" style="margin-top:10px;display:none" class="hotel-pill" aria-live="polite"></div>
+                    </div>
+
+                    <div style="margin-top:12px">
+                        <h4 style="margin:0 0 6px 0">Filters</h4>
+                        <div class="filters" id="filters">
+                            <button class="filter-btn active" data-filter="all">All</button>
+                            <button class="filter-btn" data-filter="business">Business meals</button>
+                            <button class="filter-btn" data-filter="trendy">Trendy</button>
+                            <button class="filter-btn" data-filter="chill">Chill</button>
+                            <button class="filter-btn" data-filter="delivery">Has delivery</button>
+                        </div>
+                        <div class="small muted" style="margin-top:8px">Filters update the nearby list and map.</div>
+                    </div>
+                </div>
+
+                <div style="margin-top:8px">
+                    <h4 style="margin:0 0 8px 0">Quick availability</h4>
+                    <p class="small muted" style="margin:0">Find options for one or two nights in your next city and see curated places nearby.</p>
+
+                    <div class="field" style="margin-top:8px">
+                        <label class="small muted">City (try Chicago, New York, San Francisco)</label>
+                        <input id="city" class="input" type="text" placeholder="e.g., Chicago" aria-label="City">
+                    </div>
+
+                    <div class="row" style="margin-top:10px">
+                        <div style="flex:1" class="field">
+                            <label class="small muted">Arrival</label>
+                            <input id="date" class="input" type="date" aria-label="Arrival date">
+                        </div>
+                        <div style="width:120px" class="field">
+                            <label class="small muted">Nights</label>
+                            <select id="nights" class="select" aria-label="Nights">
+                                <option value="1">1 night</option>
+                                <option value="2">2 nights</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px;display:flex;gap:8px">
+                        <button id="checkBtn" class="btn" type="button">Check availability</button>
+                        <button id="notifyBtn" class="btn" type="button" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)">Notify me</button>
+                    </div>
+
+                    <div id="result" class="result" style="margin-top:12px;min-height:56px">
+                        <div class="small muted">Enter a city and date to see availability and nearby spots.</div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <section class="card" id="nearby" style="margin-top:22px">
+            <h3 style="margin:0 0 8px 0">Curated spots around your hotel</h3>
+            <p class="small muted" style="margin:0 0 12px 0">Click a place to open reviews, socials, or order delivery when available.</p>
+
+            <div class="nearby-wrap">
+                <div>
+                    <div class="place-list" id="placeList" aria-live="polite"></div>
+                </div>
+                <div id="map" aria-label="Map of nearby spots">Loading map…</div>
+            </div>
+        </section>
+
+        <section class="card" style="margin-top:22px">
+            <h3 style="margin:0 0 8px 0">Created by traveling reps, trusted by traveling reps</h3>
+            <div class="testimonials">
+                <div class="t"><div class="avatar">MB</div><div><strong>Mark B.</strong><div class="small muted">"Booked twice during a week-long road trip — saved hours."</div></div></div>
+                <div class="t"><div class="avatar">AL</div><div><strong>Alice L.</strong><div class="small muted">"Easy corporate invoicing and last-minute options."</div></div></div>
+            </div>
+        </section>
+
+        <footer>
+            <div style="max-width:700px;margin:18px auto 0 auto">© <span id="year"></span> OnTheGo — Built by salespeople for salespeople. <a class="small" href="#privacy">Privacy</a> · <a class="small" href="#terms">Terms</a></div>
+        </footer>
+    </div>
+
+    <!-- Signup/Reserve Modal -->
+    <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal" role="document" aria-labelledby="modalTitle" tabindex="-1">
+            <h2 id="modalTitle" style="margin:0 0 8px 0">Reserve your quick stay</h2>
+            <p class="small muted" style="margin:0 0 12px 0">Enter details to reserve (demo). We'll show confirmation and save locally.</p>
+
+            <form id="fullForm" onsubmit="event.preventDefault(); submitReservation();">
+                <div class="field"><label class="small muted">Full name</label><input id="fullName" class="input" required></div>
+                <div class="field" style="margin-top:8px"><label class="small muted">Email</label><input id="fullEmail" class="input" type="email" required></div>
+                <div class="row-stack" style="margin-top:8px">
+                    <div style="flex:1" class="field"><label class="small muted">City</label><input id="modalCity" class="input" required></div>
+                    <div style="width:120px" class="field"><label class="small muted">Nights</label><select id="modalNights" class="select" aria-label="Nights"><option value="1">1</option><option value="2">2</option></select></div>
+                </div>
+
+                <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+                    <button type="button" class="btn" id="closeModal">Cancel</button>
+                    <button type="submit" class="btn" style="background:linear-gradient(90deg,var(--accent),#60a5fa)">Reserve</button>
+                </div>
+                <div id="modalNote" class="note"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manual hotel detail modal (lat/lng optional) -->
+    <div id="hotelModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal" role="document" tabindex="-1">
+            <h3 style="margin:0 0 8px 0">Enter hotel details</h3>
+            <p class="small muted">Provide hotel name and address (or lat/lng). This will center the map and show curated spots nearby.</p>
+            <div class="field" style="margin-top:8px"><label class="small muted">Hotel name</label><input id="hmName" class="input"></div>
+            <div class="field" style="margin-top:8px"><label class="small muted">Address</label><input id="hmAddr" class="input"></div>
+            <div class="row" style="margin-top:8px">
+                <div style="flex:1" class="field"><label class="small muted">Latitude</label><input id="hmLat" class="input" placeholder="Optional"></div>
+                <div style="width:140px" class="field"><label class="small muted">Longitude</label><input id="hmLng" class="input" placeholder="Optional"></div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+                <button class="btn" id="closeHotelModal" type="button" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)">Cancel</button>
+                <button class="btn" id="saveHotelManual" type="button">Save hotel</button>
+            </div>
+            <div class="note" id="hotelModalNote"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        // Minimal demo integration: TripIt / Concur placeholders.
+        // In a production app, implement OAuth flows and secure server-side proxies.
+        // Here we simulate and provide manual fallback.
+
+        // Sample city centers and curated places (now with tags)
+        const cityIndex = {
+            "chicago": { center: [41.8781, -87.6298], zoom: 13 },
+            "new york": { center: [40.7128, -74.0060], zoom: 13 },
+            "san francisco": { center: [37.7749, -122.4194], zoom: 13 }
+        };
+
+        const curated = {
+            "chicago": [
+                { id:"c1", name:"Riverfront Bistro", category:"Restaurant", coords:[41.8885,-87.6280], desc:"Modern American near the business district.", links:{google:"https://maps.google.com", yelp:"https://www.yelp.com", insta:"https://instagram.com"}, delivery:{doordash:"https://www.doordash.com", ubereats:"https://www.ubereats.com"}, tags:["business","trendy"] },
+                { id:"c2", name:"Lakeside Brewery", category:"Brewery", coords:[41.8820,-87.6232], desc:"Local craft beers and quick bites.", links:{google:"https://maps.google.com", yelp:"https://www.yelp.com"}, delivery:{doordash:null, ubereats:null}, tags:["chill"] },
+                { id:"c3", name:"Downtown Rooftop", category:"Bar", coords:[41.8796,-87.6244], desc:"Rooftop cocktails with skyline views.", links:{google:"https://maps.google.com"}, delivery:{}, tags:["trendy","chill"] }
+            ],
+            "new york": [
+                { id:"ny1", name:"Midtown Deli", category:"Restaurant", coords:[40.7549,-73.9840], desc:"Fast, reliable sandwiches for busy travelers.", links:{google:"https://maps.google.com", yelp:"https://www.yelp.com"}, delivery:{ubereats:"https://www.ubereats.com"}, tags:["business"] },
+                { id:"ny2", name:"Hudson Taproom", category:"Bar", coords:[40.7577,-73.9857], desc:"After-work drinks and quick apps.", links:{google:"https://maps.google.com"}, delivery:{}, tags:["chill","trendy"] }
+            ],
+            "san francisco": [
+                { id:"sf1", name:"Bayview Kitchen", category:"Restaurant", coords:[37.7952,-122.3930], desc:"Seasonal menu near the ferry building.", links:{google:"https://maps.google.com", yelp:"https://www.yelp.com"}, delivery:{doordash:"https://www.doordash.com", ubereats:"https://www.ubereats.com"}, tags:["trendy","business"] }
+            ]
+        };
+
+        let map, markers = [], currentHotel = null, activeFilter = 'all';
+
+        function initMap() {
+            map = L.map('map', { center:[39.5,-98.35], zoom:4, minZoom:3 });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
+        }
+
+        function clearMarkers() { markers.forEach(m => map.removeLayer(m)); markers = []; }
+
+        function haversineDist(a, b) {
+            const toRad = d => d * Math.PI / 180;
+            const [lat1, lon1] = a; const [lat2, lon2] = b;
+            const R = 6371; const dLat = toRad(lat2-lat1); const dLon = toRad(lon2-lon1);
+            const A = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+            return R * 2 * Math.asin(Math.sqrt(A)); // km
+        }
+
+        function hasFilter(place) {
+            if (activeFilter === 'all') return true;
+            if (activeFilter === 'delivery') return (place.delivery && (place.delivery.doordash || place.delivery.ubereats));
+            return (place.tags && place.tags.includes(activeFilter));
+        }
+
+        function renderPlacesNearby(hotelCoords) {
+            const listEl = document.getElementById('placeList');
+            listEl.innerHTML = '';
+            clearMarkers();
+            if (!hotelCoords) {
+                listEl.innerHTML = '<div class="small muted">Set a hotel to view curated spots nearby.</div>';
+                return;
+            }
+            // Collect places from curated index whose city center is near hotel or simply flatten dataset
+            const allPlaces = Object.values(curated).flat();
+            // compute distance and filter by proximity (<= 4 km) and by activeFilter
+            const nearby = allPlaces.map(p => {
+                const d = haversineDist(hotelCoords, p.coords);
+                return Object.assign({}, p, { distanceKm: d });
+            }).filter(p => p.distanceKm <= 4 && hasFilter(p)).sort((a,b)=>a.distanceKm-b.distanceKm);
+
+            if (!nearby.length) {
+                listEl.innerHTML = '<div class="small muted">No curated spots within ~4 km of this hotel in the demo. Try a central hotel or switch filters.</div>';
+                map.setView(hotelCoords, 14);
+                return;
+            }
+
+            nearby.forEach(place => {
+                const div = document.createElement('div'); div.className = 'place';
+                div.innerHTML = `
+                    <div style="width:56px;height:56px;border-radius:8px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent)">${(place.category||'P')[0]}</div>
+                    <div class="meta">
+                        <h4>${place.name} <span class="distance">· ${place.distanceKm.toFixed(1)} km</span></h4>
+                        <div class="small muted">${place.desc}</div>
+                        <div class="tags">${(place.tags||[]).map(t=>`<div class="tag">${t}</div>`).join('')}</div>
+                        <div class="links"></div>
+                    </div>
+                `;
+                const linksNode = div.querySelector('.links');
+                if (place.links) {
+                    if (place.links.google) linksNode.appendChild(makeLink('Map/Google', place.links.google));
+                    if (place.links.yelp) linksNode.appendChild(makeLink('Yelp', place.links.yelp));
+                    if (place.links.insta) linksNode.appendChild(makeLink('Instagram', place.links.insta));
+                }
+                if (place.delivery) {
+                    if (place.delivery.doordash) linksNode.appendChild(makeLink('Doordash', place.delivery.doordash));
+                    if (place.delivery.ubereats) linksNode.appendChild(makeLink('UberEats', place.delivery.ubereats));
+                }
+
+                div.addEventListener('click', () => {
+                    map.setView(place.coords, Math.max(map.getZoom(), 15), { animate: true });
+                    const m = markers.find(x => x.options._placeId === place.id);
+                    if (m) m.openPopup();
+                });
+
+                listEl.appendChild(div);
+
+                const marker = L.marker(place.coords).addTo(map);
+                marker.bindPopup(`<strong>${place.name}</strong><br/><small class="muted">${place.category} · ${place.distanceKm.toFixed(1)} km</small>`);
+                marker.options._placeId = place.id;
+                markers.push(marker);
+            });
+
+            map.setView(hotelCoords, 14);
+        }
+
+        function makeLink(label, href) {
+            const a = document.createElement('a');
+            a.className = 'link-btn';
+            a.target = '_blank'; a.rel = 'noopener';
+            // In production, route these through a proxy if you need to append tracking or aggregate clicks.
+            a.href = href;
+            a.textContent = label;
+            return a;
+        }
+
+        function setHotel(hotel) {
+            currentHotel = hotel;
+            const curEl = document.getElementById('currentHotel');
+            curEl.style.display = 'flex';
+            curEl.innerHTML = `<div style="font-weight:600">${hotel.name}</div><div class="small muted">${hotel.address || ''}</div>`;
+            const coords = hotel.coords;
+            if (coords) {
+                renderPlacesNearby(coords);
+                // add a hotel marker
+                clearMarkers(); // clear existing so restaurant markers will be re-added from renderPlacesNearby
+                const hmark = L.circleMarker(coords, { radius:8, color:'#60a5fa', fill:true, fillOpacity:0.9 }).addTo(map);
+                hmark.bindPopup(`<strong>${hotel.name}</strong><br/><small class="muted">${hotel.address || ''}</small>`).openPopup();
+                // keep hotel marker separate; re-render will add place markers below and reset markers variable, so we add hotel marker after
+                // For simplicity, we'll store hotel marker temporarily and re-add inside renderPlacesNearby
+                // Re-run render to produce place markers and then add hotel marker again
+                renderPlacesNearby(coords);
+                L.circleMarker(coords, { radius:8, color:'#60a5fa', fill:true, fillOpacity:0.9 }).addTo(map);
+            } else if (hotel.city) {
+                tryCenterCity(hotel.city);
+            }
+        }
+
+        // Try center by city (used for availability check)
+        function tryCenterCity(cityRaw) {
+            const key = String(cityRaw || '').trim().toLowerCase();
+            if (cityIndex[key]) {
+                const cfg = cityIndex[key];
+                map.setView(cfg.center, cfg.zoom);
+                // set a pseudo-hotel at center so nearby places render around that point
+                setHotel({ name: `Center of ${cityRaw}`, address: '', coords: cfg.center });
+                document.getElementById('result').innerHTML = `<div class="small">Showing curated spots around ${cityRaw}.</div>`;
+                return true;
+            } else {
+                map.setView([39.5, -98.35], 4);
+                document.getElementById('result').innerHTML = `<div class="small muted">City not in demo index. Try "Chicago", "New York", or "San Francisco".</div>`;
+                document.getElementById('placeList').innerHTML = '<div class="small muted">No curated spots available for this city in the demo.</div>';
+                clearMarkers(); return false;
+            }
+        }
+
+        // Quick signup and reservations (demo)
+        function handleQuickSignup() {
+            const email = document.getElementById('newsletterEmail').value.trim();
+            if (!email) return;
+            const store = JSON.parse(localStorage.getItem('roadstay_waitlist') || '[]');
+            store.push({ email, date: new Date().toISOString() });
+            localStorage.setItem('roadstay_waitlist', JSON.stringify(store));
+            document.getElementById('newsletterEmail').value = '';
+            alert('Thanks — you are on the waitlist (demo).');
+        }
+        function submitReservation() {
+            const name = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('fullEmail').value.trim();
+            const city = document.getElementById('modalCity').value.trim();
+            const nights = document.getElementById('modalNights').value;
+            if (!name || !email || !city) return;
+            const reservations = JSON.parse(localStorage.getItem('roadstay_reservations') || '[]');
+            const reservation = { id:'r'+Date.now(), name, email, city, nights, created:new Date().toISOString() };
+            reservations.push(reservation);
+            localStorage.setItem('roadstay_reservations', JSON.stringify(reservation));
+            closeModal();
+            alert('Reservation saved (demo). You can explore curated nearby spots now.');
+            tryCenterCity(city);
+        }
+
+        // Modal controls
+        const modal = document.getElementById('modalBackdrop');
+        document.getElementById('openSignUp').addEventListener('click', e => { e.preventDefault(); openModal(); });
+        document.getElementById('closeModal').addEventListener('click', e => { e.preventDefault(); closeModal(); });
+        function openModal(){ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); document.getElementById('fullName').focus(); }
+        function closeModal(){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); document.getElementById('modalNote').innerText = ''; }
+
+        // Hotel modal controls
+        const hotelModal = document.getElementById('hotelModal');
+        document.getElementById('openManualModal').addEventListener('click', () => { hotelModal.classList.add('show'); hotelModal.setAttribute('aria-hidden','false'); });
+        document.getElementById('closeHotelModal').addEventListener('click', () => { hotelModal.classList.remove('show'); hotelModal.setAttribute('aria-hidden','true'); document.getElementById('hotelModalNote').innerText = ''; });
+        document.getElementById('saveHotelManual').addEventListener('click', () => {
+            const name = document.getElementById('hmName').value.trim() || 'Manual hotel';
+            const address = document.getElementById('hmAddr').value.trim();
+            const lat = parseFloat(document.getElementById('hmLat').value);
+            const lng = parseFloat(document.getElementById('hmLng').value);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                setHotel({ name, address, coords:[lat,lng] });
+            } else if (address) {
+                // No geocoding available in demo; try to match a city name or fallback to center search
+                // In production: call geocoding (Mapbox/Google) server-side.
+                document.getElementById('hotelModalNote').innerText = 'No coordinates provided — using address as city fallback (demo).';
+                setHotel({ name, address, city:address });
+            } else {
+                document.getElementById('hotelModalNote').innerText = 'Provide either lat/lng or an address.';
+                return;
+            }
+            hotelModal.classList.remove('show'); hotelModal.setAttribute('aria-hidden','true'); document.getElementById('hotelModalNote').innerText = '';
+        });
+
+        // Manual use button (simple lookup: if manual text matches known city we'll center; otherwise we store as name only)
+        document.getElementById('useManual').addEventListener('click', () => {
+            const txt = document.getElementById('manualHotel').value.trim();
+            if (!txt) { alert('Enter a hotel name or city (demo).'); return; }
+            // if it matches demo city keys, center to that city
+            if (cityIndex[txt.toLowerCase()]) {
+                setHotel({ name: txt, address: '', coords: cityIndex[txt.toLowerCase()].center });
+            } else {
+                // fallback: ask user to provide details in modal for coordinates
+                document.getElementById('hmName').value = txt; hotelModal.classList.add('show'); hotelModal.setAttribute('aria-hidden','false');
+            }
+        });
+
+        // Fake integration buttons for TripIt and Concur (demo)
+        document.getElementById('btnTripIt').addEventListener('click', async () => {
+            // In production, redirect to your server that performs OAuth with TripIt and returns reservation/hotel data.
+            // Here we simulate an async fetch and return a sample hotel.
+            document.getElementById('btnTripIt').textContent = 'Connecting…';
+            setTimeout(() => {
+                const demoHotel = { name:'Grand Central Hotel', address:'Chicago Loop', coords:[41.8786,-87.6272] };
+                setHotel(demoHotel);
+                document.getElementById('btnTripIt').textContent = 'Connect TripIt';
+                alert('TripIt imported a reservation (demo).');
+            }, 900);
+        });
+
+        document.getElementById('btnConcur').addEventListener('click', async () => {
+            // In production, implement Concur OAuth on server and return hotel details.
+            document.getElementById('btnConcur').textContent = 'Connecting…';
+            setTimeout(() => {
+                const demoHotel = { name:'Market Street Inn', address:'San Francisco Financial District', coords:[37.7950,-122.3960] };
+                setHotel(demoHotel);
+                document.getElementById('btnConcur').textContent = 'Connect Concur';
+                alert('Concur imported a reservation (demo).');
+            }, 900);
+        });
+
+        // Availability / notify handlers
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            const city = document.getElementById('city').value.trim();
+            const date = document.getElementById('date').value;
+            const nights = document.getElementById('nights').value;
+            if (!city || !date) { document.getElementById('result').innerHTML = '<div class="small muted">Please enter both a city and an arrival date.</div>'; return; }
+            const ok = tryCenterCity(city);
+            if (ok) {
+                document.getElementById('result').innerHTML = `<div class="small">Rooms likely available for ${nights} night(s) starting ${date} in ${city} — import your hotel to see nearby spots.</div>`;
+            } else {
+                document.getElementById('result').innerHTML = `<div class="small muted">No instant availability in our demo for ${city}. You can still join the waitlist.</div>`;
+            }
+        });
+
+        document.getElementById('notifyBtn').addEventListener('click', () => {
+            const city = document.getElementById('city').value.trim();
+            const date = document.getElementById('date').value;
+            if (!city || !date) { alert('Enter city and date to be notified (demo).'); return; }
+            const notes = JSON.parse(localStorage.getItem('roadstay_notify') || '[]');
+            notes.push({ city, date, created: new Date().toISOString() });
+            localStorage.setItem('roadstay_notify', JSON.stringify(notes));
+            alert('We will notify you if availability appears (demo).');
+        });
+
+        // Filters
+        document.querySelectorAll('#filters .filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#filters .filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeFilter = btn.getAttribute('data-filter');
+                if (currentHotel && currentHotel.coords) renderPlacesNearby(currentHotel.coords);
+            });
+        });
+
+        // Initialize map and demo content
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            // default: show chicago center and its curated spots
+            setHotel({ name:'Default: Chicago center', address:'Chicago', coords: cityIndex['chicago'].center });
+            document.getElementById('year').textContent = new Date().getFullYear();
+        });
+
+        // close modal on escape
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(); hotelModal.classList.remove('show'); } });
+
+        // Expose demo objects for debugging
+        window.RoadStayDemo = { curated, cityIndex, setHotel };
+    </script>
+</body>
+</html>
