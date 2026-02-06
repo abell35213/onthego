@@ -43,46 +43,174 @@
     <div id="accountModal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2><i class="fas fa-link"></i> Connect Your Accounts</h2>
-            <p class="modal-description">Link your travel accounts to sync your trip history and upcoming reservations.</p>
             
-            <div class="account-connections">
-                <div class="account-card" data-account-type="concur">
-                    <div class="account-header">
-                        <i class="fas fa-briefcase account-icon"></i>
-                        <h3>Concur</h3>
+            <!-- Account Tabs -->
+            <div class="account-tabs">
+                <button class="account-tab active" data-tab="profile">
+                    <i class="fas fa-user"></i> Profile
+                </button>
+                <button class="account-tab" data-tab="connections">
+                    <i class="fas fa-link"></i> Connections
+                </button>
+                <button class="account-tab" data-tab="settings">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+            </div>
+
+            <!-- Profile Tab (Create Account / View Profile) -->
+            <div id="profileTab" class="tab-content active">
+                <h2><i class="fas fa-user-circle"></i> Your Profile</h2>
+                <p class="modal-description">Create your account or update your profile information.</p>
+                
+                <form id="accountForm" class="account-form">
+                    <div class="form-group">
+                        <label for="userName"><i class="fas fa-user"></i> Full Name *</label>
+                        <input type="text" id="userName" class="form-input" placeholder="Enter your full name" required>
                     </div>
-                    <p>Sync your business travel expenses and itineraries</p>
-                    <button id="concurConnect" class="connect-btn">
-                        <i class="fas fa-plug"></i>
-                        <span class="connect-text">Connect Concur</span>
+                    
+                    <div class="form-group">
+                        <label for="userEmail"><i class="fas fa-envelope"></i> Email Address *</label>
+                        <input type="email" id="userEmail" class="form-input" placeholder="you@example.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userPhone"><i class="fas fa-phone"></i> Phone Number * <small>(for text alerts)</small></label>
+                        <input type="tel" id="userPhone" class="form-input" placeholder="(555) 123-4567" required>
+                    </div>
+                    
+                    <button type="submit" id="saveProfileBtn" class="save-profile-btn">
+                        <i class="fas fa-save"></i> Save Profile
                     </button>
-                    <div id="concurStatus" class="connection-status" style="display: none;">
-                        <i class="fas fa-check-circle"></i> Connected
-                        <button class="disconnect-btn">Disconnect</button>
+                    
+                    <div id="profileSavedMsg" class="profile-saved-msg" style="display: none;">
+                        <i class="fas fa-check-circle"></i> Profile saved successfully!
+                    </div>
+                </form>
+            </div>
+
+            <!-- Connections Tab -->
+            <div id="connectionsTab" class="tab-content" style="display: none;">
+                <h2><i class="fas fa-link"></i> Connect Your Accounts</h2>
+                <p class="modal-description">Link your travel accounts to sync your trip history and upcoming reservations.</p>
+                
+                <div class="account-connections">
+                    <div class="account-card" data-account-type="concur">
+                        <div class="account-header">
+                            <i class="fas fa-briefcase account-icon"></i>
+                            <h3>Concur</h3>
+                        </div>
+                        <p>Sync your business travel expenses and itineraries</p>
+                        <button id="concurConnect" class="connect-btn">
+                            <i class="fas fa-plug"></i>
+                            <span class="connect-text">Connect Concur</span>
+                        </button>
+                        <div id="concurStatus" class="connection-status" style="display: none;">
+                            <i class="fas fa-check-circle"></i> Connected
+                            <button class="disconnect-btn">Disconnect</button>
+                        </div>
+                    </div>
+                    
+                    <div class="account-card" data-account-type="tripit">
+                        <div class="account-header">
+                            <i class="fas fa-plane account-icon"></i>
+                            <h3>TripIt</h3>
+                        </div>
+                        <p>Import your travel plans and reservations</p>
+                        <button id="tripitConnect" class="connect-btn">
+                            <i class="fas fa-plug"></i>
+                            <span class="connect-text">Connect TripIt</span>
+                        </button>
+                        <div id="tripitStatus" class="connection-status" style="display: none;">
+                            <i class="fas fa-check-circle"></i> Connected
+                            <button class="disconnect-btn">Disconnect</button>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="account-card" data-account-type="tripit">
-                    <div class="account-header">
-                        <i class="fas fa-plane account-icon"></i>
-                        <h3>TripIt</h3>
-                    </div>
-                    <p>Import your travel plans and reservations</p>
-                    <button id="tripitConnect" class="connect-btn">
-                        <i class="fas fa-plug"></i>
-                        <span class="connect-text">Connect TripIt</span>
-                    </button>
-                    <div id="tripitStatus" class="connection-status" style="display: none;">
-                        <i class="fas fa-check-circle"></i> Connected
-                        <button class="disconnect-btn">Disconnect</button>
-                    </div>
+                <div id="syncInfo" class="sync-info" style="display: none;">
+                    <i class="fas fa-sync-alt"></i>
+                    <span id="lastSyncTime">Last synced: Never</span>
                 </div>
             </div>
-            
-            <div id="syncInfo" class="sync-info" style="display: none;">
-                <i class="fas fa-sync-alt"></i>
-                <span id="lastSyncTime">Last synced: Never</span>
+
+            <!-- Settings Tab -->
+            <div id="settingsTab" class="tab-content" style="display: none;">
+                <h2><i class="fas fa-cog"></i> Settings</h2>
+                <p class="modal-description">Customize your OnTheGo experience.</p>
+                
+                <div class="settings-section">
+                    <h3><i class="fas fa-bell"></i> Notifications</h3>
+                    <div class="settings-group">
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingTextAlerts" checked>
+                            <span class="toggle-label">Text alerts for trip reminders</span>
+                        </label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingEmailAlerts" checked>
+                            <span class="toggle-label">Email notifications for new recommendations</span>
+                        </label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingDealAlerts">
+                            <span class="toggle-label">Restaurant deal alerts near hotel</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3><i class="fas fa-map-marker-alt"></i> Map Preferences</h3>
+                    <div class="settings-group">
+                        <div class="form-group">
+                            <label for="settingRadius">Search Radius</label>
+                            <select id="settingRadius" class="form-input">
+                                <option value="1000">1 km</option>
+                                <option value="3000">3 km</option>
+                                <option value="5000" selected>5 km</option>
+                                <option value="10000">10 km</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="settingCuisine">Default Cuisine Preference</label>
+                            <select id="settingCuisine" class="form-input">
+                                <option value="">No Preference</option>
+                                <option value="american">American</option>
+                                <option value="italian">Italian</option>
+                                <option value="japanese">Japanese</option>
+                                <option value="mexican">Mexican</option>
+                                <option value="chinese">Chinese</option>
+                                <option value="thai">Thai</option>
+                                <option value="mediterranean">Mediterranean</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3><i class="fas fa-utensils"></i> Dining Preferences</h3>
+                    <div class="settings-group">
+                        <div class="form-group">
+                            <label for="settingPrice">Default Price Range</label>
+                            <select id="settingPrice" class="form-input">
+                                <option value="">Any Price</option>
+                                <option value="$">$ - Budget</option>
+                                <option value="$$">$$ - Moderate</option>
+                                <option value="$$$">$$$ - Expensive</option>
+                                <option value="$$$$">$$$$ - Very Expensive</option>
+                            </select>
+                        </div>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="settingAccessibility">
+                            <span class="toggle-label">Show accessibility-friendly restaurants</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <button id="saveSettingsBtn" class="save-profile-btn">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+                
+                <div id="settingsSavedMsg" class="profile-saved-msg" style="display: none;">
+                    <i class="fas fa-check-circle"></i> Settings saved successfully!
+                </div>
             </div>
         </div>
     </div>

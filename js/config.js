@@ -21,7 +21,7 @@ const CONFIG = {
     
     // World map settings
     WORLD_MAP_ZOOM: 2,
-    WORLD_MAP_MIN_ZOOM: 2,
+    WORLD_MAP_MIN_ZOOM: 1,
     WORLD_MAP_MAX_ZOOM: 18,
     
     // View modes
@@ -547,6 +547,9 @@ const MOCK_UPCOMING_TRIPS = [
 
 // User account state
 const USER_ACCOUNT = {
+    name: '',
+    email: '',
+    phone: '',
     concurConnected: false,
     tripitConnected: false,
     lastSync: null
