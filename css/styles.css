@@ -1,0 +1,522 @@
+/* ===== CSS Variables ===== */
+:root {
+    --primary-color: #FF6B35;
+    --secondary-color: #004E89;
+    --accent-color: #F77F00;
+    --text-dark: #1A1A1A;
+    --text-light: #666666;
+    --border-color: #E0E0E0;
+    --bg-light: #F9F9F9;
+    --bg-white: #FFFFFF;
+    --success-color: #28A745;
+    --warning-color: #FFC107;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== Global Styles ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text-dark);
+    background-color: var(--bg-light);
+    line-height: 1.6;
+}
+
+/* ===== Header ===== */
+.header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    box-shadow: var(--shadow);
+}
+
+.header-content h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.header-content h1 i {
+    margin-right: 0.5rem;
+}
+
+.tagline {
+    font-size: 0.95rem;
+    opacity: 0.95;
+    font-weight: 300;
+}
+
+/* ===== Main Container ===== */
+.container {
+    display: flex;
+    height: calc(100vh - 120px);
+    max-width: 100%;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+    width: 450px;
+    background-color: var(--bg-white);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ===== Search Bar ===== */
+.search-container {
+    position: relative;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.search-icon {
+    position: absolute;
+    right: 2.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light);
+}
+
+/* ===== Filters ===== */
+.filters {
+    padding: 1rem 1.5rem;
+    background-color: var(--bg-light);
+    border-bottom: 1px solid var(--border-color);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 0.4rem;
+}
+
+.filter-select {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* ===== Restaurant List ===== */
+.restaurant-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+/* ===== Loading & Empty States ===== */
+.loading-state,
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--text-light);
+}
+
+.loading-state i,
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+.loading-state p,
+.empty-state p {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state small {
+    font-size: 0.9rem;
+}
+
+/* ===== Restaurant Card ===== */
+.restaurant-card {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: var(--shadow);
+}
+
+.restaurant-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-color);
+}
+
+.restaurant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.restaurant-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 0.25rem;
+}
+
+.restaurant-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-left: 1rem;
+}
+
+.restaurant-category {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+}
+
+.restaurant-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.stars {
+    color: var(--accent-color);
+    font-size: 0.9rem;
+}
+
+.rating-number {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.review-count {
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+.restaurant-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.info-item i {
+    color: var(--primary-color);
+}
+
+.price-level {
+    color: var(--success-color);
+    font-weight: 700;
+}
+
+.restaurant-address {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.restaurant-address i {
+    margin-top: 0.2rem;
+    color: var(--primary-color);
+}
+
+/* ===== Action Links ===== */
+.restaurant-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    background-color: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-dark);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.action-link:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.action-link i {
+    font-size: 0.9rem;
+}
+
+.action-link.yelp {
+    background-color: #D32323;
+    color: white;
+    border-color: #D32323;
+}
+
+.action-link.yelp:hover {
+    background-color: #A91B1B;
+    border-color: #A91B1B;
+}
+
+/* Social Media Links */
+.social-links {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.social-link:hover {
+    transform: scale(1.1);
+}
+
+.social-link.instagram {
+    background: linear-gradient(45deg, #F58529, #DD2A7B, #8134AF, #515BD4);
+}
+
+.social-link.facebook {
+    background-color: #1877F2;
+}
+
+.social-link.twitter {
+    background-color: #1DA1F2;
+}
+
+/* ===== Map Container ===== */
+.map-container {
+    flex: 1;
+    position: relative;
+    background-color: var(--bg-light);
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+/* ===== Leaflet Popup Customization ===== */
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: var(--shadow-hover);
+}
+
+.popup-content {
+    min-width: 200px;
+}
+
+.popup-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.popup-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.popup-btn {
+    flex: 1;
+    padding: 0.5rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.popup-btn:hover {
+    background-color: var(--accent-color);
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 1024px) {
+    .filters {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .sidebar {
+        width: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 120px);
+    }
+    
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 2px solid var(--border-color);
+        max-height: 60vh;
+    }
+    
+    .map-container {
+        height: 400px;
+        min-height: 400px;
+    }
+    
+    .header-content h1 {
+        font-size: 1.5rem;
+    }
+    
+    .filters {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .restaurant-card {
+        padding: 1rem;
+    }
+    
+    .restaurant-name {
+        font-size: 1.1rem;
+    }
+    
+    .restaurant-image {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 1rem;
+    }
+    
+    .header-content h1 {
+        font-size: 1.3rem;
+    }
+    
+    .tagline {
+        font-size: 0.85rem;
+    }
+    
+    .search-container,
+    .filters {
+        padding: 1rem;
+    }
+    
+    .restaurant-actions {
+        flex-direction: column;
+    }
+    
+    .action-link {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ===== Scrollbar Styling ===== */
+.restaurant-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.restaurant-list::-webkit-scrollbar-track {
+    background: var(--bg-light);
+}
+
+.restaurant-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.restaurant-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-light);
+}
