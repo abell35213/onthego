@@ -253,7 +253,7 @@ const WorldMap = {
             ],
             'New York': [
                 { name: 'Manhattan Bistro', cuisine: 'French', rating: 4.4, price: '$$$' },
-                { name: 'Brooklyn Pizza Co.', cuisine: 'Italian, Pizza', rating: 4.2, price: '$' },
+                { name: 'Brooklyn Pizza Co.', cuisine: 'Pizza', rating: 4.2, price: '$' },
                 { name: 'Empire Sushi', cuisine: 'Japanese', rating: 4.6, price: '$$$' },
                 { name: 'Harlem Soul Food', cuisine: 'Southern', rating: 4.5, price: '$$' },
                 { name: 'The Deli on 5th', cuisine: 'Deli', rating: 4.0, price: '$' },
