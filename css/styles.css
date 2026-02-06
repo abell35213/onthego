@@ -30,10 +30,10 @@ body {
 
 /* ===== Header ===== */
 .header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
     color: white;
     padding: 1.5rem 2rem;
-    box-shadow: var(--shadow);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .header-content h1 {
@@ -1225,5 +1225,240 @@ body {
     
     .instagram-timestamp {
         font-size: 0.6rem;
+    }
+}
+
+/* ===== Enhanced Popup Styles ===== */
+.popup-content-full {
+    min-width: 280px;
+    max-width: 320px;
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.popup-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    object-fit: cover;
+    margin-left: 0.75rem;
+}
+
+.popup-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+}
+
+.popup-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.popup-tags .tag-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+}
+
+/* ===== My Travel Log Styles ===== */
+.travel-log-view {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-light);
+    overflow-y: auto;
+}
+
+.travel-log-header {
+    padding: 2rem 2.5rem 1rem;
+    background-color: var(--bg-white);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.travel-log-header h2 {
+    font-size: 1.5rem;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.travel-log-header p {
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+.travel-log-content {
+    padding: 1.5rem 2.5rem;
+    flex: 1;
+}
+
+.travel-log-year {
+    margin-bottom: 2rem;
+}
+
+.travel-log-year h3 {
+    font-size: 1.3rem;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.travel-log-year h3 i {
+    color: var(--primary-color);
+}
+
+.travel-log-entries {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+}
+
+.travel-log-entry {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow);
+    transition: all 0.3s;
+}
+
+.travel-log-entry:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+}
+
+.travel-log-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.travel-log-city {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.travel-log-dates {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    background-color: var(--bg-light);
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+}
+
+.travel-log-hotel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.travel-log-hotel i {
+    color: var(--secondary-color);
+}
+
+.travel-log-restaurants-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.travel-log-restaurants-title i {
+    color: var(--primary-color);
+}
+
+.travel-log-restaurant-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.travel-log-restaurant-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    padding: 0.3rem 0;
+}
+
+.travel-log-restaurant-item .stars {
+    font-size: 0.7rem;
+}
+
+.travel-log-no-restaurants {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.travel-log-stats {
+    display: flex;
+    gap: 2rem;
+    padding: 1.5rem 2.5rem;
+    background-color: var(--bg-white);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.travel-log-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.travel-log-stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.travel-log-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .travel-log-header {
+        padding: 1.5rem;
+    }
+    
+    .travel-log-content {
+        padding: 1rem;
+    }
+    
+    .travel-log-entries {
+        grid-template-columns: 1fr;
+    }
+    
+    .travel-log-stats {
+        padding: 1rem;
+        gap: 1rem;
     }
 }

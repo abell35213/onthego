@@ -28,6 +28,9 @@ const App = {
         
         // Setup view toggle
         this.setupViewToggle();
+
+        // Setup travel log button
+        this.setupTravelLogToggle();
         
         console.log('OnTheGo App Ready!');
     },
@@ -45,14 +48,30 @@ const App = {
     },
 
     /**
+     * Setup travel log button
+     */
+    setupTravelLogToggle() {
+        const travelLogBtn = document.getElementById('travelLogBtn');
+        if (!travelLogBtn) return;
+
+        travelLogBtn.addEventListener('click', () => {
+            this.showTravelLog();
+        });
+    },
+
+    /**
      * Toggle between world map and local restaurant view
      */
     toggleView() {
         const worldView = document.getElementById('worldView');
         const localView = document.getElementById('localView');
+        const travelLogView = document.getElementById('travelLogView');
         const viewToggleBtn = document.getElementById('viewToggle');
 
-        if (this.currentView === CONFIG.VIEW_MODE_WORLD) {
+        // Hide travel log if visible
+        if (travelLogView) travelLogView.style.display = 'none';
+
+        if (this.currentView === CONFIG.VIEW_MODE_WORLD || this.currentView === CONFIG.VIEW_MODE_TRAVEL_LOG) {
             // Switch to local restaurant view
             worldView.style.display = 'none';
             localView.style.display = 'flex';
@@ -79,6 +98,127 @@ const App = {
                 }, 100);
             }
         }
+    },
+
+    /**
+     * Show My Travel Log view
+     */
+    showTravelLog() {
+        const worldView = document.getElementById('worldView');
+        const localView = document.getElementById('localView');
+        const travelLogView = document.getElementById('travelLogView');
+        const viewToggleBtn = document.getElementById('viewToggle');
+
+        worldView.style.display = 'none';
+        localView.style.display = 'none';
+        if (travelLogView) travelLogView.style.display = 'flex';
+
+        this.currentView = CONFIG.VIEW_MODE_TRAVEL_LOG;
+        viewToggleBtn.innerHTML = '<i class="fas fa-globe"></i><span>World Map</span>';
+
+        // Render travel log content
+        this.renderTravelLog();
+    },
+
+    /**
+     * Render travel log with yearly records
+     */
+    renderTravelLog() {
+        const statsContainer = document.getElementById('travelLogStats');
+        const contentContainer = document.getElementById('travelLogContent');
+        if (!statsContainer || !contentContainer) return;
+
+        // Combine all trips
+        const allTrips = [...MOCK_TRAVEL_HISTORY];
+
+        // Calculate stats
+        const totalTrips = allTrips.length;
+        const totalCities = new Set(allTrips.map(t => t.city)).size;
+        const totalRestaurantsVisited = allTrips.reduce((sum, t) => sum + (t.restaurantsVisited ? t.restaurantsVisited.length : 0), 0);
+        const totalHotels = new Set(allTrips.map(t => t.hotel)).size;
+
+        statsContainer.innerHTML = `
+            <div class="travel-log-stat">
+                <div class="travel-log-stat-number">${totalTrips}</div>
+                <div class="travel-log-stat-label">Trips</div>
+            </div>
+            <div class="travel-log-stat">
+                <div class="travel-log-stat-number">${totalCities}</div>
+                <div class="travel-log-stat-label">Cities</div>
+            </div>
+            <div class="travel-log-stat">
+                <div class="travel-log-stat-number">${totalHotels}</div>
+                <div class="travel-log-stat-label">Hotels</div>
+            </div>
+            <div class="travel-log-stat">
+                <div class="travel-log-stat-number">${totalRestaurantsVisited}</div>
+                <div class="travel-log-stat-label">Places Eaten</div>
+            </div>
+        `;
+
+        // Group trips by year
+        const tripsByYear = {};
+        allTrips.forEach(trip => {
+            const year = new Date(trip.startDate).getFullYear();
+            if (!tripsByYear[year]) tripsByYear[year] = [];
+            tripsByYear[year].push(trip);
+        });
+
+        // Sort years descending
+        const years = Object.keys(tripsByYear).sort((a, b) => b - a);
+
+        contentContainer.innerHTML = '';
+        years.forEach(year => {
+            const yearSection = document.createElement('div');
+            yearSection.className = 'travel-log-year';
+
+            const trips = tripsByYear[year];
+
+            yearSection.innerHTML = `
+                <h3><i class="fas fa-calendar-alt"></i> ${year}</h3>
+                <div class="travel-log-entries">
+                    ${trips.map(trip => {
+                        const dateRange = `${WorldMap.formatDate(trip.startDate)} - ${WorldMap.formatDate(trip.endDate)}`;
+                        const visitedRestaurants = trip.restaurantsVisited || [];
+                        
+                        // Look up restaurant names from MOCK_RESTAURANTS
+                        const restaurantDetails = visitedRestaurants.map(id => {
+                            const r = MOCK_RESTAURANTS.find(mr => mr.id === id);
+                            return r ? r : null;
+                        }).filter(r => r !== null);
+
+                        return `
+                            <div class="travel-log-entry">
+                                <div class="travel-log-entry-header">
+                                    <div class="travel-log-city">${trip.city}, ${trip.state}</div>
+                                    <div class="travel-log-dates">${dateRange}</div>
+                                </div>
+                                <div class="travel-log-hotel">
+                                    <i class="fas fa-hotel"></i> ${trip.hotel}
+                                </div>
+                                ${restaurantDetails.length > 0 ? `
+                                    <div class="travel-log-restaurants-title">
+                                        <i class="fas fa-utensils"></i> Places Visited
+                                    </div>
+                                    <div class="travel-log-restaurant-list">
+                                        ${restaurantDetails.map(r => `
+                                            <div class="travel-log-restaurant-item">
+                                                <span class="stars">${API.getStarRating(r.rating)}</span>
+                                                <span>${r.name}</span>
+                                                <span style="color:var(--success-color);font-weight:700;">${r.price || ''}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : `
+                                    <div class="travel-log-no-restaurants">No dining records for this trip</div>
+                                `}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            contentContainer.appendChild(yearSection);
+        });
     },
 
     /**

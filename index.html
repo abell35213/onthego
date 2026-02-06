@@ -33,6 +33,10 @@
                 <i class="fas fa-list"></i>
                 <span>Restaurant List</span>
             </button>
+            <button id="travelLogBtn" class="view-toggle-btn" title="My Travel Log">
+                <i class="fas fa-book"></i>
+                <span>My Travel Log</span>
+            </button>
             <button id="accountBtn" class="account-btn" title="Account Settings">
                 <i class="fas fa-user-circle"></i>
             </button>
@@ -237,6 +241,20 @@
         
         <!-- Restaurant List View (Toggle-able) -->
         <div id="localView" class="local-view" style="display: none;">
+
+        <!-- My Travel Log View -->
+        <div id="travelLogView" class="travel-log-view" style="display: none;">
+            <div class="travel-log-header">
+                <h2><i class="fas fa-book"></i> My Travel Log</h2>
+                <p>A yearly record of your hotels and places visited</p>
+            </div>
+            <div class="travel-log-stats" id="travelLogStats">
+                <!-- Stats populated by JS -->
+            </div>
+            <div class="travel-log-content" id="travelLogContent">
+                <!-- Travel log entries populated by JS -->
+            </div>
+        </div>
         <!-- Sidebar with Restaurant List -->
         <aside class="sidebar">
             <!-- Search Bar -->

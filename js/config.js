@@ -27,6 +27,7 @@ const CONFIG = {
     // View modes
     VIEW_MODE_WORLD: 'world',
     VIEW_MODE_LOCAL: 'local',
+    VIEW_MODE_TRAVEL_LOG: 'travellog',
 };
 
 // Sample/Mock Restaurant Data
@@ -425,6 +426,142 @@ const MOCK_RESTAURANTS = [
                 url: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?w=200&h=200&fit=crop',
                 username: 'sf_brunch',
                 timestamp: '6 days ago'
+            }
+        ]
+    },
+    {
+        id: '11',
+        name: 'Anchor Brewing Taproom',
+        image_url: 'https://images.unsplash.com/photo-1559526324-593bc073d938?w=300&h=300&fit=crop',
+        categories: [{ title: 'Brewery' }, { title: 'Craft Beer' }],
+        rating: 4.4,
+        review_count: 312,
+        price: '$$',
+        location: {
+            address1: '1705 Mariposa Street',
+            city: 'San Francisco',
+            state: 'CA',
+            zip_code: '94107'
+        },
+        coordinates: {
+            latitude: 37.7639,
+            longitude: -122.3964
+        },
+        display_phone: '(415) 555-0811',
+        distance: 1350,
+        url: 'https://www.yelp.com',
+        tags: ['Chill', 'Craft Beer'],
+        visited: false,
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=200&h=200&fit=crop',
+                username: 'craftbeer_sf',
+                timestamp: '5 hours ago'
+            }
+        ]
+    },
+    {
+        id: '12',
+        name: 'The Bourbon Lounge',
+        image_url: 'https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=300&h=300&fit=crop',
+        categories: [{ title: 'Bar' }, { title: 'Cocktail Bar' }],
+        rating: 4.3,
+        review_count: 278,
+        price: '$$$',
+        location: {
+            address1: '501 Jones Street',
+            city: 'San Francisco',
+            state: 'CA',
+            zip_code: '94102'
+        },
+        coordinates: {
+            latitude: 37.7859,
+            longitude: -122.4124
+        },
+        display_phone: '(415) 555-0812',
+        distance: 620,
+        url: 'https://www.yelp.com',
+        tags: ['Nightlife', 'Chill'],
+        visited: true,
+        visitDate: '2024-11-14',
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=200&h=200&fit=crop',
+                username: 'cocktail_culture',
+                timestamp: '2 hours ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&h=200&fit=crop',
+                username: 'sf_nightlife',
+                timestamp: '1 day ago'
+            }
+        ]
+    },
+    {
+        id: '13',
+        name: 'Temple Nightclub',
+        image_url: 'https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=300&h=300&fit=crop',
+        categories: [{ title: 'Club' }, { title: 'Dance Club' }],
+        rating: 4.0,
+        review_count: 445,
+        price: '$$$',
+        location: {
+            address1: '540 Howard Street',
+            city: 'San Francisco',
+            state: 'CA',
+            zip_code: '94105'
+        },
+        coordinates: {
+            latitude: 37.7879,
+            longitude: -122.3964
+        },
+        display_phone: '(415) 555-0813',
+        distance: 890,
+        url: 'https://www.yelp.com',
+        tags: ['Nightlife', 'Fun'],
+        visited: false,
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1571266028253-6f88503e7e87?w=200&h=200&fit=crop',
+                username: 'sf_clubbing',
+                timestamp: '8 hours ago'
+            }
+        ]
+    },
+    {
+        id: '14',
+        name: 'Cellarmaker Brewing',
+        image_url: 'https://images.unsplash.com/photo-1532634993-15f421e42ec0?w=300&h=300&fit=crop',
+        categories: [{ title: 'Brewery' }, { title: 'Gastropub' }],
+        rating: 4.6,
+        review_count: 287,
+        price: '$$',
+        location: {
+            address1: '1150 Howard Street',
+            city: 'San Francisco',
+            state: 'CA',
+            zip_code: '94103'
+        },
+        coordinates: {
+            latitude: 37.7769,
+            longitude: -122.4114
+        },
+        display_phone: '(415) 555-0814',
+        distance: 410,
+        url: 'https://www.yelp.com',
+        tags: ['Craft Beer', 'Local Spots'],
+        visited: true,
+        visitDate: '2025-01-20',
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=200&h=200&fit=crop',
+                username: 'hophead_sf',
+                timestamp: '3 hours ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1575037614876-c38a4c44f5b8?w=200&h=200&fit=crop',
+                username: 'beer_explorer',
+                timestamp: '2 days ago'
             }
         ]
     }
