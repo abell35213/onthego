@@ -71,20 +71,7 @@ const App = {
         // Hide travel log if visible
         if (travelLogView) travelLogView.style.display = 'none';
 
-        if (this.currentView === CONFIG.VIEW_MODE_WORLD || this.currentView === CONFIG.VIEW_MODE_TRAVEL_LOG) {
-            // Switch to local restaurant view
-            worldView.style.display = 'none';
-            localView.style.display = 'flex';
-            this.currentView = CONFIG.VIEW_MODE_LOCAL;
-            viewToggleBtn.innerHTML = '<i class="fas fa-globe"></i><span>World Map</span>';
-            
-            // Initialize local map if not already done
-            if (MapModule.map) {
-                setTimeout(() => {
-                    MapModule.map.invalidateSize();
-                }, 100);
-            }
-        } else {
+        if (this.currentView === CONFIG.VIEW_MODE_LOCAL) {
             // Switch to world map view
             localView.style.display = 'none';
             worldView.style.display = 'flex';
@@ -95,6 +82,30 @@ const App = {
             if (WorldMap.map) {
                 setTimeout(() => {
                     WorldMap.map.invalidateSize();
+                }, 100);
+            }
+        } else if (this.currentView === CONFIG.VIEW_MODE_TRAVEL_LOG) {
+            // From travel log, go back to world map
+            worldView.style.display = 'flex';
+            this.currentView = CONFIG.VIEW_MODE_WORLD;
+            viewToggleBtn.innerHTML = '<i class="fas fa-list"></i><span>Restaurant List</span>';
+            
+            if (WorldMap.map) {
+                setTimeout(() => {
+                    WorldMap.map.invalidateSize();
+                }, 100);
+            }
+        } else {
+            // Switch to local restaurant view (from world map)
+            worldView.style.display = 'none';
+            localView.style.display = 'flex';
+            this.currentView = CONFIG.VIEW_MODE_LOCAL;
+            viewToggleBtn.innerHTML = '<i class="fas fa-globe"></i><span>World Map</span>';
+            
+            // Initialize local map if not already done
+            if (MapModule.map) {
+                setTimeout(() => {
+                    MapModule.map.invalidateSize();
                 }, 100);
             }
         }
