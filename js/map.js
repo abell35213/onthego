@@ -9,6 +9,14 @@ const MapModule = {
      * Initialize the map
      */
     init() {
+        // Check if Leaflet is available
+        if (typeof L === 'undefined') {
+            console.warn('Leaflet library not loaded. Map functionality disabled.');
+            // Still try to get user location for the restaurant list
+            this.getUserLocation();
+            return;
+        }
+
         // Create map centered on default location
         this.map = L.map('map').setView(
             [CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG],
@@ -116,6 +124,8 @@ const MapModule = {
      * @param {number} lng - Longitude
      */
     addUserMarker(lat, lng) {
+        if (!this.map || typeof L === 'undefined') return;
+        
         // Create custom icon for user location
         const userIcon = L.icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
@@ -147,6 +157,8 @@ const MapModule = {
      * @param {Array} restaurants - Array of restaurant objects
      */
     addRestaurantMarkers(restaurants) {
+        if (!this.map || typeof L === 'undefined') return;
+        
         this.clearMarkers();
 
         restaurants.forEach(restaurant => {
@@ -167,6 +179,8 @@ const MapModule = {
      * @returns {Object} - Leaflet marker object
      */
     createRestaurantMarker(restaurant) {
+        if (!this.map || typeof L === 'undefined') return null;
+        
         const lat = restaurant.coordinates.latitude;
         const lng = restaurant.coordinates.longitude;
 
@@ -236,6 +250,8 @@ const MapModule = {
      * @param {number} lng - Longitude
      */
     panToRestaurant(lat, lng) {
+        if (!this.map) return;
+        
         this.map.setView([lat, lng], 16, {
             animate: true,
             duration: 0.5
