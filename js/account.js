@@ -1,11 +1,16 @@
-// Account Module - Handles Concur/TripIt account connections
+// Account Module - Handles user profile, Concur/TripIt account connections, and settings
 const Account = {
     /**
      * Initialize account modal and event listeners
      */
     init() {
         this.setupEventListeners();
+        this.setupTabs();
+        this.setupProfileForm();
+        this.setupSettings();
         this.updateConnectionStatus();
+        this.loadProfile();
+        this.loadSettings();
     },
 
     /**
@@ -53,6 +58,168 @@ const Account = {
                 this.disconnectAccount(accountType);
             }
         });
+    },
+
+    /**
+     * Setup tab navigation
+     */
+    setupTabs() {
+        const tabs = document.querySelectorAll('.account-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => {
+                    c.style.display = 'none';
+                    c.classList.remove('active');
+                });
+
+                // Activate clicked tab
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab') + 'Tab';
+                const tabContent = document.getElementById(tabId);
+                if (tabContent) {
+                    tabContent.style.display = 'block';
+                    tabContent.classList.add('active');
+                }
+            });
+        });
+    },
+
+    /**
+     * Setup profile form submission
+     */
+    setupProfileForm() {
+        const form = document.getElementById('accountForm');
+        if (!form) return;
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveProfile();
+        });
+    },
+
+    /**
+     * Save user profile to localStorage
+     */
+    saveProfile() {
+        const name = document.getElementById('userName').value.trim();
+        const email = document.getElementById('userEmail').value.trim();
+        const phone = document.getElementById('userPhone').value.trim();
+
+        if (!name || !email || !phone) {
+            this.showNotification('Please fill in all required fields.');
+            return;
+        }
+
+        const profile = { name, email, phone };
+        localStorage.setItem('onthego_profile', JSON.stringify(profile));
+
+        // Update global state
+        USER_ACCOUNT.name = name;
+        USER_ACCOUNT.email = email;
+        USER_ACCOUNT.phone = phone;
+
+        // Show success message
+        const msg = document.getElementById('profileSavedMsg');
+        if (msg) {
+            msg.style.display = 'flex';
+            setTimeout(() => { msg.style.display = 'none'; }, 3000);
+        }
+
+        this.showNotification('Profile saved successfully!');
+    },
+
+    /**
+     * Load user profile from localStorage
+     */
+    loadProfile() {
+        const saved = localStorage.getItem('onthego_profile');
+        if (saved) {
+            try {
+                const profile = JSON.parse(saved);
+                const nameInput = document.getElementById('userName');
+                const emailInput = document.getElementById('userEmail');
+                const phoneInput = document.getElementById('userPhone');
+
+                if (nameInput) nameInput.value = profile.name || '';
+                if (emailInput) emailInput.value = profile.email || '';
+                if (phoneInput) phoneInput.value = profile.phone || '';
+
+                USER_ACCOUNT.name = profile.name;
+                USER_ACCOUNT.email = profile.email;
+                USER_ACCOUNT.phone = profile.phone;
+            } catch (e) {
+                console.error('Error loading profile:', e);
+            }
+        }
+    },
+
+    /**
+     * Setup settings save handler
+     */
+    setupSettings() {
+        const saveBtn = document.getElementById('saveSettingsBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.saveSettings();
+            });
+        }
+    },
+
+    /**
+     * Save settings to localStorage
+     */
+    saveSettings() {
+        const settings = {
+            textAlerts: document.getElementById('settingTextAlerts')?.checked || false,
+            emailAlerts: document.getElementById('settingEmailAlerts')?.checked || false,
+            dealAlerts: document.getElementById('settingDealAlerts')?.checked || false,
+            searchRadius: document.getElementById('settingRadius')?.value || '5000',
+            defaultCuisine: document.getElementById('settingCuisine')?.value || '',
+            defaultPrice: document.getElementById('settingPrice')?.value || '',
+            accessibility: document.getElementById('settingAccessibility')?.checked || false
+        };
+
+        localStorage.setItem('onthego_settings', JSON.stringify(settings));
+
+        // Show success message
+        const msg = document.getElementById('settingsSavedMsg');
+        if (msg) {
+            msg.style.display = 'flex';
+            setTimeout(() => { msg.style.display = 'none'; }, 3000);
+        }
+
+        this.showNotification('Settings saved successfully!');
+    },
+
+    /**
+     * Load settings from localStorage
+     */
+    loadSettings() {
+        const saved = localStorage.getItem('onthego_settings');
+        if (saved) {
+            try {
+                const settings = JSON.parse(saved);
+                const textAlerts = document.getElementById('settingTextAlerts');
+                const emailAlerts = document.getElementById('settingEmailAlerts');
+                const dealAlerts = document.getElementById('settingDealAlerts');
+                const radius = document.getElementById('settingRadius');
+                const cuisine = document.getElementById('settingCuisine');
+                const price = document.getElementById('settingPrice');
+                const accessibility = document.getElementById('settingAccessibility');
+
+                if (textAlerts) textAlerts.checked = settings.textAlerts !== false;
+                if (emailAlerts) emailAlerts.checked = settings.emailAlerts !== false;
+                if (dealAlerts) dealAlerts.checked = settings.dealAlerts || false;
+                if (radius) radius.value = settings.searchRadius || '5000';
+                if (cuisine) cuisine.value = settings.defaultCuisine || '';
+                if (price) price.value = settings.defaultPrice || '';
+                if (accessibility) accessibility.checked = settings.accessibility || false;
+            } catch (e) {
+                console.error('Error loading settings:', e);
+            }
+        }
     },
 
     /**
