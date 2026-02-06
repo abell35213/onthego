@@ -351,6 +351,26 @@ const UI = {
                     <i class="fab fa-twitter"></i>
                 </a>
             </div>
+            
+            ${restaurant.instagram_photos && restaurant.instagram_photos.length > 0 ? `
+            <div class="instagram-section">
+                <div class="instagram-header">
+                    <i class="fab fa-instagram"></i>
+                    <span>Recent Instagram Posts</span>
+                </div>
+                <div class="instagram-photos">
+                    ${restaurant.instagram_photos.map(photo => `
+                        <div class="instagram-photo">
+                            <img src="${photo.url}" alt="Photo by @${photo.username}" loading="lazy">
+                            <div class="instagram-overlay">
+                                <div class="instagram-username">@${photo.username}</div>
+                                <div class="instagram-timestamp">${photo.timestamp}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
         `;
 
         // Add click event to pan map to restaurant

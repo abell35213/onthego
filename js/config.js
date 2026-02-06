@@ -55,7 +55,24 @@ const MOCK_RESTAURANTS = [
         url: 'https://www.yelp.com',
         tags: ['Local Spots', 'Good for Business Meal'],
         visited: true,
-        visitDate: '2024-11-15'
+        visitDate: '2024-11-15',
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&h=200&fit=crop',
+                username: 'foodie_sam',
+                timestamp: '2 days ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&h=200&fit=crop',
+                username: 'sf_eats',
+                timestamp: '1 week ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=200&h=200&fit=crop',
+                username: 'dining_vibes',
+                timestamp: '2 weeks ago'
+            }
+        ]
     },
     {
         id: '2',
@@ -80,7 +97,19 @@ const MOCK_RESTAURANTS = [
         url: 'https://www.yelp.com',
         tags: ['Chill', 'Local Spots'],
         visited: true,
-        visitDate: '2024-10-22'
+        visitDate: '2024-10-22',
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&h=200&fit=crop',
+                username: 'sushi_lover',
+                timestamp: '3 days ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1563612116625-3012372fccce?w=200&h=200&fit=crop',
+                username: 'bay_area_food',
+                timestamp: '5 days ago'
+            }
+        ]
     },
     {
         id: '3',
@@ -104,7 +133,24 @@ const MOCK_RESTAURANTS = [
         distance: 320,
         url: 'https://www.yelp.com',
         tags: ['Fun', 'Chill'],
-        visited: false
+        visited: false,
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=200&h=200&fit=crop',
+                username: 'burger_fan',
+                timestamp: '1 day ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1521305916504-4a1121188589?w=200&h=200&fit=crop',
+                username: 'foodie_life',
+                timestamp: '4 days ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=200&h=200&fit=crop',
+                username: 'sf_dining',
+                timestamp: '1 week ago'
+            }
+        ]
     },
     {
         id: '4',
@@ -129,7 +175,19 @@ const MOCK_RESTAURANTS = [
         url: 'https://www.yelp.com',
         tags: ['Fun', 'Local Spots'],
         visited: true,
-        visitDate: '2025-01-10'
+        visitDate: '2025-01-10',
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop',
+                username: 'taco_tuesday',
+                timestamp: '2 hours ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=200&h=200&fit=crop',
+                username: 'mexican_food_fan',
+                timestamp: '1 day ago'
+            }
+        ]
     },
     {
         id: '5',
@@ -153,7 +211,19 @@ const MOCK_RESTAURANTS = [
         distance: 780,
         url: 'https://www.yelp.com',
         tags: ['Chill'],
-        visited: false
+        visited: false,
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=200&h=200&fit=crop',
+                username: 'thai_food_lover',
+                timestamp: '3 days ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=200&fit=crop',
+                username: 'spicy_eats',
+                timestamp: '1 week ago'
+            }
+        ]
     },
     {
         id: '6',
@@ -178,7 +248,24 @@ const MOCK_RESTAURANTS = [
         url: 'https://www.yelp.com',
         tags: ['Good for Business Meal', 'Chill'],
         visited: true,
-        visitDate: '2024-09-05'
+        visitDate: '2024-09-05',
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=200&h=200&fit=crop',
+                username: 'pasta_perfection',
+                timestamp: '6 hours ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=200&h=200&fit=crop',
+                username: 'italian_cuisine',
+                timestamp: '2 days ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=200&h=200&fit=crop',
+                username: 'fine_dining_sf',
+                timestamp: '5 days ago'
+            }
+        ]
     },
     {
         id: '7',
@@ -203,7 +290,24 @@ const MOCK_RESTAURANTS = [
         url: 'https://www.yelp.com',
         tags: ['Good for Business Meal'],
         visited: true,
-        visitDate: '2024-12-03'
+        visitDate: '2024-12-03',
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1558030006-450675393462?w=200&h=200&fit=crop',
+                username: 'steak_lover',
+                timestamp: '5 hours ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=200&h=200&fit=crop',
+                username: 'business_dining',
+                timestamp: '1 day ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1544148103-0773bf10d330?w=200&h=200&fit=crop',
+                username: 'upscale_eats',
+                timestamp: '3 days ago'
+            }
+        ]
     },
     {
         id: '8',
@@ -227,7 +331,19 @@ const MOCK_RESTAURANTS = [
         distance: 520,
         url: 'https://www.yelp.com',
         tags: ['Local Spots', 'Chill'],
-        visited: false
+        visited: false,
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=200&h=200&fit=crop',
+                username: 'pho_fanatic',
+                timestamp: '8 hours ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop',
+                username: 'vietnamese_eats',
+                timestamp: '2 days ago'
+            }
+        ]
     },
     {
         id: '9',
@@ -251,7 +367,24 @@ const MOCK_RESTAURANTS = [
         distance: 1150,
         url: 'https://www.yelp.com',
         tags: ['Chill', 'Local Spots'],
-        visited: false
+        visited: false,
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=200&h=200&fit=crop',
+                username: 'mediterranean_vibes',
+                timestamp: '12 hours ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?w=200&h=200&fit=crop',
+                username: 'greek_foodie',
+                timestamp: '4 days ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=200&h=200&fit=crop',
+                username: 'healthy_eats_sf',
+                timestamp: '1 week ago'
+            }
+        ]
     },
     {
         id: '10',
@@ -276,7 +409,24 @@ const MOCK_RESTAURANTS = [
         url: 'https://www.yelp.com',
         tags: ['Fun', 'Local Spots'],
         visited: true,
-        visitDate: '2024-08-18'
+        visitDate: '2024-08-18',
+        instagram_photos: [
+            {
+                url: 'https://images.unsplash.com/photo-1496412705862-e0088f16f791?w=200&h=200&fit=crop',
+                username: 'dimsum_daily',
+                timestamp: '4 hours ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=200&h=200&fit=crop',
+                username: 'chinese_food_love',
+                timestamp: '1 day ago'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?w=200&h=200&fit=crop',
+                username: 'sf_brunch',
+                timestamp: '6 days ago'
+            }
+        ]
     }
 ];
 
