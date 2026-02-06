@@ -17,18 +17,24 @@ const UI = {
     setupEventListeners() {
         // Search input
         const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', (e) => {
-            this.handleSearch(e.target.value);
-        });
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.handleSearch(e.target.value);
+            });
+        }
 
         // Filter dropdowns
         const cuisineFilter = document.getElementById('cuisineFilter');
         const priceFilter = document.getElementById('priceFilter');
+        const ambianceFilter = document.getElementById('ambianceFilter');
         const sortBy = document.getElementById('sortBy');
+        const visitedFilter = document.getElementById('visitedFilter');
 
-        cuisineFilter.addEventListener('change', () => this.applyFilters());
-        priceFilter.addEventListener('change', () => this.applyFilters());
-        sortBy.addEventListener('change', () => this.applyFilters());
+        if (cuisineFilter) cuisineFilter.addEventListener('change', () => this.applyFilters());
+        if (priceFilter) priceFilter.addEventListener('change', () => this.applyFilters());
+        if (ambianceFilter) ambianceFilter.addEventListener('change', () => this.applyFilters());
+        if (sortBy) sortBy.addEventListener('change', () => this.applyFilters());
+        if (visitedFilter) visitedFilter.addEventListener('change', () => this.applyFilters());
     },
 
     /**
@@ -114,12 +120,14 @@ const UI = {
      * @param {string} searchQuery - Optional search query
      */
     applyFilters(searchQuery = null) {
-        const cuisineFilter = document.getElementById('cuisineFilter').value;
-        const priceFilter = document.getElementById('priceFilter').value;
-        const sortBy = document.getElementById('sortBy').value;
+        const cuisineFilter = document.getElementById('cuisineFilter')?.value || '';
+        const priceFilter = document.getElementById('priceFilter')?.value || '';
+        const ambianceFilter = document.getElementById('ambianceFilter')?.value || '';
+        const sortBy = document.getElementById('sortBy')?.value || 'rating';
+        const visitedOnly = document.getElementById('visitedFilter')?.checked || false;
         const query = searchQuery !== null 
             ? searchQuery 
-            : document.getElementById('searchInput').value;
+            : (document.getElementById('searchInput')?.value || '');
 
         // Start with all restaurants
         let filtered = [...this.restaurants];
@@ -134,6 +142,18 @@ const UI = {
         // Apply price filter
         if (priceFilter) {
             filtered = filtered.filter(restaurant => restaurant.price === priceFilter);
+        }
+
+        // Apply ambiance filter
+        if (ambianceFilter) {
+            filtered = filtered.filter(restaurant => {
+                return restaurant.tags && restaurant.tags.includes(ambianceFilter);
+            });
+        }
+
+        // Apply visited filter
+        if (visitedOnly) {
+            filtered = filtered.filter(restaurant => restaurant.visited === true);
         }
 
         // Apply search query
@@ -256,6 +276,7 @@ const UI = {
                 <span class="stars">${API.getStarRating(restaurant.rating)}</span>
                 <span class="rating-number">${restaurant.rating}</span>
                 <span class="review-count">(${restaurant.review_count} reviews)</span>
+                ${restaurant.visited ? '<span class="visited-indicator"><i class="fas fa-check"></i> Visited</span>' : ''}
             </div>
             
             <div class="restaurant-info">
@@ -274,6 +295,15 @@ const UI = {
                 </div>
                 ` : ''}
             </div>
+            
+            ${restaurant.tags && restaurant.tags.length > 0 ? `
+            <div class="restaurant-tags">
+                ${restaurant.tags.map(tag => {
+                    const tagClass = tag.toLowerCase().replace(/\s+/g, '-').replace('good-for-business-meal', 'business');
+                    return `<span class="tag-badge ${tagClass}">${tag}</span>`;
+                }).join('')}
+            </div>
+            ` : ''}
             
             <div class="restaurant-address">
                 <i class="fas fa-map-marker-alt"></i>

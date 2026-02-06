@@ -18,6 +18,15 @@ const CONFIG = {
     
     // Map marker icon
     MARKER_ICON_URL: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    
+    // World map settings
+    WORLD_MAP_ZOOM: 2,
+    WORLD_MAP_MIN_ZOOM: 2,
+    WORLD_MAP_MAX_ZOOM: 18,
+    
+    // View modes
+    VIEW_MODE_WORLD: 'world',
+    VIEW_MODE_LOCAL: 'local',
 };
 
 // Sample/Mock Restaurant Data
@@ -43,7 +52,10 @@ const MOCK_RESTAURANTS = [
         },
         display_phone: '(415) 555-0123',
         distance: 450,
-        url: 'https://www.yelp.com'
+        url: 'https://www.yelp.com',
+        tags: ['Local Spots', 'Good for Business Meal'],
+        visited: true,
+        visitDate: '2024-11-15'
     },
     {
         id: '2',
@@ -65,7 +77,10 @@ const MOCK_RESTAURANTS = [
         },
         display_phone: '(415) 555-0456',
         distance: 890,
-        url: 'https://www.yelp.com'
+        url: 'https://www.yelp.com',
+        tags: ['Chill', 'Local Spots'],
+        visited: true,
+        visitDate: '2024-10-22'
     },
     {
         id: '3',
@@ -87,7 +102,9 @@ const MOCK_RESTAURANTS = [
         },
         display_phone: '(415) 555-0789',
         distance: 320,
-        url: 'https://www.yelp.com'
+        url: 'https://www.yelp.com',
+        tags: ['Fun', 'Chill'],
+        visited: false
     },
     {
         id: '4',
@@ -109,7 +126,10 @@ const MOCK_RESTAURANTS = [
         },
         display_phone: '(415) 555-0321',
         distance: 1200,
-        url: 'https://www.yelp.com'
+        url: 'https://www.yelp.com',
+        tags: ['Fun', 'Local Spots'],
+        visited: true,
+        visitDate: '2025-01-10'
     },
     {
         id: '5',
@@ -131,7 +151,9 @@ const MOCK_RESTAURANTS = [
         },
         display_phone: '(415) 555-0654',
         distance: 780,
-        url: 'https://www.yelp.com'
+        url: 'https://www.yelp.com',
+        tags: ['Chill'],
+        visited: false
     },
     {
         id: '6',
@@ -153,7 +175,10 @@ const MOCK_RESTAURANTS = [
         },
         display_phone: '(415) 555-0987',
         distance: 1450,
-        url: 'https://www.yelp.com'
+        url: 'https://www.yelp.com',
+        tags: ['Good for Business Meal', 'Chill'],
+        visited: true,
+        visitDate: '2024-09-05'
     },
     {
         id: '7',
@@ -175,7 +200,10 @@ const MOCK_RESTAURANTS = [
         },
         display_phone: '(415) 555-0147',
         distance: 650,
-        url: 'https://www.yelp.com'
+        url: 'https://www.yelp.com',
+        tags: ['Good for Business Meal'],
+        visited: true,
+        visitDate: '2024-12-03'
     },
     {
         id: '8',
@@ -197,7 +225,9 @@ const MOCK_RESTAURANTS = [
         },
         display_phone: '(415) 555-0258',
         distance: 520,
-        url: 'https://www.yelp.com'
+        url: 'https://www.yelp.com',
+        tags: ['Local Spots', 'Chill'],
+        visited: false
     },
     {
         id: '9',
@@ -219,7 +249,9 @@ const MOCK_RESTAURANTS = [
         },
         display_phone: '(415) 555-0369',
         distance: 1150,
-        url: 'https://www.yelp.com'
+        url: 'https://www.yelp.com',
+        tags: ['Chill', 'Local Spots'],
+        visited: false
     },
     {
         id: '10',
@@ -241,7 +273,10 @@ const MOCK_RESTAURANTS = [
         },
         display_phone: '(415) 555-0741',
         distance: 980,
-        url: 'https://www.yelp.com'
+        url: 'https://www.yelp.com',
+        tags: ['Fun', 'Local Spots'],
+        visited: true,
+        visitDate: '2024-08-18'
     }
 ];
 
@@ -255,3 +290,115 @@ function getUniqueCuisines(restaurants) {
     });
     return Array.from(cuisines).sort();
 }
+
+// Mock Travel History Data (for Concur/TripIt integration simulation)
+const MOCK_TRAVEL_HISTORY = [
+    {
+        id: 'trip1',
+        city: 'San Francisco',
+        state: 'CA',
+        country: 'USA',
+        coordinates: { latitude: 37.7749, longitude: -122.4194 },
+        startDate: '2024-11-12',
+        endDate: '2024-11-16',
+        purpose: 'Business',
+        hotel: 'The St. Regis San Francisco',
+        restaurantsVisited: ['1', '7']
+    },
+    {
+        id: 'trip2',
+        city: 'New York',
+        state: 'NY',
+        country: 'USA',
+        coordinates: { latitude: 40.7128, longitude: -74.0060 },
+        startDate: '2024-10-20',
+        endDate: '2024-10-24',
+        purpose: 'Business',
+        hotel: 'The Plaza Hotel',
+        restaurantsVisited: ['2']
+    },
+    {
+        id: 'trip3',
+        city: 'Chicago',
+        state: 'IL',
+        country: 'USA',
+        coordinates: { latitude: 41.8781, longitude: -87.6298 },
+        startDate: '2024-09-01',
+        endDate: '2024-09-06',
+        purpose: 'Business',
+        hotel: 'The Langham Chicago',
+        restaurantsVisited: ['6']
+    },
+    {
+        id: 'trip4',
+        city: 'Los Angeles',
+        state: 'CA',
+        country: 'USA',
+        coordinates: { latitude: 34.0522, longitude: -118.2437 },
+        startDate: '2024-08-15',
+        endDate: '2024-08-20',
+        purpose: 'Business',
+        hotel: 'The Beverly Hills Hotel',
+        restaurantsVisited: ['10']
+    },
+    {
+        id: 'trip5',
+        city: 'Miami',
+        state: 'FL',
+        country: 'USA',
+        coordinates: { latitude: 25.7617, longitude: -80.1918 },
+        startDate: '2025-01-08',
+        endDate: '2025-01-12',
+        purpose: 'Business',
+        hotel: 'Fontainebleau Miami Beach',
+        restaurantsVisited: ['4']
+    }
+];
+
+// Mock Upcoming Trips Data
+const MOCK_UPCOMING_TRIPS = [
+    {
+        id: 'upcoming1',
+        city: 'Seattle',
+        state: 'WA',
+        country: 'USA',
+        coordinates: { latitude: 47.6062, longitude: -122.3321 },
+        startDate: '2026-03-15',
+        endDate: '2026-03-19',
+        purpose: 'Business',
+        hotel: 'Four Seasons Hotel Seattle',
+        confirmedReservations: []
+    },
+    {
+        id: 'upcoming2',
+        city: 'Austin',
+        state: 'TX',
+        country: 'USA',
+        coordinates: { latitude: 30.2672, longitude: -97.7431 },
+        startDate: '2026-04-10',
+        endDate: '2026-04-14',
+        purpose: 'Conference',
+        hotel: 'The Driskill',
+        confirmedReservations: []
+    },
+    {
+        id: 'upcoming3',
+        city: 'Boston',
+        state: 'MA',
+        country: 'USA',
+        coordinates: { latitude: 42.3601, longitude: -71.0589 },
+        startDate: '2026-05-05',
+        endDate: '2026-05-09',
+        purpose: 'Business',
+        hotel: 'The Liberty Hotel',
+        confirmedReservations: []
+    }
+];
+
+// User account state
+const USER_ACCOUNT = {
+    concurConnected: false,
+    tripitConnected: false,
+    lastSync: null
+};
+

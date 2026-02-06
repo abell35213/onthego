@@ -26,12 +26,89 @@
     <header class="header">
         <div class="header-content">
             <h1><i class="fas fa-utensils"></i> OnTheGo</h1>
-            <p class="tagline">Find the best restaurants near you</p>
+            <p class="tagline">Your personal travel dining companion</p>
+        </div>
+        <div class="header-actions">
+            <button id="viewToggle" class="view-toggle-btn" title="Switch View">
+                <i class="fas fa-list"></i>
+                <span>Restaurant List</span>
+            </button>
+            <button id="accountBtn" class="account-btn" title="Account Settings">
+                <i class="fas fa-user-circle"></i>
+            </button>
         </div>
     </header>
 
+    <!-- Account Modal -->
+    <div id="accountModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-link"></i> Connect Your Accounts</h2>
+            <p class="modal-description">Link your travel accounts to sync your trip history and upcoming reservations.</p>
+            
+            <div class="account-connections">
+                <div class="account-card">
+                    <div class="account-header">
+                        <i class="fas fa-briefcase account-icon"></i>
+                        <h3>Concur</h3>
+                    </div>
+                    <p>Sync your business travel expenses and itineraries</p>
+                    <button id="concurConnect" class="connect-btn">
+                        <i class="fas fa-plug"></i>
+                        <span class="connect-text">Connect Concur</span>
+                    </button>
+                    <div id="concurStatus" class="connection-status" style="display: none;">
+                        <i class="fas fa-check-circle"></i> Connected
+                        <button class="disconnect-btn">Disconnect</button>
+                    </div>
+                </div>
+                
+                <div class="account-card">
+                    <div class="account-header">
+                        <i class="fas fa-plane account-icon"></i>
+                        <h3>TripIt</h3>
+                    </div>
+                    <p>Import your travel plans and reservations</p>
+                    <button id="tripitConnect" class="connect-btn">
+                        <i class="fas fa-plug"></i>
+                        <span class="connect-text">Connect TripIt</span>
+                    </button>
+                    <div id="tripitStatus" class="connection-status" style="display: none;">
+                        <i class="fas fa-check-circle"></i> Connected
+                        <button class="disconnect-btn">Disconnect</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="syncInfo" class="sync-info" style="display: none;">
+                <i class="fas fa-sync-alt"></i>
+                <span id="lastSyncTime">Last synced: Never</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Container -->
-    <main class="container">
+    <main class="container" id="mainContainer">
+        <!-- World Map View (Default Landing Page) -->
+        <div id="worldView" class="world-view">
+            <div id="worldMap" class="world-map"></div>
+            
+            <!-- Trip History Sidebar -->
+            <aside class="trip-sidebar">
+                <h2><i class="fas fa-history"></i> Travel History</h2>
+                <div id="tripHistory" class="trip-history-list">
+                    <!-- Trip history items will be added here -->
+                </div>
+                
+                <h2 style="margin-top: 2rem;"><i class="fas fa-calendar-alt"></i> Upcoming Trips</h2>
+                <div id="upcomingTrips" class="upcoming-trips-list">
+                    <!-- Upcoming trips will be added here -->
+                </div>
+            </aside>
+        </div>
+        
+        <!-- Restaurant List View (Toggle-able) -->
+        <div id="localView" class="local-view" style="display: none;">
         <!-- Sidebar with Restaurant List -->
         <aside class="sidebar">
             <!-- Search Bar -->
@@ -61,12 +138,30 @@
                 </div>
                 
                 <div class="filter-group">
+                    <label for="ambianceFilter">Ambiance:</label>
+                    <select id="ambianceFilter" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="Good for Business Meal">Business Meal</option>
+                        <option value="Chill">Chill</option>
+                        <option value="Fun">Fun</option>
+                        <option value="Local Spots">Local Spots</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
                     <label for="sortBy">Sort By:</label>
                     <select id="sortBy" class="filter-select">
                         <option value="rating">Rating</option>
                         <option value="distance">Distance</option>
                         <option value="review_count">Reviews</option>
                     </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>
+                        <input type="checkbox" id="visitedFilter" class="filter-checkbox">
+                        Show Only Visited
+                    </label>
                 </div>
             </div>
 
@@ -93,6 +188,7 @@
         <div class="map-container">
             <div id="map"></div>
         </div>
+        </div>
     </main>
 
     <!-- Leaflet JS -->
@@ -104,6 +200,8 @@
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script src="js/map.js"></script>
+    <script src="js/worldmap.js"></script>
+    <script src="js/account.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
 </body>
