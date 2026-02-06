@@ -51,7 +51,7 @@ const API = {
      */
     async getMockRestaurants(latitude, longitude) {
         // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, CONFIG.MOCK_API_DELAY));
         
         // Return mock data with updated distances based on user location
         return MOCK_RESTAURANTS.map(restaurant => {

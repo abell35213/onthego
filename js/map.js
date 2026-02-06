@@ -46,7 +46,9 @@ const MapModule = {
                     };
                     
                     // Center map on user location
-                    this.map.setView([this.userLocation.lat, this.userLocation.lng], CONFIG.DEFAULT_ZOOM);
+                    if (this.map) {
+                        this.map.setView([this.userLocation.lat, this.userLocation.lng], CONFIG.DEFAULT_ZOOM);
+                    }
                     
                     // Add user location marker
                     this.addUserMarker(this.userLocation.lat, this.userLocation.lng);

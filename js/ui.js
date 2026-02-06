@@ -341,7 +341,7 @@ const UI = {
         if (card) {
             // Remove highlight from all cards
             const allCards = document.querySelectorAll('.restaurant-card');
-            allCards.forEach(c => c.style.borderColor = '');
+            allCards.forEach(card => card.style.borderColor = '');
 
             // Highlight the selected card
             card.style.borderColor = 'var(--primary-color)';
