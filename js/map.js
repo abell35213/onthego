@@ -23,9 +23,9 @@ const MapModule = {
             CONFIG.DEFAULT_ZOOM
         );
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        // Add Esri satellite tiles for Google Earth-style satellite view
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
             maxZoom: 19
         }).addTo(this.map);
 
@@ -225,21 +225,69 @@ const MapModule = {
             : '';
         
         const stars = API.getStarRating(restaurant.rating);
-        
+
+        const location = restaurant.location;
+        const address = location 
+            ? `${location.address1}, ${location.city}, ${location.state} ${location.zip_code}`
+            : '';
+
+        const tagsHtml = restaurant.tags && restaurant.tags.length > 0 
+            ? `<div class="popup-tags">${restaurant.tags.map(tag => {
+                const tagClassMap = {
+                    'Good for Business Meal': 'business',
+                    'Chill': 'chill',
+                    'Fun': 'fun',
+                    'Local Spots': 'local',
+                    'Nightlife': 'fun',
+                    'Craft Beer': 'chill'
+                };
+                const tagClass = tagClassMap[tag] || tag.toLowerCase().replace(/\s+/g, '-');
+                return `<span class="tag-badge ${tagClass}">${tag}</span>`;
+            }).join('')}</div>`
+            : '';
+
+        const deliveryLinks = API.getDeliveryLinks(restaurant.name, address);
+        const reservationLinks = API.getReservationLinks(
+            restaurant.name, 
+            location ? location.city : ''
+        );
+
         return `
-            <div class="popup-content">
-                <div class="popup-name">${restaurant.name}</div>
+            <div class="popup-content popup-content-full">
+                <div class="popup-header">
+                    <div>
+                        <div class="popup-name">${restaurant.name}</div>
+                        <div style="color: #666; font-size: 0.85rem;">${categories}</div>
+                    </div>
+                    ${restaurant.image_url ? `<img src="${restaurant.image_url}" alt="${restaurant.name}" class="popup-image">` : ''}
+                </div>
                 <div class="popup-rating">
                     <span class="stars">${stars}</span>
                     <span class="rating-number">${restaurant.rating}</span>
                     <span class="review-count">(${restaurant.review_count} reviews)</span>
+                    ${restaurant.visited ? '<span class="visited-indicator" style="font-size:0.7rem;padding:0.2rem 0.4rem;margin-left:0.3rem;"><i class="fas fa-check"></i> Visited</span>' : ''}
                 </div>
-                <div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">
-                    ${categories}
+                <div class="popup-info">
+                    <span><i class="fas fa-dollar-sign" style="color:var(--primary-color)"></i> ${restaurant.price || 'N/A'}</span>
+                    <span><i class="fas fa-walking" style="color:var(--primary-color)"></i> ${API.formatDistance(restaurant.distance)}</span>
+                    ${restaurant.display_phone ? `<span><i class="fas fa-phone" style="color:var(--primary-color)"></i> ${restaurant.display_phone}</span>` : ''}
+                </div>
+                ${tagsHtml}
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">
+                    <i class="fas fa-map-marker-alt" style="color:var(--primary-color)"></i> ${address}
                 </div>
                 <div class="popup-actions">
-                    <a href="${restaurant.url}" target="_blank" rel="noopener noreferrer" class="popup-btn">
-                        View on Yelp
+                    <a href="${restaurant.url}" target="_blank" rel="noopener noreferrer" class="popup-btn" style="background-color:#D32323;">
+                        <i class="fab fa-yelp"></i> Yelp
+                    </a>
+                    <a href="${deliveryLinks.ubereats}" target="_blank" rel="noopener noreferrer" class="popup-btn">
+                        <i class="fas fa-hamburger"></i> Uber Eats
+                    </a>
+                    <a href="${deliveryLinks.doordash}" target="_blank" rel="noopener noreferrer" class="popup-btn">
+                        <i class="fas fa-motorcycle"></i> DoorDash
+                    </a>
+                    <a href="${reservationLinks.opentable}" target="_blank" rel="noopener noreferrer" class="popup-btn">
+                        <i class="fas fa-calendar-check"></i> OpenTable
                     </a>
                 </div>
             </div>

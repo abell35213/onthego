@@ -18,9 +18,9 @@ const WorldMap = {
         // Create world map centered on earth view (zoomed out globe)
         this.map = L.map('worldMap').setView([20, 0], CONFIG.WORLD_MAP_ZOOM);
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        // Add Esri satellite tiles for Google Earth-style satellite view
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
             minZoom: CONFIG.WORLD_MAP_MIN_ZOOM,
             maxZoom: CONFIG.WORLD_MAP_MAX_ZOOM
         }).addTo(this.map);
@@ -176,9 +176,34 @@ const WorldMap = {
             [trip.coordinates.latitude, trip.coordinates.longitude],
             { icon: hotelIcon }
         ).addTo(this.map)
-         .bindPopup(`<div class="popup-content">
+         .bindPopup(`<div class="popup-content popup-content-full">
             <div class="popup-name"><i class="fas fa-hotel"></i> ${trip.hotel}</div>
-            <div style="color: #666; font-size: 0.9rem;">${trip.city}, ${trip.state}</div>
+            <div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${trip.city}, ${trip.state}</div>
+            <div class="popup-info">
+                <span><i class="fas fa-star" style="color:#F77F00"></i> 4.5 (Google)</span>
+                <span><i class="fas fa-phone" style="color:var(--primary-color)"></i> (800) 555-0199</span>
+            </div>
+            <div style="font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">
+                <i class="fas fa-clock" style="color:var(--primary-color)"></i> Check-in: 3:00 PM | Check-out: 11:00 AM
+            </div>
+            <div style="font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">
+                <i class="fas fa-wifi" style="color:var(--primary-color)"></i> Free WiFi &nbsp;
+                <i class="fas fa-parking" style="color:var(--primary-color)"></i> Valet Parking &nbsp;
+                <i class="fas fa-swimmer" style="color:var(--primary-color)"></i> Pool
+            </div>
+            <div style="font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">
+                <i class="fas fa-concierge-bell" style="color:var(--primary-color)"></i> Concierge &nbsp;
+                <i class="fas fa-dumbbell" style="color:var(--primary-color)"></i> Fitness Center &nbsp;
+                <i class="fas fa-spa" style="color:var(--primary-color)"></i> Spa
+            </div>
+            <div class="popup-actions">
+                <a href="https://www.google.com/maps/search/${encodeURIComponent(trip.hotel + ' ' + trip.city)}" target="_blank" rel="noopener noreferrer" class="popup-btn">
+                    <i class="fas fa-map"></i> Google Maps
+                </a>
+                <a href="https://www.google.com/search?q=${encodeURIComponent(trip.hotel + ' ' + trip.city)}" target="_blank" rel="noopener noreferrer" class="popup-btn">
+                    <i class="fas fa-search"></i> Google
+                </a>
+            </div>
          </div>`)
          .openPopup();
 
@@ -187,14 +212,32 @@ const WorldMap = {
         // Generate nearby restaurant pins around the hotel
         const nearbyRestaurants = this.generateNearbyRestaurants(trip);
         nearbyRestaurants.forEach(restaurant => {
+            // Use different marker colors based on type
+            const markerColors = {
+                'restaurant': 'red',
+                'bar': 'orange',
+                'brewery': 'gold',
+                'club': 'violet'
+            };
+            const markerColor = markerColors[restaurant.type] || 'red';
+            
             const restaurantIcon = L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${markerColor}.png`,
                 shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
                 iconSize: [25, 41],
                 iconAnchor: [12, 41],
                 popupAnchor: [1, -34],
                 shadowSize: [41, 41]
             });
+
+            const typeIcons = {
+                'restaurant': 'fa-utensils',
+                'bar': 'fa-cocktail',
+                'brewery': 'fa-beer',
+                'club': 'fa-music'
+            };
+            const typeIcon = typeIcons[restaurant.type] || 'fa-utensils';
+            const typeLabel = restaurant.type ? restaurant.type.charAt(0).toUpperCase() + restaurant.type.slice(1) : 'Restaurant';
 
             const stars = API.getStarRating(restaurant.rating);
             const popupContent = `
@@ -205,7 +248,7 @@ const WorldMap = {
                         <span class="rating-number">${restaurant.rating}</span>
                     </div>
                     <div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">
-                        ${restaurant.cuisine}
+                        <i class="fas ${typeIcon}"></i> ${typeLabel} &middot; ${restaurant.cuisine}
                     </div>
                     <div style="color: #666; font-size: 0.85rem;">
                         <i class="fas fa-dollar-sign"></i> ${restaurant.price}
@@ -242,72 +285,99 @@ const WorldMap = {
         const baseLat = trip.coordinates.latitude;
         const baseLng = trip.coordinates.longitude;
 
-        // Restaurant templates per city for variety
+        // Restaurant, bar, brewery, and club templates per city for variety
         const cityRestaurants = {
             'San Francisco': [
-                { name: 'Golden Gate Grill', cuisine: 'American', rating: 4.3, price: '$$' },
-                { name: 'Fisherman\'s Catch', cuisine: 'Seafood', rating: 4.5, price: '$$$' },
-                { name: 'Chinatown Express', cuisine: 'Chinese', rating: 4.1, price: '$' },
-                { name: 'Bay Brew Coffee', cuisine: 'Cafe', rating: 4.6, price: '$' },
-                { name: 'Nob Hill Steakhouse', cuisine: 'Steakhouse', rating: 4.7, price: '$$$$' },
+                { name: 'Golden Gate Grill', cuisine: 'American', rating: 4.3, price: '$$', type: 'restaurant' },
+                { name: 'Fisherman\'s Catch', cuisine: 'Seafood', rating: 4.5, price: '$$$', type: 'restaurant' },
+                { name: 'Chinatown Express', cuisine: 'Chinese', rating: 4.1, price: '$', type: 'restaurant' },
+                { name: 'Bay Brew Coffee', cuisine: 'Cafe', rating: 4.6, price: '$', type: 'restaurant' },
+                { name: 'Nob Hill Steakhouse', cuisine: 'Steakhouse', rating: 4.7, price: '$$$$', type: 'restaurant' },
+                { name: 'Anchor Brewing Taproom', cuisine: 'Brewery', rating: 4.4, price: '$$', type: 'brewery' },
+                { name: 'The Bourbon Bar', cuisine: 'Bar', rating: 4.2, price: '$$$', type: 'bar' },
+                { name: 'Temple Nightclub', cuisine: 'Club', rating: 4.0, price: '$$$', type: 'club' },
             ],
             'New York': [
-                { name: 'Manhattan Bistro', cuisine: 'French', rating: 4.4, price: '$$$' },
-                { name: 'Brooklyn Pizza Co.', cuisine: 'Pizza', rating: 4.2, price: '$' },
-                { name: 'Empire Sushi', cuisine: 'Japanese', rating: 4.6, price: '$$$' },
-                { name: 'Harlem Soul Food', cuisine: 'Southern', rating: 4.5, price: '$$' },
-                { name: 'The Deli on 5th', cuisine: 'Deli', rating: 4.0, price: '$' },
+                { name: 'Manhattan Bistro', cuisine: 'French', rating: 4.4, price: '$$$', type: 'restaurant' },
+                { name: 'Brooklyn Pizza Co.', cuisine: 'Pizza', rating: 4.2, price: '$', type: 'restaurant' },
+                { name: 'Empire Sushi', cuisine: 'Japanese', rating: 4.6, price: '$$$', type: 'restaurant' },
+                { name: 'Harlem Soul Food', cuisine: 'Southern', rating: 4.5, price: '$$', type: 'restaurant' },
+                { name: 'The Deli on 5th', cuisine: 'Deli', rating: 4.0, price: '$', type: 'restaurant' },
+                { name: 'Brooklyn Brewery', cuisine: 'Brewery', rating: 4.5, price: '$$', type: 'brewery' },
+                { name: 'Speakeasy Bar NYC', cuisine: 'Bar', rating: 4.3, price: '$$$', type: 'bar' },
+                { name: 'Marquee NYC', cuisine: 'Club', rating: 4.1, price: '$$$$', type: 'club' },
             ],
             'Chicago': [
-                { name: 'Deep Dish House', cuisine: 'Pizza', rating: 4.5, price: '$$' },
-                { name: 'Windy City Steaks', cuisine: 'Steakhouse', rating: 4.7, price: '$$$$' },
-                { name: 'Lake Shore Sushi', cuisine: 'Japanese', rating: 4.3, price: '$$$' },
-                { name: 'Magnificent Mile Cafe', cuisine: 'Cafe', rating: 4.1, price: '$' },
-                { name: 'South Side BBQ', cuisine: 'BBQ', rating: 4.4, price: '$$' },
+                { name: 'Deep Dish House', cuisine: 'Pizza', rating: 4.5, price: '$$', type: 'restaurant' },
+                { name: 'Windy City Steaks', cuisine: 'Steakhouse', rating: 4.7, price: '$$$$', type: 'restaurant' },
+                { name: 'Lake Shore Sushi', cuisine: 'Japanese', rating: 4.3, price: '$$$', type: 'restaurant' },
+                { name: 'Magnificent Mile Cafe', cuisine: 'Cafe', rating: 4.1, price: '$', type: 'restaurant' },
+                { name: 'South Side BBQ', cuisine: 'BBQ', rating: 4.4, price: '$$', type: 'restaurant' },
+                { name: 'Revolution Brewing', cuisine: 'Brewery', rating: 4.5, price: '$$', type: 'brewery' },
+                { name: 'The Violet Hour', cuisine: 'Bar', rating: 4.6, price: '$$$', type: 'bar' },
+                { name: 'Sound-Bar Chicago', cuisine: 'Club', rating: 4.0, price: '$$$', type: 'club' },
             ],
             'Los Angeles': [
-                { name: 'Sunset Tacos', cuisine: 'Mexican', rating: 4.3, price: '$' },
-                { name: 'Hollywood Grill', cuisine: 'American', rating: 4.1, price: '$$' },
-                { name: 'Venice Beach Bowls', cuisine: 'Health Food', rating: 4.5, price: '$$' },
-                { name: 'Beverly Hills Bistro', cuisine: 'French', rating: 4.8, price: '$$$$' },
-                { name: 'K-Town BBQ', cuisine: 'Korean', rating: 4.4, price: '$$' },
+                { name: 'Sunset Tacos', cuisine: 'Mexican', rating: 4.3, price: '$', type: 'restaurant' },
+                { name: 'Hollywood Grill', cuisine: 'American', rating: 4.1, price: '$$', type: 'restaurant' },
+                { name: 'Venice Beach Bowls', cuisine: 'Health Food', rating: 4.5, price: '$$', type: 'restaurant' },
+                { name: 'Beverly Hills Bistro', cuisine: 'French', rating: 4.8, price: '$$$$', type: 'restaurant' },
+                { name: 'K-Town BBQ', cuisine: 'Korean', rating: 4.4, price: '$$', type: 'restaurant' },
+                { name: 'Angel City Brewery', cuisine: 'Brewery', rating: 4.3, price: '$$', type: 'brewery' },
+                { name: 'The Varnish', cuisine: 'Bar', rating: 4.5, price: '$$$', type: 'bar' },
+                { name: 'Avalon Hollywood', cuisine: 'Club', rating: 4.2, price: '$$$', type: 'club' },
             ],
             'Miami': [
-                { name: 'Ocean Drive Seafood', cuisine: 'Seafood', rating: 4.5, price: '$$$' },
-                { name: 'Little Havana Cafe', cuisine: 'Cuban', rating: 4.6, price: '$$' },
-                { name: 'South Beach Sushi', cuisine: 'Japanese', rating: 4.2, price: '$$$' },
-                { name: 'Brickell Steakhouse', cuisine: 'Steakhouse', rating: 4.7, price: '$$$$' },
-                { name: 'Wynwood Tacos', cuisine: 'Mexican', rating: 4.3, price: '$' },
+                { name: 'Ocean Drive Seafood', cuisine: 'Seafood', rating: 4.5, price: '$$$', type: 'restaurant' },
+                { name: 'Little Havana Cafe', cuisine: 'Cuban', rating: 4.6, price: '$$', type: 'restaurant' },
+                { name: 'South Beach Sushi', cuisine: 'Japanese', rating: 4.2, price: '$$$', type: 'restaurant' },
+                { name: 'Brickell Steakhouse', cuisine: 'Steakhouse', rating: 4.7, price: '$$$$', type: 'restaurant' },
+                { name: 'Wynwood Tacos', cuisine: 'Mexican', rating: 4.3, price: '$', type: 'restaurant' },
+                { name: 'Wynwood Brewing Co.', cuisine: 'Brewery', rating: 4.4, price: '$$', type: 'brewery' },
+                { name: 'Broken Shaker', cuisine: 'Bar', rating: 4.5, price: '$$$', type: 'bar' },
+                { name: 'LIV Miami', cuisine: 'Club', rating: 4.3, price: '$$$$', type: 'club' },
             ],
             'Seattle': [
-                { name: 'Pike Place Chowder', cuisine: 'Seafood', rating: 4.6, price: '$$' },
-                { name: 'Capitol Hill Coffee', cuisine: 'Cafe', rating: 4.4, price: '$' },
-                { name: 'Emerald City Sushi', cuisine: 'Japanese', rating: 4.3, price: '$$$' },
-                { name: 'Ballard Brewery & Grill', cuisine: 'American', rating: 4.2, price: '$$' },
-                { name: 'Pioneer Square Pasta', cuisine: 'Italian', rating: 4.5, price: '$$' },
+                { name: 'Pike Place Chowder', cuisine: 'Seafood', rating: 4.6, price: '$$', type: 'restaurant' },
+                { name: 'Capitol Hill Coffee', cuisine: 'Cafe', rating: 4.4, price: '$', type: 'restaurant' },
+                { name: 'Emerald City Sushi', cuisine: 'Japanese', rating: 4.3, price: '$$$', type: 'restaurant' },
+                { name: 'Ballard Brewery & Grill', cuisine: 'American', rating: 4.2, price: '$$', type: 'restaurant' },
+                { name: 'Pioneer Square Pasta', cuisine: 'Italian', rating: 4.5, price: '$$', type: 'restaurant' },
+                { name: 'Fremont Brewing', cuisine: 'Brewery', rating: 4.6, price: '$$', type: 'brewery' },
+                { name: 'Canon Whiskey Bar', cuisine: 'Bar', rating: 4.7, price: '$$$', type: 'bar' },
+                { name: 'Q Nightclub', cuisine: 'Club', rating: 4.1, price: '$$$', type: 'club' },
             ],
             'Austin': [
-                { name: 'Congress Ave BBQ', cuisine: 'BBQ', rating: 4.7, price: '$$' },
-                { name: 'South Lamar Tacos', cuisine: 'Tex-Mex', rating: 4.4, price: '$' },
-                { name: '6th Street Grill', cuisine: 'American', rating: 4.1, price: '$$' },
-                { name: 'East Side Thai', cuisine: 'Thai', rating: 4.3, price: '$$' },
-                { name: 'Rainey Street Cafe', cuisine: 'Cafe', rating: 4.5, price: '$' },
+                { name: 'Congress Ave BBQ', cuisine: 'BBQ', rating: 4.7, price: '$$', type: 'restaurant' },
+                { name: 'South Lamar Tacos', cuisine: 'Tex-Mex', rating: 4.4, price: '$', type: 'restaurant' },
+                { name: '6th Street Grill', cuisine: 'American', rating: 4.1, price: '$$', type: 'restaurant' },
+                { name: 'East Side Thai', cuisine: 'Thai', rating: 4.3, price: '$$', type: 'restaurant' },
+                { name: 'Rainey Street Cafe', cuisine: 'Cafe', rating: 4.5, price: '$', type: 'restaurant' },
+                { name: 'Jester King Brewery', cuisine: 'Brewery', rating: 4.7, price: '$$', type: 'brewery' },
+                { name: 'Midnight Cowboy', cuisine: 'Bar', rating: 4.5, price: '$$$', type: 'bar' },
+                { name: 'Summit Rooftop', cuisine: 'Club', rating: 4.2, price: '$$$', type: 'club' },
             ],
             'Boston': [
-                { name: 'Beacon Hill Bistro', cuisine: 'French', rating: 4.5, price: '$$$' },
-                { name: 'North End Pasta', cuisine: 'Italian', rating: 4.6, price: '$$' },
-                { name: 'Back Bay Oyster Bar', cuisine: 'Seafood', rating: 4.4, price: '$$$' },
-                { name: 'Fenway Franks', cuisine: 'American', rating: 4.0, price: '$' },
-                { name: 'Seaport Sushi', cuisine: 'Japanese', rating: 4.3, price: '$$$' },
+                { name: 'Beacon Hill Bistro', cuisine: 'French', rating: 4.5, price: '$$$', type: 'restaurant' },
+                { name: 'North End Pasta', cuisine: 'Italian', rating: 4.6, price: '$$', type: 'restaurant' },
+                { name: 'Back Bay Oyster Bar', cuisine: 'Seafood', rating: 4.4, price: '$$$', type: 'restaurant' },
+                { name: 'Fenway Franks', cuisine: 'American', rating: 4.0, price: '$', type: 'restaurant' },
+                { name: 'Seaport Sushi', cuisine: 'Japanese', rating: 4.3, price: '$$$', type: 'restaurant' },
+                { name: 'Trillium Brewing', cuisine: 'Brewery', rating: 4.7, price: '$$', type: 'brewery' },
+                { name: 'Drink Bar Boston', cuisine: 'Bar', rating: 4.5, price: '$$$', type: 'bar' },
+                { name: 'Royale Boston', cuisine: 'Club', rating: 4.1, price: '$$$', type: 'club' },
             ]
         };
 
         const restaurants = cityRestaurants[trip.city] || [
-            { name: 'Local Grill', cuisine: 'American', rating: 4.2, price: '$$' },
-            { name: 'City Bistro', cuisine: 'French', rating: 4.4, price: '$$$' },
-            { name: 'Corner Cafe', cuisine: 'Cafe', rating: 4.0, price: '$' },
-            { name: 'Main Street Sushi', cuisine: 'Japanese', rating: 4.3, price: '$$' },
-            { name: 'Downtown Steakhouse', cuisine: 'Steakhouse', rating: 4.6, price: '$$$$' },
+            { name: 'Local Grill', cuisine: 'American', rating: 4.2, price: '$$', type: 'restaurant' },
+            { name: 'City Bistro', cuisine: 'French', rating: 4.4, price: '$$$', type: 'restaurant' },
+            { name: 'Corner Cafe', cuisine: 'Cafe', rating: 4.0, price: '$', type: 'restaurant' },
+            { name: 'Main Street Sushi', cuisine: 'Japanese', rating: 4.3, price: '$$', type: 'restaurant' },
+            { name: 'Downtown Steakhouse', cuisine: 'Steakhouse', rating: 4.6, price: '$$$$', type: 'restaurant' },
+            { name: 'Local Craft Brewery', cuisine: 'Brewery', rating: 4.3, price: '$$', type: 'brewery' },
+            { name: 'The Neighborhood Bar', cuisine: 'Bar', rating: 4.1, price: '$$', type: 'bar' },
+            { name: 'Downtown Club', cuisine: 'Club', rating: 3.9, price: '$$$', type: 'club' },
         ];
 
         // Spread restaurants around the hotel coordinates
@@ -317,12 +387,15 @@ const WorldMap = {
             { lat: 0.004, lng: -0.005 },
             { lat: -0.006, lng: -0.002 },
             { lat: 0.002, lng: -0.007 },
+            { lat: 0.006, lng: 0.005 },
+            { lat: -0.004, lng: -0.006 },
+            { lat: -0.002, lng: 0.008 },
         ];
 
         return restaurants.map((r, i) => ({
             ...r,
-            lat: baseLat + offsets[i].lat,
-            lng: baseLng + offsets[i].lng
+            lat: baseLat + offsets[i % offsets.length].lat,
+            lng: baseLng + offsets[i % offsets.length].lng
         }));
     },
 
