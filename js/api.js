@@ -145,15 +145,17 @@ const API = {
     },
 
     /**
-     * Format distance for display
+     * Format distance for display (in miles)
      * @param {number} meters - Distance in meters
      * @returns {string} - Formatted distance string
      */
     formatDistance(meters) {
-        if (meters < 1000) {
-            return `${Math.round(meters)}m`;
+        const miles = meters / 1609.344;
+        if (miles < 0.1) {
+            const feet = Math.round(meters * 3.28084);
+            return `${feet} ft`;
         } else {
-            return `${(meters / 1000).toFixed(1)}km`;
+            return `${miles.toFixed(1)} mi`;
         }
     },
 

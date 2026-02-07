@@ -4,6 +4,7 @@ const MapModule = {
     markers: [],
     userMarker: null,
     userLocation: null,
+    searchAreaBtn: null,
 
     /**
      * Initialize the map
@@ -29,8 +30,63 @@ const MapModule = {
             maxZoom: 19
         }).addTo(this.map);
 
+        // Add "Search This Area" button
+        this.addSearchAreaButton();
+
+        // Listen for map move to show search area button
+        this.map.on('moveend', () => {
+            if (this.searchAreaBtn) {
+                this.searchAreaBtn.style.display = 'block';
+            }
+        });
+
         // Try to get user's location
         this.getUserLocation();
+    },
+
+    /**
+     * Add a "Search This Area" button overlay on the map
+     */
+    addSearchAreaButton() {
+        if (!this.map) return;
+
+        const SearchAreaControl = L.Control.extend({
+            options: { position: 'topright' },
+            onAdd: () => {
+                const btn = L.DomUtil.create('button', 'search-area-btn');
+                btn.innerHTML = '<i class="fas fa-search-location"></i> Search This Area';
+                btn.style.display = 'none';
+                btn.onclick = (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    this.searchCurrentArea();
+                    btn.style.display = 'none';
+                };
+                L.DomEvent.disableClickPropagation(btn);
+                this.searchAreaBtn = btn;
+                return btn;
+            }
+        });
+
+        this.map.addControl(new SearchAreaControl());
+    },
+
+    /**
+     * Search for restaurants in the current map view area
+     */
+    async searchCurrentArea() {
+        const center = this.map.getCenter();
+        const lat = center.lat;
+        const lng = center.lng;
+
+        console.log(`Searching area at: ${lat}, ${lng}`);
+
+        try {
+            const restaurants = await API.fetchRestaurants(lat, lng);
+            console.log(`Found ${restaurants.length} restaurants in area`);
+            UI.setRestaurants(restaurants);
+        } catch (error) {
+            console.error('Error searching area:', error);
+        }
     },
 
     /**
@@ -115,9 +171,6 @@ const MapModule = {
         }
         
         console.log(message);
-        
-        // Could show a user-friendly notification here
-        // For now, just log to console
     },
 
     /**
@@ -196,13 +249,13 @@ const MapModule = {
             shadowSize: [41, 41]
         });
 
-        // Create popup content
+        // Create popup content matching the restaurant list card format
         const popupContent = this.createPopupContent(restaurant);
 
         // Create and return marker
         const marker = L.marker([lat, lng], { icon: restaurantIcon })
             .addTo(this.map)
-            .bindPopup(popupContent);
+            .bindPopup(popupContent, { maxWidth: 350, minWidth: 280 });
 
         // Add click event to highlight corresponding card
         marker.on('click', () => {
@@ -215,7 +268,7 @@ const MapModule = {
     },
 
     /**
-     * Create popup content for a restaurant marker
+     * Create popup content for a restaurant marker that mimics the restaurant list cards
      * @param {Object} restaurant - Restaurant object
      * @returns {string} - HTML string for popup
      */
@@ -251,6 +304,7 @@ const MapModule = {
             restaurant.name, 
             location ? location.city : ''
         );
+        const socialLinks = API.getSocialMediaLinks(restaurant.name);
 
         return `
             <div class="popup-content popup-content-full">
@@ -288,6 +342,17 @@ const MapModule = {
                     </a>
                     <a href="${reservationLinks.opentable}" target="_blank" rel="noopener noreferrer" class="popup-btn">
                         <i class="fas fa-calendar-check"></i> OpenTable
+                    </a>
+                </div>
+                <div class="popup-social-links">
+                    <a href="${socialLinks.instagram}" target="_blank" rel="noopener noreferrer" class="social-link instagram" title="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="${socialLinks.facebook}" target="_blank" rel="noopener noreferrer" class="social-link facebook" title="Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="${socialLinks.twitter}" target="_blank" rel="noopener noreferrer" class="social-link twitter" title="Twitter">
+                        <i class="fab fa-twitter"></i>
                     </a>
                 </div>
             </div>

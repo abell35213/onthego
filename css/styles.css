@@ -422,6 +422,91 @@ body {
     background-color: var(--accent-color);
 }
 
+/* ===== Search Area Button on Map ===== */
+.search-area-btn {
+    background-color: var(--bg-white);
+    color: var(--text-dark);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 1000;
+}
+
+.search-area-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.search-area-btn i {
+    font-size: 1rem;
+}
+
+/* ===== Popup Social Links in Map Popups ===== */
+.popup-social-links {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+}
+
+.popup-social-links .social-link {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+}
+
+/* ===== Cesium 3D Globe Popup Styles ===== */
+.cesium-popup-container {
+    position: absolute;
+    z-index: 1000;
+    pointer-events: auto;
+}
+
+.cesium-popup-content {
+    background-color: var(--bg-white);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 350px;
+    min-width: 260px;
+    position: relative;
+}
+
+.cesium-popup-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: var(--text-light);
+    line-height: 1;
+    padding: 0;
+}
+
+.cesium-popup-close:hover {
+    color: var(--text-dark);
+}
+
+/* Cesium globe container */
+#worldMap .cesium-viewer,
+#worldMap .cesium-viewer-cesiumWidgetContainer,
+#worldMap .cesium-widget,
+#worldMap .cesium-widget canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 /* ===== Responsive Design ===== */
 @media (max-width: 1024px) {
     .filters {

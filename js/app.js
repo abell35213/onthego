@@ -79,9 +79,10 @@ const App = {
             viewToggleBtn.innerHTML = '<i class="fas fa-list"></i><span>Restaurant List</span>';
             
             // Refresh world map if not already done
-            if (WorldMap.map) {
+            if (WorldMap.viewer) {
                 setTimeout(() => {
-                    WorldMap.map.invalidateSize();
+                    WorldMap.viewer.resize();
+                    WorldMap.viewer.scene.requestRender();
                 }, 100);
             }
         } else if (this.currentView === CONFIG.VIEW_MODE_TRAVEL_LOG) {
@@ -90,9 +91,10 @@ const App = {
             this.currentView = CONFIG.VIEW_MODE_WORLD;
             viewToggleBtn.innerHTML = '<i class="fas fa-list"></i><span>Restaurant List</span>';
             
-            if (WorldMap.map) {
+            if (WorldMap.viewer) {
                 setTimeout(() => {
-                    WorldMap.map.invalidateSize();
+                    WorldMap.viewer.resize();
+                    WorldMap.viewer.scene.requestRender();
                 }, 100);
             }
         } else {

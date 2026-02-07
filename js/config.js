@@ -10,7 +10,7 @@ const CONFIG = {
     YELP_API_URL: 'https://api.yelp.com/v3/businesses/search',
     
     // Search parameters
-    SEARCH_RADIUS: 5000, // 5km in meters
+    SEARCH_RADIUS: 8047, // 5 miles in meters
     SEARCH_LIMIT: 20,
     
     // Mock API settings
