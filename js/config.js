@@ -19,6 +19,9 @@ const CONFIG = {
     // Map marker icon
     MARKER_ICON_URL: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
     
+    // Cesium Ion access token for 3D globe (default public token for basic usage)
+    CESIUM_ION_TOKEN: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YjAwZTJlMC0xMzBiLTQ0NTUtOTAzYy1mZDFkZTcyMTFmMGMiLCJpZCI6MjU5LCJpYXQiOjE3MjczNzc5ODd9.sld5jLe3TOJdpxpVfxM_FJR31lCGjVDMwnFVHo24Wpw',
+    
     // World map settings
     WORLD_MAP_ZOOM: 2,
     WORLD_MAP_MIN_ZOOM: 1,

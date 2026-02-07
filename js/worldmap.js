@@ -18,7 +18,7 @@ const WorldMap = {
         }
 
         // Use default Cesium Ion token for basic imagery
-        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YjAwZTJlMC0xMzBiLTQ0NTUtOTAzYy1mZDFkZTcyMTFmMGMiLCJpZCI6MjU5LCJpYXQiOjE3MjczNzc5ODd9.sld5jLe3TOJdpxpVfxM_FJR31lCGjVDMwnFVHo24Wpw';
+        Cesium.Ion.defaultAccessToken = CONFIG.CESIUM_ION_TOKEN;
 
         try {
             this.viewer = new Cesium.Viewer('worldMap', {
@@ -235,8 +235,8 @@ const WorldMap = {
         }
 
         // Highlight corresponding card in sidebar
-        const listId = isPast ? 'tripHistory' : 'upcomingTrips';
-        const cards = document.querySelectorAll('#' + listId + ' .trip-card');
+        var listId = isPast ? 'tripHistory' : 'upcomingTrips';
+        var cards = document.querySelectorAll('#' + listId + ' .trip-card');
         cards.forEach(card => {
             if (card.dataset.tripId === tripId) {
                 card.classList.add('active');
