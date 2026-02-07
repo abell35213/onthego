@@ -156,7 +156,7 @@ const UI = {
             filtered = filtered.filter(restaurant => restaurant.visited === true);
         }
 
-        // Apply search query
+        // Apply search query (name, cuisine, city, state, or zip)
         if (query && query.trim() !== '') {
             const lowerQuery = query.toLowerCase();
             filtered = filtered.filter(restaurant => {
@@ -164,7 +164,11 @@ const UI = {
                 const categoryMatch = restaurant.categories.some(cat => 
                     cat.title.toLowerCase().includes(lowerQuery)
                 );
-                return nameMatch || categoryMatch;
+                const location = restaurant.location;
+                const cityMatch = location && location.city && location.city.toLowerCase().includes(lowerQuery);
+                const stateMatch = location && location.state && location.state.toLowerCase().includes(lowerQuery);
+                const zipMatch = location && location.zip_code && location.zip_code.includes(query.trim());
+                return nameMatch || categoryMatch || cityMatch || stateMatch || zipMatch;
             });
         }
 
