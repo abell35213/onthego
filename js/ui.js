@@ -49,8 +49,10 @@ const UI = {
         
         // Clear restaurant list
         const restaurantList = document.getElementById('restaurantList');
-        const cards = restaurantList.querySelectorAll('.restaurant-card');
-        cards.forEach(card => card.remove());
+        if (restaurantList) {
+            const cards = restaurantList.querySelectorAll('.restaurant-card');
+            cards.forEach(card => card.remove());
+        }
     },
 
     /**
@@ -93,6 +95,7 @@ const UI = {
      */
     populateCuisineFilter() {
         const cuisineFilter = document.getElementById('cuisineFilter');
+        if (!cuisineFilter) return;
         const cuisines = getUniqueCuisines(this.restaurants);
 
         // Clear existing options except "All Cuisines"

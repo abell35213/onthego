@@ -1,195 +1,77 @@
-// World Map Module - Handles the 3D globe view with travel history using CesiumJS
+// World Map Module - Handles the 2D world map view with travel history using Leaflet
 const WorldMap = {
-    viewer: null,
-    entities: [],
-    restaurantEntities: [],
+    _leafletMap: null,
+    _tripMarkers: [],
+    _restaurantMarkers: [],
     currentView: CONFIG.VIEW_MODE_WORLD,
-    infoBoxContainer: null,
 
     /**
-     * Initialize the 3D globe world map using CesiumJS
+     * Initialize the world map using Leaflet 2D map
      */
     init() {
-        // Check if Cesium is available
-        if (typeof Cesium === 'undefined') {
-            console.warn('CesiumJS library not loaded. Falling back to 2D map.');
-            this.initFallback2D();
-            return;
-        }
-
-        // Use default Cesium Ion token for basic imagery
-        Cesium.Ion.defaultAccessToken = CONFIG.CESIUM_ION_TOKEN;
-
-        try {
-            this.viewer = new Cesium.Viewer('worldMap', {
-                terrainProvider: Cesium.createWorldTerrain(),
-                animation: false,
-                baseLayerPicker: false,
-                fullscreenButton: false,
-                geocoder: false,
-                homeButton: false,
-                infoBox: false,
-                sceneModePicker: false,
-                selectionIndicator: false,
-                timeline: false,
-                navigationHelpButton: false,
-                scene3DOnly: true,
-                requestRenderMode: true,
-                maximumRenderTimeChange: Infinity
-            });
-
-            // Remove Cesium credits display clutter
-            this.viewer.cesiumWidget.creditContainer.style.display = 'none';
-
-            // Set initial camera to show globe
-            this.viewer.camera.setView({
-                destination: Cesium.Cartesian3.fromDegrees(0, 20, 20000000),
-                orientation: {
-                    heading: 0,
-                    pitch: Cesium.Math.toRadians(-90),
-                    roll: 0
-                }
-            });
-
-            // Create info box container for popups
-            this.createInfoBoxContainer();
-
-            // Add travel history markers
-            this.addTravelHistoryMarkers();
-
-            // Add upcoming trip markers
-            this.addUpcomingTripMarkers();
-
-            // Handle entity clicks
-            const handler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas);
-            handler.setInputAction((click) => {
-                const pickedObject = this.viewer.scene.pick(click.position);
-                if (Cesium.defined(pickedObject) && pickedObject.id) {
-                    const entity = pickedObject.id;
-                    if (entity.tripData) {
-                        this.highlightTrip(entity.tripData.id, entity.tripData.isPast);
-                    } else if (entity.restaurantPopupContent) {
-                        this.showInfoBox(entity.restaurantPopupContent, click.position);
-                    }
-                } else {
-                    this.hideInfoBox();
-                }
-            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-        } catch (e) {
-            console.error('Error initializing CesiumJS:', e);
-            this.initFallback2D();
-        }
-    },
-
-    /**
-     * Create a floating info box container for popups on the 3D globe
-     */
-    createInfoBoxContainer() {
-        const worldMapEl = document.getElementById('worldMap');
-        if (!worldMapEl) return;
-
-        this.infoBoxContainer = document.createElement('div');
-        this.infoBoxContainer.className = 'cesium-popup-container';
-        this.infoBoxContainer.style.display = 'none';
-        worldMapEl.appendChild(this.infoBoxContainer);
-    },
-
-    /**
-     * Show info box popup near clicked entity
-     */
-    showInfoBox(content, position) {
-        if (!this.infoBoxContainer) return;
-        this.infoBoxContainer.innerHTML = '<div class="cesium-popup-content">' +
-            '<button class="cesium-popup-close" onclick="WorldMap.hideInfoBox()">&times;</button>' +
-            content +
-            '</div>';
-        this.infoBoxContainer.style.display = 'block';
-        this.infoBoxContainer.style.left = Math.min(position.x, window.innerWidth - 360) + 'px';
-        this.infoBoxContainer.style.top = Math.min(position.y, window.innerHeight - 300) + 'px';
-    },
-
-    /**
-     * Hide info box popup
-     */
-    hideInfoBox() {
-        if (this.infoBoxContainer) {
-            this.infoBoxContainer.style.display = 'none';
-        }
-    },
-
-    /**
-     * Fallback to 2D Leaflet map if CesiumJS fails to load
-     */
-    initFallback2D() {
         if (typeof L === 'undefined') {
-            console.warn('Leaflet library also not loaded. World map disabled.');
+            console.warn('Leaflet library not loaded. World map disabled.');
             return;
         }
 
-        this._leafletMap = L.map('worldMap').setView([20, 0], CONFIG.WORLD_MAP_ZOOM);
+        this._leafletMap = L.map('worldMap').setView([30, -40], CONFIG.WORLD_MAP_ZOOM);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri',
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
             minZoom: CONFIG.WORLD_MAP_MIN_ZOOM,
             maxZoom: CONFIG.WORLD_MAP_MAX_ZOOM
         }).addTo(this._leafletMap);
+
+        // Add travel history markers
+        this.addTravelHistoryMarkers();
+
+        // Add upcoming trip markers
+        this.addUpcomingTripMarkers();
     },
 
     /**
-     * Add markers for travel history on the 3D globe
+     * Add markers for travel history on the map
      */
     addTravelHistoryMarkers() {
         MOCK_TRAVEL_HISTORY.forEach(trip => {
-            this.createTripEntity(trip, true);
+            this.createTripMarker(trip, true);
         });
     },
 
     /**
-     * Add markers for upcoming trips on the 3D globe
+     * Add markers for upcoming trips on the map
      */
     addUpcomingTripMarkers() {
         MOCK_UPCOMING_TRIPS.forEach(trip => {
-            this.createTripEntity(trip, false);
+            this.createTripMarker(trip, false);
         });
     },
 
     /**
-     * Create a 3D globe entity for a trip
+     * Create a Leaflet marker for a trip
      */
-    createTripEntity(trip, isPast) {
-        if (!this.viewer) return;
+    createTripMarker(trip, isPast) {
+        if (!this._leafletMap) return;
 
-        const entity = this.viewer.entities.add({
-            position: Cesium.Cartesian3.fromDegrees(
-                trip.coordinates.longitude,
-                trip.coordinates.latitude
-            ),
-            point: {
-                pixelSize: 16,
-                color: isPast
-                    ? Cesium.Color.fromCssColorString('#FF6B35')
-                    : Cesium.Color.fromCssColorString('#004E89'),
-                outlineColor: Cesium.Color.WHITE,
-                outlineWidth: 3,
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-            },
-            label: {
-                text: trip.city,
-                font: '14px sans-serif',
-                fillColor: Cesium.Color.WHITE,
-                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                outlineWidth: 2,
-                outlineColor: Cesium.Color.BLACK,
-                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                pixelOffset: new Cesium.Cartesian2(0, -20),
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 8000000)
-            },
-            tripData: { ...trip, isPast }
+        var color = isPast ? '#FF6B35' : '#004E89';
+        var icon = L.divIcon({
+            className: 'trip-marker-icon',
+            html: '<div style="background-color:' + color + ';width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>' +
+                  '<div style="color:white;font-size:12px;font-weight:bold;text-shadow:1px 1px 2px black,-1px -1px 2px black,1px -1px 2px black,-1px 1px 2px black;white-space:nowrap;margin-top:2px;text-align:center;transform:translateX(-30%);">' + trip.city + '</div>',
+            iconSize: [22, 40],
+            iconAnchor: [11, 8]
         });
 
-        this.entities.push(entity);
-        this.viewer.scene.requestRender();
+        var marker = L.marker(
+            [trip.coordinates.latitude, trip.coordinates.longitude],
+            { icon: icon }
+        ).addTo(this._leafletMap);
+
+        var self = this;
+        marker.on('click', function() {
+            self.highlightTrip(trip.id, isPast);
+        });
+
+        this._tripMarkers.push(marker);
     },
 
     /**
@@ -202,42 +84,33 @@ const WorldMap = {
     },
 
     /**
-     * Highlight a trip on the globe and show restaurant pins near the hotel
+     * Highlight a trip on the map and show restaurant pins near the hotel
      * @param {string} tripId - Trip ID
      * @param {boolean} isPast - Whether this is a past trip
      */
     highlightTrip(tripId, isPast) {
         const trips = isPast ? MOCK_TRAVEL_HISTORY : MOCK_UPCOMING_TRIPS;
         const trip = trips.find(t => t.id === tripId);
-        
-        if (trip && this.viewer) {
-            this.hideInfoBox();
 
+        if (trip && this._leafletMap) {
             // Fly to the trip location
-            this.viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(
-                    trip.coordinates.longitude,
-                    trip.coordinates.latitude,
-                    50000
-                ),
-                orientation: {
-                    heading: 0,
-                    pitch: Cesium.Math.toRadians(-45),
-                    roll: 0
-                },
-                duration: 2
-            });
+            this._leafletMap.flyTo(
+                [trip.coordinates.latitude, trip.coordinates.longitude],
+                13,
+                { duration: 1.5 }
+            );
 
-            // Show nearby restaurants around the hotel
-            setTimeout(() => {
-                this.showNearbyRestaurants(trip);
-            }, 2200);
+            // Show nearby restaurants around the hotel after fly animation
+            var self = this;
+            setTimeout(function() {
+                self.showNearbyRestaurants(trip);
+            }, 1600);
         }
 
         // Highlight corresponding card in sidebar
         var listId = isPast ? 'tripHistory' : 'upcomingTrips';
         var cards = document.querySelectorAll('#' + listId + ' .trip-card');
-        cards.forEach(card => {
+        cards.forEach(function(card) {
             if (card.dataset.tripId === tripId) {
                 card.classList.add('active');
                 card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -248,16 +121,25 @@ const WorldMap = {
     },
 
     /**
-     * Show nearby restaurant pins on the 3D globe around a trip's hotel
+     * Show nearby restaurant pins on the map around a trip's hotel
      * @param {Object} trip - Trip data with coordinates
      */
     showNearbyRestaurants(trip) {
-        if (!this.viewer) return;
+        if (!this._leafletMap) return;
 
-        // Clear existing restaurant entities
+        // Clear existing restaurant markers
         this.clearRestaurantMarkers();
 
-        // Add hotel entity
+        // Add hotel marker
+        var hotelIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
         var hotelPopup = '<div class="popup-content popup-content-full">' +
             '<div class="popup-name"><i class="fas fa-hotel"></i> ' + trip.hotel + '</div>' +
             '<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">' + trip.city + ', ' + trip.state + '</div>' +
@@ -272,32 +154,13 @@ const WorldMap = {
             '</div>' +
             '</div>';
 
-        var hotelEntity = this.viewer.entities.add({
-            position: Cesium.Cartesian3.fromDegrees(
-                trip.coordinates.longitude,
-                trip.coordinates.latitude
-            ),
-            billboard: {
-                image: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-                width: 25,
-                height: 41,
-                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-            },
-            label: {
-                text: trip.hotel,
-                font: '12px sans-serif',
-                fillColor: Cesium.Color.WHITE,
-                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                outlineWidth: 2,
-                outlineColor: Cesium.Color.BLACK,
-                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                pixelOffset: new Cesium.Cartesian2(0, -45),
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-            },
-            restaurantPopupContent: hotelPopup
-        });
-        this.restaurantEntities.push(hotelEntity);
+        var hotelMarker = L.marker(
+            [trip.coordinates.latitude, trip.coordinates.longitude],
+            { icon: hotelIcon }
+        ).addTo(this._leafletMap)
+         .bindPopup(hotelPopup, { maxWidth: 350, minWidth: 280 });
+
+        this._restaurantMarkers.push(hotelMarker);
 
         // Generate and add nearby restaurant pins
         var nearbyRestaurants = this.generateNearbyRestaurants(trip);
@@ -309,7 +172,14 @@ const WorldMap = {
                 'brewery': '#f1c40f',
                 'club': '#9b59b6'
             };
-            var color = Cesium.Color.fromCssColorString(markerColors[restaurant.type] || '#e74c3c');
+            var color = markerColors[restaurant.type] || '#e74c3c';
+
+            var restaurantIcon = L.divIcon({
+                className: 'restaurant-pin-icon',
+                html: '<div style="background-color:' + color + ';width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.4);"></div>',
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            });
 
             var stars = API.getStarRating(restaurant.rating);
             var typeIcons = {
@@ -326,6 +196,11 @@ const WorldMap = {
                 restaurant.lat, restaurant.lng
             );
 
+            // Get delivery, reservation, and social media links
+            var deliveryLinks = API.getDeliveryLinks(restaurant.name, trip.city);
+            var reservationLinks = API.getReservationLinks(restaurant.name, trip.city);
+            var socialLinks = API.getSocialMediaLinks(restaurant.name);
+
             var popupContent = '<div class="popup-content popup-content-full">' +
                 '<div class="popup-header"><div>' +
                     '<div class="popup-name">' + restaurant.name + '</div>' +
@@ -340,54 +215,74 @@ const WorldMap = {
                     '<span><i class="fas fa-walking" style="color:var(--primary-color)"></i> ' + API.formatDistance(distanceMeters) + '</span>' +
                 '</div>' +
                 '<div class="popup-actions">' +
+                    '<a href="https://www.yelp.com/search?find_desc=' + encodeURIComponent(restaurant.name) + '&find_loc=' + encodeURIComponent(trip.city) + '" target="_blank" rel="noopener noreferrer" class="popup-btn" style="background-color:#D32323;">' +
+                        '<i class="fab fa-yelp"></i> Yelp' +
+                    '</a>' +
+                    '<a href="' + deliveryLinks.ubereats + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
+                        '<i class="fas fa-hamburger"></i> Uber Eats' +
+                    '</a>' +
+                    '<a href="' + deliveryLinks.doordash + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
+                        '<i class="fas fa-motorcycle"></i> DoorDash' +
+                    '</a>' +
+                    '<a href="' + deliveryLinks.grubhub + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
+                        '<i class="fas fa-utensils"></i> Grubhub' +
+                    '</a>' +
+                    '<a href="' + reservationLinks.opentable + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
+                        '<i class="fas fa-calendar-check"></i> OpenTable' +
+                    '</a>' +
+                    '<a href="' + reservationLinks.resy + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
+                        '<i class="fas fa-bookmark"></i> Resy' +
+                    '</a>' +
                     '<a href="https://www.google.com/maps/search/' + encodeURIComponent(restaurant.name + ' ' + trip.city) + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
                         '<i class="fas fa-map"></i> Google Maps' +
                     '</a>' +
-                    '<a href="https://www.yelp.com/search?find_desc=' + encodeURIComponent(restaurant.name) + '&find_loc=' + encodeURIComponent(trip.city) + '" target="_blank" rel="noopener noreferrer" class="popup-btn" style="background-color:#D32323;">' +
-                        '<i class="fab fa-yelp"></i> Yelp' +
+                '</div>' +
+                '<div class="popup-social-links">' +
+                    '<a href="' + socialLinks.instagram + '" target="_blank" rel="noopener noreferrer" class="social-link instagram" title="Instagram">' +
+                        '<i class="fab fa-instagram"></i>' +
+                    '</a>' +
+                    '<a href="' + socialLinks.facebook + '" target="_blank" rel="noopener noreferrer" class="social-link facebook" title="Facebook">' +
+                        '<i class="fab fa-facebook-f"></i>' +
+                    '</a>' +
+                    '<a href="' + socialLinks.twitter + '" target="_blank" rel="noopener noreferrer" class="social-link twitter" title="Twitter">' +
+                        '<i class="fab fa-twitter"></i>' +
                     '</a>' +
                 '</div>' +
                 '</div>';
 
-            var entity = self.viewer.entities.add({
-                position: Cesium.Cartesian3.fromDegrees(restaurant.lng, restaurant.lat),
-                point: {
-                    pixelSize: 12,
-                    color: color,
-                    outlineColor: Cesium.Color.WHITE,
-                    outlineWidth: 2,
-                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                },
-                label: {
-                    text: restaurant.name,
-                    font: '11px sans-serif',
-                    fillColor: Cesium.Color.WHITE,
-                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                    outlineWidth: 2,
-                    outlineColor: Cesium.Color.BLACK,
-                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                    pixelOffset: new Cesium.Cartesian2(0, -16),
-                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                    distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 80000)
-                },
-                restaurantPopupContent: popupContent
-            });
+            var marker = L.marker(
+                [restaurant.lat, restaurant.lng],
+                { icon: restaurantIcon }
+            ).addTo(self._leafletMap)
+             .bindPopup(popupContent, { maxWidth: 350, minWidth: 280 });
 
-            self.restaurantEntities.push(entity);
+            self._restaurantMarkers.push(marker);
         });
-
-        this.viewer.scene.requestRender();
     },
 
     /**
-     * Clear all restaurant entities from the globe
+     * Clear all restaurant markers from the map
      */
     clearRestaurantMarkers() {
-        if (!this.viewer) return;
-        this.restaurantEntities.forEach(function(entity) {
-            this.viewer.entities.remove(entity);
+        if (!this._leafletMap) return;
+        this._restaurantMarkers.forEach(function(marker) {
+            this._leafletMap.removeLayer(marker);
         }.bind(this));
-        this.restaurantEntities = [];
+        this._restaurantMarkers = [];
+    },
+
+    /**
+     * Zoom to a specific trip location on the map
+     * @param {Object} coordinates - {latitude, longitude}
+     */
+    zoomToLocation(coordinates) {
+        if (this._leafletMap) {
+            this._leafletMap.flyTo(
+                [coordinates.latitude, coordinates.longitude],
+                10,
+                { duration: 1.5 }
+            );
+        }
     },
 
     /**
@@ -513,23 +408,6 @@ const WorldMap = {
     },
 
     /**
-     * Zoom to a specific trip location on the globe
-     * @param {Object} coordinates - {latitude, longitude}
-     */
-    zoomToLocation(coordinates) {
-        if (this.viewer) {
-            this.viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(
-                    coordinates.longitude,
-                    coordinates.latitude,
-                    500000
-                ),
-                duration: 2
-            });
-        }
-    },
-
-    /**
      * Render trip history sidebar
      */
     renderTripHistory() {
@@ -582,7 +460,7 @@ const WorldMap = {
         card.dataset.tripId = trip.id;
 
         var dateRange = this.formatDate(trip.startDate) + ' - ' + this.formatDate(trip.endDate);
-        var restaurantCount = isPast ? trip.restaurantsVisited.length : 0;
+        var restaurantCount = isPast && trip.restaurantsVisited ? trip.restaurantsVisited.length : 0;
 
         card.innerHTML = '<div class="trip-city">' + trip.city + ', ' + trip.state + '</div>' +
             '<div class="trip-dates"><i class="fas fa-calendar"></i> ' + dateRange + '</div>' +
