@@ -17,7 +17,10 @@ const parseRequestBody = (req) => {
         try {
             return JSON.parse(req.body);
         } catch (error) {
-            console.warn('Invalid JSON body received for Yelp search request.');
+            console.warn(
+                'Invalid JSON body received for Yelp search request.',
+                error?.message || String(error)
+            );
             return {};
         }
     }
@@ -98,8 +101,7 @@ module.exports = async (req, res) => {
         );
         return res.status(200).json(data);
     } catch (error) {
-        const errorMessage = error?.message || String(error);
-        console.error('Error contacting Yelp API:', errorMessage, error);
+        console.error('Error contacting Yelp API:', error);
         return res.status(500).json({ error: 'Failed to contact Yelp API' });
     }
 };
