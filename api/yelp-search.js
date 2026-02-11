@@ -5,17 +5,22 @@ const DEFAULT_SEARCH_LIMIT = 20;
 const DEFAULT_CATEGORIES = 'restaurants';
 const DEFAULT_SORT_BY = 'rating';
 const DEFAULT_CACHE_TTL_SECONDS = 300;
-const parsedCacheTtlSeconds = parseInt(process.env.YELP_CACHE_TTL_SECONDS, 10);
-const parsedCacheTtlMs = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
-const parsedCacheStaleSeconds = parseInt(process.env.YELP_CACHE_STALE_SECONDS, 10);
-const CACHE_TTL_SECONDS = Number.isFinite(parsedCacheTtlSeconds) && parsedCacheTtlSeconds > 0
-    ? parsedCacheTtlSeconds
-    : (Number.isFinite(parsedCacheTtlMs) && parsedCacheTtlMs > 0
-        ? Math.round(parsedCacheTtlMs / 1000)
-        : DEFAULT_CACHE_TTL_SECONDS);
-const STALE_WHILE_REVALIDATE_SECONDS = Number.isFinite(parsedCacheStaleSeconds) && parsedCacheStaleSeconds > 0
-    ? parsedCacheStaleSeconds
-    : CACHE_TTL_SECONDS * 2;
+
+const getCacheDurations = () => {
+    const parsedCacheTtlSeconds = parseInt(process.env.YELP_CACHE_TTL_SECONDS, 10);
+    const parsedCacheTtlMs = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
+    const parsedCacheStaleSeconds = parseInt(process.env.YELP_CACHE_STALE_SECONDS, 10);
+    const cacheTtlSeconds = Number.isFinite(parsedCacheTtlSeconds) && parsedCacheTtlSeconds > 0
+        ? parsedCacheTtlSeconds
+        : (Number.isFinite(parsedCacheTtlMs) && parsedCacheTtlMs > 0
+            ? Math.round(parsedCacheTtlMs / 1000)
+            : DEFAULT_CACHE_TTL_SECONDS);
+    const staleWhileRevalidateSeconds = Number.isFinite(parsedCacheStaleSeconds) && parsedCacheStaleSeconds > 0
+        ? parsedCacheStaleSeconds
+        : cacheTtlSeconds * 2;
+
+    return { cacheTtlSeconds, staleWhileRevalidateSeconds };
+};
 
 const parseRequestBody = (req) => {
     if (!req.body) {
@@ -91,6 +96,7 @@ module.exports = async (req, res) => {
     });
 
     try {
+        const { cacheTtlSeconds, staleWhileRevalidateSeconds } = getCacheDurations();
         const response = await fetch(`${YELP_BASE_URL}?${params.toString()}`, {
             headers: {
                 Authorization: `Bearer ${YELP_API_KEY}`,
@@ -109,7 +115,7 @@ module.exports = async (req, res) => {
         const data = await response.json();
         res.setHeader(
             'Cache-Control',
-            `s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${STALE_WHILE_REVALIDATE_SECONDS}`
+            `s-maxage=${cacheTtlSeconds}, stale-while-revalidate=${staleWhileRevalidateSeconds}`
         );
         return res.status(200).json(data);
     } catch (error) {
