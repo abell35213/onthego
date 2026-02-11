@@ -5,12 +5,12 @@ const DEFAULT_SEARCH_LIMIT = 20;
 const DEFAULT_CATEGORIES = 'restaurants';
 const DEFAULT_SORT_BY = 'rating';
 const DEFAULT_CACHE_TTL_SECONDS = 300;
-const CACHE_TTL_SECONDS_ENV = parseInt(process.env.YELP_CACHE_TTL_SECONDS, 10);
-const CACHE_TTL_MS_ENV = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
-const CACHE_TTL_SECONDS = Number.isFinite(CACHE_TTL_SECONDS_ENV) && CACHE_TTL_SECONDS_ENV > 0
-    ? CACHE_TTL_SECONDS_ENV
-    : (Number.isFinite(CACHE_TTL_MS_ENV) && CACHE_TTL_MS_ENV > 0
-        ? Math.round(CACHE_TTL_MS_ENV / 1000)
+const parsedCacheTtlSeconds = parseInt(process.env.YELP_CACHE_TTL_SECONDS, 10);
+const parsedCacheTtlMs = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
+const CACHE_TTL_SECONDS = Number.isFinite(parsedCacheTtlSeconds) && parsedCacheTtlSeconds > 0
+    ? parsedCacheTtlSeconds
+    : (Number.isFinite(parsedCacheTtlMs) && parsedCacheTtlMs > 0
+        ? Math.round(parsedCacheTtlMs / 1000)
         : DEFAULT_CACHE_TTL_SECONDS);
 const STALE_WHILE_REVALIDATE_SECONDS = CACHE_TTL_SECONDS * 2;
 
@@ -24,7 +24,7 @@ const parseRequestBody = (req) => {
             return JSON.parse(req.body);
         } catch (error) {
             console.warn(
-                'Invalid JSON body received for Yelp search request.',
+                'Invalid JSON body received for Yelp search request. Defaulting to empty parameters.',
                 error?.message || String(error)
             );
             return {};
