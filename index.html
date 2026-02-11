@@ -244,6 +244,22 @@
         <!-- Sidebar with Restaurant List -->
         <aside class="sidebar">
             <!-- Search Bar -->
+            <div class="location-controls">
+              <label for="tripLocationSelect" class="location-label">
+                Search near:
+              </label>
+
+              <select id="tripLocationSelect" class="filter-select location-select">
+                <option value="" disabled selected>Select a trip…</option>
+              </select>
+
+              <button id="useGpsBtn" class="location-btn">
+                <i class="fas fa-location-crosshairs"></i> Use My Location
+              </button>
+
+              <div id="activeLocationLabel" class="active-location"></div>
+            </div>
+
             <div class="search-container">
                 <input type="text" id="searchInput" class="search-input" placeholder="Search by name, cuisine, city, state, or zip...">
                 <i class="fas fa-search search-icon"></i>
