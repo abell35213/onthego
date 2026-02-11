@@ -7,12 +7,15 @@ const DEFAULT_SORT_BY = 'rating';
 const DEFAULT_CACHE_TTL_SECONDS = 300;
 const parsedCacheTtlSeconds = parseInt(process.env.YELP_CACHE_TTL_SECONDS, 10);
 const parsedCacheTtlMs = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
+const parsedCacheStaleSeconds = parseInt(process.env.YELP_CACHE_STALE_SECONDS, 10);
 const CACHE_TTL_SECONDS = Number.isFinite(parsedCacheTtlSeconds) && parsedCacheTtlSeconds > 0
     ? parsedCacheTtlSeconds
     : (Number.isFinite(parsedCacheTtlMs) && parsedCacheTtlMs > 0
         ? Math.round(parsedCacheTtlMs / 1000)
         : DEFAULT_CACHE_TTL_SECONDS);
-const STALE_WHILE_REVALIDATE_SECONDS = CACHE_TTL_SECONDS * 2;
+const STALE_WHILE_REVALIDATE_SECONDS = Number.isFinite(parsedCacheStaleSeconds) && parsedCacheStaleSeconds > 0
+    ? parsedCacheStaleSeconds
+    : CACHE_TTL_SECONDS * 2;
 
 const parseRequestBody = (req) => {
     if (!req.body) {
