@@ -63,7 +63,16 @@ const UI = {
         const tripSelector = document.getElementById('tripSelector');
         if (!tripSelector) return;
 
-        tripSelector.innerHTML = '<option value="">Upcoming Trips / Travel History</option>';
+        const defaultOption = tripSelector.querySelector('option[value=""]');
+        tripSelector.innerHTML = '';
+        if (defaultOption) {
+            tripSelector.appendChild(defaultOption);
+        } else {
+            const fallbackOption = document.createElement('option');
+            fallbackOption.value = '';
+            fallbackOption.textContent = 'Upcoming Trips / Travel History';
+            tripSelector.appendChild(fallbackOption);
+        }
 
         const addTripGroup = (trips, label, prefix) => {
             if (!trips || trips.length === 0) return;

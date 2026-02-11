@@ -241,7 +241,7 @@ const App = {
      * @param {string} label - Center label
      */
     updateSearchCenter(latitude, longitude, label) {
-        this.currentSearchCenter = { latitude, longitude };
+        this.currentSearchCenter = { lat: latitude, lng: longitude };
         if (label) {
             this.currentSearchLabel = label;
             UI.updateActiveCenterLabel(label);
@@ -293,7 +293,7 @@ const App = {
      */
     requestUserLocation() {
         if (MapModule && MapModule.getUserLocation) {
-            MapModule.getUserLocation();
+            MapModule.getUserLocation({ successLabel: 'Your Location', fallbackLabel: 'San Francisco' });
         }
     },
 
