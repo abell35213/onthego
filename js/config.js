@@ -5,9 +5,8 @@ const CONFIG = {
     DEFAULT_LNG: -122.4194,
     DEFAULT_ZOOM: 13,
     
-    // Yelp API settings
-    YELP_API_KEY: '', // Will be loaded from environment or left empty to use mock data
-    YELP_API_URL: 'https://api.yelp.com/v3/businesses/search',
+    // Yelp API settings (proxy endpoint, assumes same-origin hosting)
+    YELP_API_URL: '/api/yelp',
     
     // Search parameters
     SEARCH_RADIUS: 8047, // 5 miles in meters
@@ -691,4 +690,3 @@ const USER_ACCOUNT = {
     tripitConnected: false,
     lastSync: null
 };
-
