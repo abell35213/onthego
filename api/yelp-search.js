@@ -5,10 +5,11 @@ const DEFAULT_SEARCH_LIMIT = 20;
 const DEFAULT_CATEGORIES = 'restaurants';
 const DEFAULT_SORT_BY = 'rating';
 const DEFAULT_CACHE_TTL_SECONDS = 300;
-const CACHE_TTL_MS_RAW = parseInt(process.env.YELP_CACHE_TTL_MS, 10) || 0;
-const CACHE_TTL_SECONDS = Number.isFinite(CACHE_TTL_MS_RAW) && CACHE_TTL_MS_RAW > 0
-    ? Math.round(CACHE_TTL_MS_RAW / 1000)
+const CACHE_TTL_MS_ENV = parseInt(process.env.YELP_CACHE_TTL_MS, 10) || 0;
+const CACHE_TTL_SECONDS = Number.isFinite(CACHE_TTL_MS_ENV) && CACHE_TTL_MS_ENV > 0
+    ? Math.round(CACHE_TTL_MS_ENV / 1000)
     : DEFAULT_CACHE_TTL_SECONDS;
+const STALE_WHILE_REVALIDATE_SECONDS = CACHE_TTL_SECONDS * 2;
 
 const parseRequestBody = (req) => {
     if (!req.body) {
@@ -103,7 +104,7 @@ module.exports = async (req, res) => {
         const data = await response.json();
         res.setHeader(
             'Cache-Control',
-            `s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${CACHE_TTL_SECONDS}`
+            `s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${STALE_WHILE_REVALIDATE_SECONDS}`
         );
         return res.status(200).json(data);
     } catch (error) {
