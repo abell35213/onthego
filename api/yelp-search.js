@@ -1,60 +1,43 @@
-const express = require('express');
-const path = require('path');
-const dotenv = require('dotenv');
-
-dotenv.config();
-
-const app = express();
-const parsedPort = parseInt(process.env.PORT, 10);
-const PORT = Number.isFinite(parsedPort) && parsedPort > 0 ? parsedPort : 3000;
-const YELP_API_KEY = process.env.YELP_API_KEY;
-const parsedCacheTtl = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
-const CACHE_TTL_MS = Number.isFinite(parsedCacheTtl) && parsedCacheTtl > 0
-    ? parsedCacheTtl
-    : 5 * 60 * 1000;
 const YELP_BASE_URL = 'https://api.yelp.com/v3/businesses/search';
 const DEFAULT_SEARCH_RADIUS = 8047;
 const DEFAULT_SEARCH_LIMIT = 20;
 const DEFAULT_CATEGORIES = 'restaurants';
 const DEFAULT_SORT_BY = 'rating';
+const parsedCacheTtl = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
+const CACHE_TTL_SECONDS = Number.isFinite(parsedCacheTtl) && parsedCacheTtl > 0
+    ? Math.round(parsedCacheTtl / 1000)
+    : 300;
 
-// In-memory cache is process-local, not shared across instances, and resets on server restart.
-const cache = new Map();
-
-const buildCacheKey = (params) => params.toString();
-
-const getCachedResponse = (cacheKey) => {
-    const cached = cache.get(cacheKey);
-    if (!cached) {
-        return null;
+const parseRequestBody = (req) => {
+    if (!req.body) {
+        return {};
     }
 
-    if (cached.expiresAt < Date.now()) {
-        cache.delete(cacheKey);
-        return null;
+    if (typeof req.body === 'string') {
+        try {
+            return JSON.parse(req.body);
+        } catch (error) {
+            return {};
+        }
     }
 
-    return cached.data;
+    return req.body;
 };
 
-const setCachedResponse = (cacheKey, data) => {
-    cache.set(cacheKey, {
-        expiresAt: Date.now() + CACHE_TTL_MS,
-        data
-    });
-};
+module.exports = async (req, res) => {
+    if (req.method !== 'POST') {
+        res.setHeader('Allow', 'POST');
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
 
-app.use(express.static(path.resolve(__dirname)));
-app.use(express.json());
-
-app.post('/api/yelp-search', async (req, res) => {
+    const YELP_API_KEY = process.env.YELP_API_KEY;
     if (!YELP_API_KEY) {
         return res.status(500).json({
-            error: 'Yelp API key not configured. Please set YELP_API_KEY in your .env file.'
+            error: 'Yelp API key not configured. Please set YELP_API_KEY in your environment.'
         });
     }
 
-    const { latitude, longitude, radius, limit, categories, sort_by: sortBy } = req.body || {};
+    const { latitude, longitude, radius, limit, categories, sort_by: sortBy } = parseRequestBody(req);
 
     if (!latitude || !longitude) {
         return res.status(400).json({ error: 'latitude and longitude are required' });
@@ -92,12 +75,6 @@ app.post('/api/yelp-search', async (req, res) => {
         sort_by: normalizedSortBy
     });
 
-    const cacheKey = buildCacheKey(params);
-    const cachedData = getCachedResponse(cacheKey);
-    if (cachedData) {
-        return res.json(cachedData);
-    }
-
     try {
         const response = await fetch(`${YELP_BASE_URL}?${params.toString()}`, {
             headers: {
@@ -114,14 +91,13 @@ app.post('/api/yelp-search', async (req, res) => {
         }
 
         const data = await response.json();
-        setCachedResponse(cacheKey, data);
-        return res.json(data);
+        res.setHeader(
+            'Cache-Control',
+            `s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${CACHE_TTL_SECONDS}`
+        );
+        return res.status(200).json(data);
     } catch (error) {
         console.error('Error contacting Yelp API:', error?.message || error);
         return res.status(500).json({ error: 'Failed to contact Yelp API' });
     }
-});
-
-app.listen(PORT, () => {
-    console.log(`OnTheGo proxy server running on http://localhost:${PORT}`);
-});
+};
