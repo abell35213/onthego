@@ -135,6 +135,45 @@ body {
     border-color: var(--primary-color);
 }
 
+/* ===== LocationControls ===== */
+.location-controls {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.location-label {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-bottom: 0.2rem;
+}
+
+.location-select {
+  width: 100%;
+}
+
+.location-btn {
+  padding: 0.65rem 0.9rem;
+  border: 2px solid var(--border-color);
+  background: var(--bg-white);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.location-btn:hover {
+  border-color: var(--primary-color);
+}
+
+.active-location {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
 /* ===== Restaurant List ===== */
 .restaurant-list {
     flex: 1;
