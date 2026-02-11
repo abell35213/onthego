@@ -280,8 +280,9 @@ const App = {
 
         const [tripType, tripId] = selection.split(':');
         if (!tripType || !tripId) return;
+        if (!['upcoming', 'history'].includes(tripType)) return;
         const trips = tripType === 'upcoming' ? MOCK_UPCOMING_TRIPS : MOCK_TRAVEL_HISTORY;
-        const trip = trips.find(item => item.id === tripId);
+        const trip = trips.find(item => String(item.id) === tripId);
         if (!trip) return;
 
         const label = UI.formatTripLabel(trip);

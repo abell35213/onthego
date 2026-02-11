@@ -68,14 +68,12 @@ const UI = {
             defaultOption = document.createElement('option');
             defaultOption.value = '';
             defaultOption.textContent = 'Upcoming Trips / Travel History';
-            tripSelector.prepend(defaultOption);
         }
 
-        Array.from(tripSelector.children).forEach(child => {
-            if (child !== defaultOption) {
-                child.remove();
-            }
-        });
+        while (tripSelector.firstChild) {
+            tripSelector.removeChild(tripSelector.firstChild);
+        }
+        tripSelector.appendChild(defaultOption);
 
         const addTripGroup = (trips, label, prefix) => {
             if (!trips || trips.length === 0) return;
