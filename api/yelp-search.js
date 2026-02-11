@@ -1,12 +1,14 @@
 const YELP_BASE_URL = 'https://api.yelp.com/v3/businesses/search';
 const DEFAULT_SEARCH_RADIUS = 8047;
+const MAX_SEARCH_RADIUS_METERS = 40000;
 const DEFAULT_SEARCH_LIMIT = 20;
 const DEFAULT_CATEGORIES = 'restaurants';
 const DEFAULT_SORT_BY = 'rating';
+const DEFAULT_CACHE_TTL_SECONDS = 300;
 const CACHE_TTL_MS_RAW = parseInt(process.env.YELP_CACHE_TTL_MS, 10) || 0;
 const CACHE_TTL_SECONDS = Number.isFinite(CACHE_TTL_MS_RAW) && CACHE_TTL_MS_RAW > 0
     ? Math.round(CACHE_TTL_MS_RAW / 1000)
-    : 300;
+    : DEFAULT_CACHE_TTL_SECONDS;
 
 const parseRequestBody = (req) => {
     if (!req.body) {
@@ -17,9 +19,11 @@ const parseRequestBody = (req) => {
         try {
             return JSON.parse(req.body);
         } catch (error) {
+            const bodySnippet = req.body.slice(0, 200);
             console.warn(
                 'Invalid JSON body received for Yelp search request.',
-                error?.message || String(error)
+                error?.message || String(error),
+                `bodySnippet: ${bodySnippet}`
             );
             return {};
         }
@@ -59,8 +63,10 @@ module.exports = async (req, res) => {
     const radiusValue = hasRadius ? Number(radius) : DEFAULT_SEARCH_RADIUS;
     const limitValue = hasLimit ? Number(limit) : DEFAULT_SEARCH_LIMIT;
 
-    if (hasRadius && (!Number.isFinite(radiusValue) || radiusValue <= 0 || radiusValue > 40000)) {
-        return res.status(400).json({ error: 'radius must be a number between 1 and 40000' });
+    if (hasRadius && (!Number.isFinite(radiusValue) || radiusValue <= 0 || radiusValue > MAX_SEARCH_RADIUS_METERS)) {
+        return res.status(400).json({
+            error: `radius must be a number between 1 and ${MAX_SEARCH_RADIUS_METERS}`
+        });
     }
 
     if (hasLimit && (!Number.isFinite(limitValue) || limitValue <= 0)) {
