@@ -92,7 +92,10 @@ const MapModule = {
     /**
      * Get user's current location using Geolocation API
      */
-    getUserLocation() {
+    getUserLocation(options = {}) {
+        const successLabel = options.successLabel || 'Your Location';
+        const fallbackLabel = options.fallbackLabel || 'San Francisco';
+
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -111,7 +114,7 @@ const MapModule = {
                     
                     // Notify app that location is ready
                     if (window.App && window.App.onLocationReady) {
-                        window.App.onLocationReady(this.userLocation.lat, this.userLocation.lng);
+                        window.App.onLocationReady(this.userLocation.lat, this.userLocation.lng, successLabel);
                     }
                 },
                 (error) => {
@@ -126,7 +129,7 @@ const MapModule = {
                     
                     // Notify app with default location
                     if (window.App && window.App.onLocationReady) {
-                        window.App.onLocationReady(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG);
+                        window.App.onLocationReady(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG, fallbackLabel);
                     }
                 },
                 {
@@ -144,7 +147,7 @@ const MapModule = {
             
             // Notify app with default location
             if (window.App && window.App.onLocationReady) {
-                window.App.onLocationReady(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG);
+                window.App.onLocationReady(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG, fallbackLabel);
             }
         }
     },

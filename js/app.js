@@ -1,6 +1,8 @@
 // Main Application Module
 const App = {
     currentView: CONFIG.VIEW_MODE_WORLD,
+    currentSearchCenter: null,
+    currentSearchLabel: 'Your Location',
 
     /**
      * Initialize the application
@@ -233,26 +235,78 @@ const App = {
     },
 
     /**
-     * Called when user location is ready
-     * @param {number} latitude - User's latitude
-     * @param {number} longitude - User's longitude
+     * Update the active search center
+     * @param {number} latitude - Center latitude
+     * @param {number} longitude - Center longitude
+     * @param {string} label - Center label
      */
-    async onLocationReady(latitude, longitude) {
-        console.log(`Location ready: ${latitude}, ${longitude}`);
-        
+    updateSearchCenter(latitude, longitude, label) {
+        this.currentSearchCenter = { latitude, longitude };
+        if (label) {
+            this.currentSearchLabel = label;
+            UI.updateActiveCenterLabel(label);
+        }
+
+        if (MapModule.map) {
+            MapModule.map.setView([latitude, longitude], CONFIG.DEFAULT_ZOOM);
+        }
+    },
+
+    /**
+     * Fetch restaurants for a specific location
+     * @param {number} latitude - Location latitude
+     * @param {number} longitude - Location longitude
+     */
+    async loadRestaurants(latitude, longitude) {
+        UI.showLoadingState();
+
         try {
-            // Fetch restaurants
             const restaurants = await API.fetchRestaurants(latitude, longitude);
             console.log(`Found ${restaurants.length} restaurants`);
-            
-            // Update UI with restaurants
             UI.setRestaurants(restaurants);
-            
         } catch (error) {
             console.error('Error loading restaurants:', error);
             UI.hideLoadingState();
             UI.showEmptyState();
         }
+    },
+
+    /**
+     * Handle trip selection change
+     * @param {string} selection - Selected trip value
+     */
+    async handleTripSelection(selection) {
+        if (!selection) return;
+
+        const [tripType, tripId] = selection.split(':');
+        const trips = tripType === 'upcoming' ? MOCK_UPCOMING_TRIPS : MOCK_TRAVEL_HISTORY;
+        const trip = trips.find(item => item.id === tripId);
+        if (!trip) return;
+
+        const label = `${trip.city} • ${trip.hotel}`;
+        this.updateSearchCenter(trip.coordinates.latitude, trip.coordinates.longitude, label);
+        await this.loadRestaurants(trip.coordinates.latitude, trip.coordinates.longitude);
+    },
+
+    /**
+     * Request user's current location
+     */
+    requestUserLocation() {
+        if (MapModule && MapModule.getUserLocation) {
+            MapModule.getUserLocation();
+        }
+    },
+
+    /**
+     * Called when user location is ready
+     * @param {number} latitude - User's latitude
+     * @param {number} longitude - User's longitude
+     * @param {string} label - Active center label
+     */
+    async onLocationReady(latitude, longitude, label = 'Your Location') {
+        console.log(`Location ready: ${latitude}, ${longitude}`);
+        this.updateSearchCenter(latitude, longitude, label);
+        await this.loadRestaurants(latitude, longitude);
     }
 };
 

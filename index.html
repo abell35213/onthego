@@ -249,6 +249,21 @@
                 <i class="fas fa-search search-icon"></i>
             </div>
 
+            <div class="location-selector">
+                <div class="location-selector-header">
+                    <label for="tripSelector" class="location-selector-title">Search near:</label>
+                    <span id="activeCenterLabel" class="active-center-label">Your Location</span>
+                </div>
+                <div class="location-selector-controls">
+                    <select id="tripSelector" class="trip-select">
+                        <option value="">Upcoming Trips / Travel History</option>
+                    </select>
+                    <button id="useLocationBtn" class="use-location-btn" type="button">
+                        <i class="fas fa-location-arrow"></i> Use My Location
+                    </button>
+                </div>
+            </div>
+
             <!-- Filters -->
             <div class="filters">
                 <div class="filter-group">

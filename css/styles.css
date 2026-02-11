@@ -98,6 +98,76 @@ body {
     color: var(--text-light);
 }
 
+/* ===== Location Selector ===== */
+.location-selector {
+    padding: 0 1.5rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-white);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.location-selector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+.location-selector-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.active-center-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+
+.location-selector-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.trip-select {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.trip-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.use-location-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-light);
+    color: var(--secondary-color);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.use-location-btn:hover {
+    border-color: var(--secondary-color);
+    box-shadow: var(--shadow);
+}
+
 /* ===== Filters ===== */
 .filters {
     padding: 1rem 1.5rem;

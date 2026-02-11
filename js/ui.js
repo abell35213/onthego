@@ -8,6 +8,7 @@ const UI = {
      */
     init() {
         this.setupEventListeners();
+        this.populateTripSelector();
         this.showLoadingState();
     },
 
@@ -35,6 +36,61 @@ const UI = {
         if (ambianceFilter) ambianceFilter.addEventListener('change', () => this.applyFilters());
         if (sortBy) sortBy.addEventListener('change', () => this.applyFilters());
         if (visitedFilter) visitedFilter.addEventListener('change', () => this.applyFilters());
+
+        const tripSelector = document.getElementById('tripSelector');
+        if (tripSelector) {
+            tripSelector.addEventListener('change', (e) => {
+                if (window.App && window.App.handleTripSelection) {
+                    window.App.handleTripSelection(e.target.value);
+                }
+            });
+        }
+
+        const useLocationBtn = document.getElementById('useLocationBtn');
+        if (useLocationBtn) {
+            useLocationBtn.addEventListener('click', () => {
+                if (window.App && window.App.requestUserLocation) {
+                    window.App.requestUserLocation();
+                }
+            });
+        }
+    },
+
+    /**
+     * Populate trip selector dropdown
+     */
+    populateTripSelector() {
+        const tripSelector = document.getElementById('tripSelector');
+        if (!tripSelector) return;
+
+        tripSelector.innerHTML = '<option value="">Upcoming Trips / Travel History</option>';
+
+        const addTripGroup = (trips, label, prefix) => {
+            if (!trips || trips.length === 0) return;
+            const group = document.createElement('optgroup');
+            group.label = label;
+            trips.forEach(trip => {
+                const option = document.createElement('option');
+                option.value = `${prefix}:${trip.id}`;
+                option.textContent = `${trip.city} • ${trip.hotel}`;
+                group.appendChild(option);
+            });
+            tripSelector.appendChild(group);
+        };
+
+        addTripGroup(MOCK_UPCOMING_TRIPS, 'Upcoming Trips', 'upcoming');
+        addTripGroup(MOCK_TRAVEL_HISTORY, 'Travel History', 'history');
+    },
+
+    /**
+     * Update active search center label
+     * @param {string} label - Active center label
+     */
+    updateActiveCenterLabel(label) {
+        const activeCenterLabel = document.getElementById('activeCenterLabel');
+        if (activeCenterLabel) {
+            activeCenterLabel.textContent = label;
+        }
     },
 
     /**
