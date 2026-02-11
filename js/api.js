@@ -7,9 +7,9 @@ const API = {
      * @returns {Promise<Array>} - Array of restaurant objects
      */
     async fetchRestaurants(latitude, longitude) {
-        // Check if Yelp API key is configured
-        if (!CONFIG.YELP_API_KEY || CONFIG.YELP_API_KEY === '') {
-            console.log('Yelp API key not configured. Using mock data.');
+        // Check if Yelp proxy is configured
+        if (!CONFIG.YELP_API_URL || CONFIG.YELP_API_URL === '') {
+            console.log('Yelp proxy not configured. Using mock data.');
             return this.getMockRestaurants(latitude, longitude);
         }
 
@@ -25,7 +25,6 @@ const API = {
 
             const response = await fetch(`${CONFIG.YELP_API_URL}?${params}`, {
                 headers: {
-                    'Authorization': `Bearer ${CONFIG.YELP_API_KEY}`,
                     'Accept': 'application/json'
                 }
             });

@@ -67,6 +67,7 @@
 ## 🚀 Tech Stack
 
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
+- **Backend**: Node.js + Express (Yelp proxy)
 - **Mapping**: [Leaflet.js](https://leafletjs.com/) with OpenStreetMap tiles
 - **API**: [Yelp Fusion API](https://www.yelp.com/developers) for restaurant data
 - **Icons**: [Font Awesome 6](https://fontawesome.com/)
@@ -86,6 +87,9 @@ onthego/
 │   ├── api.js              # API calls and data utilities
 │   ├── ui.js               # UI rendering and interactions
 │   └── config.js           # Configuration and sample data
+├── server.js               # Express proxy for Yelp API
+├── package.json            # Node.js dependencies and scripts
+├── package-lock.json       # Dependency lockfile
 ├── assets/
 │   └── icons/              # Custom icons (if any)
 ├── .env.example            # Environment variable template
@@ -98,6 +102,7 @@ onthego/
 ### Prerequisites
 - A modern web browser (Chrome, Firefox, Safari, Edge)
 - A web server (optional for local development)
+- Node.js 18+ (for the Yelp proxy server)
 - Yelp Fusion API key (optional - app works with sample data)
 
 ### 1. Clone the Repository
@@ -126,18 +131,19 @@ The app works with sample data out of the box, but for real restaurant data:
    ```
    YELP_API_KEY=your_actual_yelp_api_key_here
    ```
-
-3. Update `js/config.js` with your API key:
-   ```javascript
-   const CONFIG = {
-       YELP_API_KEY: 'your_actual_yelp_api_key_here',
-       // ... rest of config
-   };
-   ```
+3. (Optional) Adjust the cache TTL in `.env` if you want a different caching window.
 
 ### 4. Run the Application
 
-#### Option A: Simple HTTP Server (Python)
+#### Option A: Node + Express (Recommended for Yelp data)
+```bash
+npm install
+npm start
+```
+
+Then open `http://localhost:3000` in your browser.
+
+#### Option B: Simple HTTP Server (Python)
 ```bash
 # Python 3
 python -m http.server 8000
@@ -148,18 +154,18 @@ python -m SimpleHTTPServer 8000
 
 Then open `http://localhost:8000` in your browser.
 
-#### Option B: Node.js HTTP Server
+#### Option C: Node.js HTTP Server
 ```bash
 npx http-server -p 8000
 ```
 
 Then open `http://localhost:8000` in your browser.
 
-#### Option C: VS Code Live Server
+#### Option D: VS Code Live Server
 1. Install the "Live Server" extension in VS Code
 2. Right-click `index.html` and select "Open with Live Server"
 
-#### Option D: Open Directly
+#### Option E: Open Directly
 For basic testing, you can open `index.html` directly in your browser. Note: Some features may not work due to CORS restrictions.
 
 ### 5. Enable Location Services
@@ -245,13 +251,14 @@ All styles are in `css/styles.css`. The design is mobile-first with responsive b
 - **Fallback**: The app will use San Francisco as default
 
 ### No Restaurants Showing
-- **Check API key**: Verify your Yelp API key in `config.js`
+- **Check API key**: Verify your Yelp API key in `.env`
+- **Check server**: Ensure the Node/Express proxy is running (`npm start`)
 - **Mock data**: The app should show sample data if API fails
 - **Console errors**: Check browser console for error messages
 
 ### CORS Issues with Yelp API
 The Yelp API has CORS restrictions. For production use:
-- Deploy to a server with backend proxy
+- Run the included Node/Express proxy (`npm start`)
 - Use a CORS proxy service
 - Or rely on the built-in mock data for demos
 
@@ -273,9 +280,9 @@ Deploy to any static hosting service:
 
 ### Server Deployment
 For Yelp API integration without CORS issues:
-1. Create a backend proxy (Node.js, Python, etc.)
-2. Forward API requests to Yelp
-3. Update `YELP_API_URL` in `config.js`
+1. Deploy the included Node/Express proxy (`server.js`)
+2. Set `YELP_API_KEY` and `PORT` in your production environment
+3. Serve the static assets from the same server or a frontend host pointed at `/api/yelp`
 
 ## 🗺️ Future Improvements
 
