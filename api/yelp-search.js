@@ -3,9 +3,9 @@ const DEFAULT_SEARCH_RADIUS = 8047;
 const DEFAULT_SEARCH_LIMIT = 20;
 const DEFAULT_CATEGORIES = 'restaurants';
 const DEFAULT_SORT_BY = 'rating';
-const parsedCacheTtl = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
-const CACHE_TTL_SECONDS = Number.isFinite(parsedCacheTtl) && parsedCacheTtl > 0
-    ? Math.round(parsedCacheTtl / 1000)
+const cacheTtlMs = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
+const CACHE_TTL_SECONDS = Number.isFinite(cacheTtlMs) && cacheTtlMs > 0
+    ? Math.round(cacheTtlMs / 1000)
     : 300;
 
 const parseRequestBody = (req) => {
@@ -97,7 +97,7 @@ module.exports = async (req, res) => {
         );
         return res.status(200).json(data);
     } catch (error) {
-        console.error('Error contacting Yelp API:', error?.message || error);
+        console.error('Error contacting Yelp API:', error?.message || String(error));
         return res.status(500).json({ error: 'Failed to contact Yelp API' });
     }
 };
