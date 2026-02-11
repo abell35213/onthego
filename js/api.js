@@ -14,19 +14,22 @@ const API = {
         }
 
         try {
-            const params = new URLSearchParams({
-                latitude: latitude.toString(),
-                longitude: longitude.toString(),
-                radius: CONFIG.SEARCH_RADIUS.toString(),
-                limit: CONFIG.SEARCH_LIMIT.toString(),
+            const payload = {
+                latitude,
+                longitude,
+                radius: CONFIG.SEARCH_RADIUS,
+                limit: CONFIG.SEARCH_LIMIT,
                 categories: 'restaurants',
                 sort_by: 'rating'
-            });
+            };
 
-            const response = await fetch(`${CONFIG.YELP_API_URL}?${params}`, {
+            const response = await fetch(CONFIG.YELP_API_URL, {
+                method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'Accept': 'application/json'
-                }
+                },
+                body: JSON.stringify(payload)
             });
 
             if (!response.ok) {

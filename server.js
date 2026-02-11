@@ -21,7 +21,7 @@ const DEFAULT_SORT_BY = 'rating';
 // In-memory cache is process-local, not shared across instances, and resets on server restart.
 const cache = new Map();
 
-const serializeCacheKey = (params) => params.toString();
+const buildCacheKey = (params) => params.toString();
 
 const getCachedResponse = (cacheKey) => {
     const cached = cache.get(cacheKey);
@@ -45,15 +45,16 @@ const setCachedResponse = (cacheKey, data) => {
 };
 
 app.use(express.static(path.resolve(__dirname)));
+app.use(express.json());
 
-app.get('/api/yelp', async (req, res) => {
+app.post('/api/yelp', async (req, res) => {
     if (!YELP_API_KEY) {
         return res.status(500).json({
             error: 'Yelp API key not configured. Please set YELP_API_KEY in your .env file.'
         });
     }
 
-    const { latitude, longitude, radius, limit, categories, sort_by: sortBy } = req.query;
+    const { latitude, longitude, radius, limit, categories, sort_by: sortBy } = req.body || {};
 
     if (!latitude || !longitude) {
         return res.status(400).json({ error: 'latitude and longitude are required' });
@@ -91,7 +92,7 @@ app.get('/api/yelp', async (req, res) => {
         sort_by: normalizedSortBy
     });
 
-    const cacheKey = serializeCacheKey(params);
+    const cacheKey = buildCacheKey(params);
     const cachedData = getCachedResponse(cacheKey);
     if (cachedData) {
         return res.json(cachedData);
