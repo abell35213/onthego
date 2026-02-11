@@ -279,11 +279,12 @@ const App = {
         if (!selection) return;
 
         const [tripType, tripId] = selection.split(':');
+        if (!tripType || !tripId) return;
         const trips = tripType === 'upcoming' ? MOCK_UPCOMING_TRIPS : MOCK_TRAVEL_HISTORY;
         const trip = trips.find(item => item.id === tripId);
         if (!trip) return;
 
-        const label = `${trip.city} • ${trip.hotel}`;
+        const label = UI && UI.formatTripLabel ? UI.formatTripLabel(trip) : `${trip.city} • ${trip.hotel}`;
         this.updateSearchCenter(trip.coordinates.latitude, trip.coordinates.longitude, label);
         await this.loadRestaurants(trip.coordinates.latitude, trip.coordinates.longitude);
     },

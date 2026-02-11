@@ -81,7 +81,7 @@ const UI = {
             trips.forEach(trip => {
                 const option = document.createElement('option');
                 option.value = `${prefix}:${trip.id}`;
-                option.textContent = `${trip.city} • ${trip.hotel}`;
+                option.textContent = this.formatTripLabel(trip);
                 group.appendChild(option);
             });
             tripSelector.appendChild(group);
@@ -100,6 +100,16 @@ const UI = {
         if (activeCenterLabel) {
             activeCenterLabel.textContent = label;
         }
+    },
+
+    /**
+     * Format the label for trip selections
+     * @param {Object} trip - Trip data
+     * @returns {string} - Trip label
+     */
+    formatTripLabel(trip) {
+        if (!trip) return '';
+        return `${trip.city} • ${trip.hotel}`;
     },
 
     /**
