@@ -5,14 +5,23 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const parsedPort = parseInt(process.env.PORT, 10);
+const PORT = Number.isFinite(parsedPort) && parsedPort > 0 ? parsedPort : 3000;
 const YELP_API_KEY = process.env.YELP_API_KEY;
-const CACHE_TTL_MS = Number(process.env.YELP_CACHE_TTL_MS) || 5 * 60 * 1000;
+const parsedCacheTtl = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
+const CACHE_TTL_MS = Number.isFinite(parsedCacheTtl) && parsedCacheTtl > 0
+    ? parsedCacheTtl
+    : 5 * 60 * 1000;
 const YELP_BASE_URL = 'https://api.yelp.com/v3/businesses/search';
+const DEFAULT_SEARCH_RADIUS = 8047;
+const DEFAULT_SEARCH_LIMIT = 20;
+const DEFAULT_CATEGORIES = 'restaurants';
+const DEFAULT_SORT_BY = 'rating';
 
+// In-memory cache is process-local, not shared across instances, and resets on server restart.
 const cache = new Map();
 
-const buildCacheKey = (params) => params.toString();
+const serializeCacheKey = (params) => params.toString();
 
 const getCachedResponse = (cacheKey) => {
     const cached = cache.get(cacheKey);
@@ -20,7 +29,7 @@ const getCachedResponse = (cacheKey) => {
         return null;
     }
 
-    if (cached.expiresAt <= Date.now()) {
+    if (cached.expiresAt < Date.now()) {
         cache.delete(cacheKey);
         return null;
     }
@@ -39,7 +48,9 @@ app.use(express.static(path.resolve(__dirname)));
 
 app.get('/api/yelp', async (req, res) => {
     if (!YELP_API_KEY) {
-        return res.status(500).json({ error: 'Yelp API key not configured' });
+        return res.status(500).json({
+            error: 'Yelp API key not configured. Please set YELP_API_KEY in your .env file.'
+        });
     }
 
     const { latitude, longitude, radius, limit, categories, sort_by: sortBy } = req.query;
@@ -48,16 +59,39 @@ app.get('/api/yelp', async (req, res) => {
         return res.status(400).json({ error: 'latitude and longitude are required' });
     }
 
+    const latitudeValue = Number(latitude);
+    const longitudeValue = Number(longitude);
+
+    if (!Number.isFinite(latitudeValue) || !Number.isFinite(longitudeValue)) {
+        return res.status(400).json({ error: 'latitude and longitude must be valid numbers' });
+    }
+
+    const hasRadius = radius !== undefined;
+    const hasLimit = limit !== undefined;
+    const radiusValue = hasRadius ? Number(radius) : DEFAULT_SEARCH_RADIUS;
+    const limitValue = hasLimit ? Number(limit) : DEFAULT_SEARCH_LIMIT;
+
+    if (hasRadius && (!Number.isFinite(radiusValue) || radiusValue <= 0 || radiusValue > 40000)) {
+        return res.status(400).json({ error: 'radius must be a number between 1 and 40000' });
+    }
+
+    if (hasLimit && (!Number.isFinite(limitValue) || limitValue <= 0)) {
+        return res.status(400).json({ error: 'limit must be a positive number' });
+    }
+
+    const normalizedCategories = categories || DEFAULT_CATEGORIES;
+    const normalizedSortBy = sortBy || DEFAULT_SORT_BY;
+
     const params = new URLSearchParams({
-        latitude: latitude.toString(),
-        longitude: longitude.toString(),
-        radius: (radius || '8047').toString(),
-        limit: (limit || '20').toString(),
-        categories: (categories || 'restaurants').toString(),
-        sort_by: (sortBy || 'rating').toString()
+        latitude: latitudeValue.toString(),
+        longitude: longitudeValue.toString(),
+        radius: radiusValue.toString(),
+        limit: limitValue.toString(),
+        categories: normalizedCategories,
+        sort_by: normalizedSortBy
     });
 
-    const cacheKey = buildCacheKey(params);
+    const cacheKey = serializeCacheKey(params);
     const cachedData = getCachedResponse(cacheKey);
     if (cachedData) {
         return res.json(cachedData);
@@ -82,7 +116,7 @@ app.get('/api/yelp', async (req, res) => {
         setCachedResponse(cacheKey, data);
         return res.json(data);
     } catch (error) {
-        console.error('Error contacting Yelp API:', error);
+        console.error('Error contacting Yelp API:', error?.message || error);
         return res.status(500).json({ error: 'Failed to contact Yelp API' });
     }
 });

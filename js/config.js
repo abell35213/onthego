@@ -5,7 +5,7 @@ const CONFIG = {
     DEFAULT_LNG: -122.4194,
     DEFAULT_ZOOM: 13,
     
-    // Yelp API settings (proxy endpoint)
+    // Yelp API settings (proxy endpoint, assumes same-origin hosting)
     YELP_API_URL: '/api/yelp',
     
     // Search parameters
