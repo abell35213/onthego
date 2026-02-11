@@ -79,6 +79,8 @@
 ```
 onthego/
 ├── index.html              # Main HTML page
+├── api/
+│   └── yelp-search.js       # Vercel serverless Yelp proxy
 ├── css/
 │   └── styles.css          # All application styles
 ├── js/
@@ -282,7 +284,7 @@ Deploy to any static hosting service:
 For Yelp API integration without CORS issues:
 1. Deploy the included Node/Express proxy (`server.js`)
 2. Set `YELP_API_KEY` and `PORT` in your production environment
-3. Serve the static assets from the same server or a frontend host pointed at `/api/yelp`
+3. Serve the static assets from the same server or a frontend host pointed at `/api/yelp-search`
 
 ## 🗺️ Future Improvements
 

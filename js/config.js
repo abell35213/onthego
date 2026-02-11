@@ -6,7 +6,7 @@ const CONFIG = {
     DEFAULT_ZOOM: 13,
     
     // Yelp API settings (proxy endpoint, assumes same-origin hosting)
-    YELP_API_URL: '/api/yelp',
+    YELP_API_URL: '/api/yelp-search',
     
     // Search parameters
     SEARCH_RADIUS: 8047, // 5 miles in meters

@@ -8,10 +8,13 @@ const app = express();
 const parsedPort = parseInt(process.env.PORT, 10);
 const PORT = Number.isFinite(parsedPort) && parsedPort > 0 ? parsedPort : 3000;
 const YELP_API_KEY = process.env.YELP_API_KEY;
-const parsedCacheTtl = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
-const CACHE_TTL_MS = Number.isFinite(parsedCacheTtl) && parsedCacheTtl > 0
-    ? parsedCacheTtl
-    : 5 * 60 * 1000;
+const parsedCacheTtlSeconds = parseInt(process.env.YELP_CACHE_TTL_SECONDS, 10);
+const parsedCacheTtlMs = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
+const CACHE_TTL_MS = Number.isFinite(parsedCacheTtlSeconds) && parsedCacheTtlSeconds > 0
+    ? parsedCacheTtlSeconds * 1000
+    : (Number.isFinite(parsedCacheTtlMs) && parsedCacheTtlMs > 0
+        ? parsedCacheTtlMs
+        : 5 * 60 * 1000);
 const YELP_BASE_URL = 'https://api.yelp.com/v3/businesses/search';
 const DEFAULT_SEARCH_RADIUS = 8047;
 const DEFAULT_SEARCH_LIMIT = 20;
@@ -47,7 +50,7 @@ const setCachedResponse = (cacheKey, data) => {
 app.use(express.static(path.resolve(__dirname)));
 app.use(express.json());
 
-app.post('/api/yelp', async (req, res) => {
+app.post('/api/yelp-search', async (req, res) => {
     if (!YELP_API_KEY) {
         return res.status(500).json({
             error: 'Yelp API key not configured. Please set YELP_API_KEY in your .env file.'
