@@ -3,9 +3,9 @@ const DEFAULT_SEARCH_RADIUS = 8047;
 const DEFAULT_SEARCH_LIMIT = 20;
 const DEFAULT_CATEGORIES = 'restaurants';
 const DEFAULT_SORT_BY = 'rating';
-const CACHE_TTL_MS = parseInt(process.env.YELP_CACHE_TTL_MS, 10) || 0;
-const CACHE_TTL_SECONDS = Number.isFinite(CACHE_TTL_MS) && CACHE_TTL_MS > 0
-    ? Math.round(CACHE_TTL_MS / 1000)
+const CACHE_TTL_MS_RAW = parseInt(process.env.YELP_CACHE_TTL_MS, 10) || 0;
+const CACHE_TTL_SECONDS = Number.isFinite(CACHE_TTL_MS_RAW) && CACHE_TTL_MS_RAW > 0
+    ? Math.round(CACHE_TTL_MS_RAW / 1000)
     : 300;
 
 const parseRequestBody = (req) => {
@@ -17,6 +17,7 @@ const parseRequestBody = (req) => {
         try {
             return JSON.parse(req.body);
         } catch (error) {
+            console.warn('Invalid JSON body received for Yelp search request.');
             return {};
         }
     }
