@@ -5,8 +5,8 @@ const DEFAULT_SEARCH_LIMIT = 20;
 const DEFAULT_CATEGORIES = 'restaurants';
 const DEFAULT_SORT_BY = 'rating';
 const DEFAULT_CACHE_TTL_SECONDS = 300;
-const CACHE_TTL_SECONDS_ENV = parseInt(process.env.YELP_CACHE_TTL_SECONDS, 10) || 0;
-const CACHE_TTL_MS_ENV = parseInt(process.env.YELP_CACHE_TTL_MS, 10) || 0;
+const CACHE_TTL_SECONDS_ENV = parseInt(process.env.YELP_CACHE_TTL_SECONDS, 10);
+const CACHE_TTL_MS_ENV = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
 const CACHE_TTL_SECONDS = Number.isFinite(CACHE_TTL_SECONDS_ENV) && CACHE_TTL_SECONDS_ENV > 0
     ? CACHE_TTL_SECONDS_ENV
     : (Number.isFinite(CACHE_TTL_MS_ENV) && CACHE_TTL_MS_ENV > 0
@@ -23,11 +23,9 @@ const parseRequestBody = (req) => {
         try {
             return JSON.parse(req.body);
         } catch (error) {
-            const bodySnippet = req.body.slice(0, 200);
             console.warn(
                 'Invalid JSON body received for Yelp search request.',
-                error?.message || String(error),
-                `bodySnippet: ${bodySnippet}`
+                error?.message || String(error)
             );
             return {};
         }
@@ -112,7 +110,7 @@ module.exports = async (req, res) => {
         );
         return res.status(200).json(data);
     } catch (error) {
-        console.error('Error contacting Yelp API:', error);
+        console.error('Error contacting Yelp API:', error?.message || String(error));
         return res.status(500).json({ error: 'Failed to contact Yelp API' });
     }
 };
