@@ -138,7 +138,7 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 0.9rem;
-    background-color: white;
+    background-color: var(--bg-white);
     cursor: pointer;
     transition: border-color 0.3s;
 }

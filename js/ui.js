@@ -63,16 +63,19 @@ const UI = {
         const tripSelector = document.getElementById('tripSelector');
         if (!tripSelector) return;
 
-        const defaultOption = tripSelector.querySelector('option[value=""]');
-        tripSelector.innerHTML = '';
-        if (defaultOption) {
-            tripSelector.appendChild(defaultOption);
-        } else {
-            const fallbackOption = document.createElement('option');
-            fallbackOption.value = '';
-            fallbackOption.textContent = 'Upcoming Trips / Travel History';
-            tripSelector.appendChild(fallbackOption);
+        let defaultOption = tripSelector.querySelector('option[value=""]');
+        if (!defaultOption) {
+            defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Upcoming Trips / Travel History';
+            tripSelector.prepend(defaultOption);
         }
+
+        Array.from(tripSelector.children).forEach(child => {
+            if (child !== defaultOption) {
+                child.remove();
+            }
+        });
 
         const addTripGroup = (trips, label, prefix) => {
             if (!trips || trips.length === 0) return;

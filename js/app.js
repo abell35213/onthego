@@ -284,7 +284,7 @@ const App = {
         const trip = trips.find(item => item.id === tripId);
         if (!trip) return;
 
-        const label = UI && UI.formatTripLabel ? UI.formatTripLabel(trip) : `${trip.city} • ${trip.hotel}`;
+        const label = UI.formatTripLabel(trip);
         this.updateSearchCenter(trip.coordinates.latitude, trip.coordinates.longitude, label);
         await this.loadRestaurants(trip.coordinates.latitude, trip.coordinates.longitude);
     },
