@@ -56,8 +56,15 @@ const MapModule = {
         // Add directions control
         this.addDirectionsControl();
 
-        // Listen for map move to show search area button
+        // Track whether the current move is programmatic (not user-initiated)
+        this._programmaticMove = false;
+
+        // Only show "Search This Area" when the user manually pans/zooms the map
         this.map.on('moveend', () => {
+            if (this._programmaticMove) {
+                this._programmaticMove = false;
+                return;
+            }
             if (this.searchAreaBtn) {
                 this.searchAreaBtn.style.display = 'block';
             }
@@ -66,30 +73,28 @@ const MapModule = {
 
     /**
      * Add a "Search This Area" button overlay on the map.
-     * Uses Leaflet's 'bottomleft' position; CSS centers it horizontally via transform.
+     * Appended directly to the map container so it can be centered horizontally.
+     * Only shown when the user manually drags/zooms the map.
      */
     addSearchAreaButton() {
         if (!this.map) return;
 
-        const SearchAreaControl = L.Control.extend({
-            options: { position: 'bottomleft' },
-            onAdd: () => {
-                const wrapper = L.DomUtil.create('div', 'search-area-btn-wrapper');
-                const btn = L.DomUtil.create('button', 'search-area-btn', wrapper);
-                btn.innerHTML = '<i class="fas fa-search-location"></i> Search This Area';
-                btn.style.display = 'none';
-                btn.onclick = (e) => {
-                    L.DomEvent.stopPropagation(e);
-                    this.searchCurrentArea();
-                    btn.style.display = 'none';
-                };
-                L.DomEvent.disableClickPropagation(wrapper);
-                this.searchAreaBtn = btn;
-                return wrapper;
-            }
+        const mapContainer = this.map.getContainer();
+        const wrapper = document.createElement('div');
+        wrapper.className = 'search-area-btn-wrapper';
+        const btn = document.createElement('button');
+        btn.className = 'search-area-btn';
+        btn.innerHTML = '<i class="fas fa-search-location"></i> Search This Area';
+        btn.style.display = 'none';
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.searchCurrentArea();
+            btn.style.display = 'none';
         });
-
-        this.map.addControl(new SearchAreaControl());
+        wrapper.appendChild(btn);
+        mapContainer.appendChild(wrapper);
+        L.DomEvent.disableClickPropagation(wrapper);
+        this.searchAreaBtn = btn;
     },
 
     /**
@@ -180,8 +185,9 @@ const MapModule = {
 
         this.userLocation = { lat: latitude, lng: longitude };
 
-        // Update map view if map exists
+        // Update map view if map exists (programmatic move, don't show search button)
         if (this.map && typeof L !== 'undefined') {
+            this._programmaticMove = true;
             this.map.setView([latitude, longitude], CONFIG.DEFAULT_ZOOM);
         }
 
@@ -312,6 +318,7 @@ const MapModule = {
             const layers = [...this.markers];
             if (this.userMarker) layers.push(this.userMarker);
             if (layers.length > 0) {
+                this._programmaticMove = true;
                 const group = L.featureGroup(layers);
                 this.map.fitBounds(group.getBounds().pad(0.1));
             }
@@ -461,6 +468,7 @@ const MapModule = {
     panToRestaurant(lat, lng) {
         if (!this.map) return;
         
+        this._programmaticMove = true;
         this.map.setView([lat, lng], 16, {
             animate: true,
             duration: 0.5

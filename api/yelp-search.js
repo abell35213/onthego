@@ -2,7 +2,7 @@ const YELP_BASE_URL = 'https://api.yelp.com/v3/businesses/search';
 const DEFAULT_SEARCH_RADIUS = 8047;
 const MAX_SEARCH_RADIUS_METERS = 40000;
 const DEFAULT_SEARCH_LIMIT = 20;
-const DEFAULT_CATEGORIES = 'restaurants';
+const DEFAULT_CATEGORIES = 'restaurants,bars,breweries,nightlife';
 const DEFAULT_SORT_BY = 'rating';
 const DEFAULT_CACHE_TTL_SECONDS = 300;
 
