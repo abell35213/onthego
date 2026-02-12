@@ -1018,6 +1018,31 @@ body {
     background-color: rgba(255, 107, 53, 0.1);
 }
 
+.trip-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.trip-countdown {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    background-color: var(--secondary-color);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.trip-countdown.soon {
+    background-color: var(--accent-color);
+}
+
+.trip-countdown.today {
+    background-color: var(--success-color);
+}
+
 .trip-city {
     font-size: 1.2rem;
     font-weight: 700;

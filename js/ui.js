@@ -203,7 +203,7 @@ const UI = {
         // Apply cuisine filter
         if (cuisineFilter) {
             filtered = filtered.filter(restaurant => {
-                return restaurant.categories.some(cat => cat.title === cuisineFilter);
+                return restaurant.categories && restaurant.categories.some(cat => cat.title === cuisineFilter);
             });
         }
 
@@ -229,7 +229,7 @@ const UI = {
             const lowerQuery = query.toLowerCase();
             filtered = filtered.filter(restaurant => {
                 const nameMatch = restaurant.name.toLowerCase().includes(lowerQuery);
-                const categoryMatch = restaurant.categories.some(cat => 
+                const categoryMatch = restaurant.categories && restaurant.categories.some(cat => 
                     cat.title.toLowerCase().includes(lowerQuery)
                 );
                 const location = restaurant.location;
@@ -277,6 +277,7 @@ const UI = {
         this.hideLoadingState();
         
         const restaurantList = document.getElementById('restaurantList');
+        if (!restaurantList) return;
         
         // Remove existing cards
         const existingCards = restaurantList.querySelectorAll('.restaurant-card');

@@ -366,11 +366,13 @@ const App = {
         if (defaultTrip) {
             select.value = `upcoming:${defaultTrip.id}`;
             this.applyTripSelection(defaultTrip, 'upcoming');
-        } else if (MOCK_TRAVEL_HISTORY.length > 0) {
-            // fallback: most recent past trip
-            const mostRecent = [...MOCK_TRAVEL_HISTORY].sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
-            select.value = `past:${mostRecent.id}`;
-            this.applyTripSelection(mostRecent, 'past');
+        } else {
+            // No upcoming trips: fall back to user's current GPS location
+            if (window.MapModule && window.MapModule.requestUserLocation) {
+                window.MapModule.requestUserLocation();
+            } else if (window.App && window.App.onLocationReady) {
+                window.App.onLocationReady(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG);
+            }
         }
 
         select.addEventListener('change', () => {

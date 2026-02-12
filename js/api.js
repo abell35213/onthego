@@ -19,7 +19,7 @@ const API = {
                 longitude,
                 radius: CONFIG.SEARCH_RADIUS,
                 limit: CONFIG.SEARCH_LIMIT,
-                categories: 'restaurants',
+                categories: 'restaurants,bars,breweries,nightlife',
                 sort_by: 'rating'
             };
 
@@ -46,7 +46,7 @@ const API = {
     },
 
     /**
-     * Get mock restaurant data
+     * Get mock restaurant data, relocated around the given coordinates
      * @param {number} latitude - User's latitude
      * @param {number} longitude - User's longitude
      * @returns {Promise<Array>} - Array of mock restaurant objects
@@ -55,17 +55,42 @@ const API = {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, CONFIG.MOCK_API_DELAY));
         
-        // Return mock data with updated distances based on user location
-        return MOCK_RESTAURANTS.map(restaurant => {
+        // Relocate mock restaurants around the given coordinates so they appear
+        // on the map regardless of which city/hotel is selected.
+        const offsets = [
+            { lat: 0.005, lng: 0.003 },
+            { lat: -0.003, lng: 0.006 },
+            { lat: 0.004, lng: -0.005 },
+            { lat: -0.006, lng: -0.002 },
+            { lat: 0.002, lng: -0.007 },
+            { lat: 0.006, lng: 0.005 },
+            { lat: -0.004, lng: -0.006 },
+            { lat: -0.002, lng: 0.008 },
+            { lat: 0.007, lng: -0.003 },
+            { lat: -0.005, lng: -0.004 },
+            { lat: 0.003, lng: 0.007 },
+            { lat: -0.007, lng: 0.002 },
+            { lat: 0.001, lng: -0.008 },
+            { lat: -0.004, lng: 0.005 },
+        ];
+
+        return MOCK_RESTAURANTS.map((restaurant, i) => {
+            const offset = offsets[i % offsets.length];
+            const newLat = latitude + offset.lat;
+            const newLng = longitude + offset.lng;
             const distance = this.calculateDistance(
                 latitude,
                 longitude,
-                restaurant.coordinates.latitude,
-                restaurant.coordinates.longitude
+                newLat,
+                newLng
             );
             
             return {
                 ...restaurant,
+                coordinates: {
+                    latitude: newLat,
+                    longitude: newLng
+                },
                 distance: Math.round(distance)
             };
         });
