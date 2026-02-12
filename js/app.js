@@ -2,6 +2,9 @@
 const App = {
     currentView: CONFIG.VIEW_MODE_WORLD,
 
+    locationControlsInitialized: false,
+    activeSearchContext: null,
+
     /**
      * Initialize the application
      */
@@ -26,6 +29,9 @@ const App = {
         // Initialize Map for local view (hidden initially)
         MapModule.init();
         
+        // Setup trip/hotel location controls (local view)
+        this.setupLocationControls();
+
         // Setup view toggle
         this.setupViewToggle();
 
@@ -102,7 +108,10 @@ const App = {
             this.currentView = CONFIG.VIEW_MODE_LOCAL;
             viewToggleBtn.innerHTML = '<i class="fas fa-globe"></i><span>World Map</span>';
             
-            // Initialize local map if not already done
+            
+            // Ensure location controls are initialized and default trip is selected
+            this.setupLocationControls();
+// Initialize local map if not already done
             if (MapModule.map) {
                 setTimeout(() => {
                     MapModule.map.invalidateSize();
@@ -232,14 +241,176 @@ const App = {
         });
     },
 
+        /**
+     * Setup trip/hotel selector (Upcoming + Past) and optional GPS button.
+     * Default selection: next upcoming trip.
+     */
+    setupLocationControls() {
+        if (this.locationControlsInitialized) return;
+
+        const select = document.getElementById('tripLocationSelect');
+        const gpsBtn = document.getElementById('useGpsBtn');
+
+        if (!select) return;
+
+        // Build dropdown options
+        select.innerHTML = '<option value="" disabled>Select a trip…</option>';
+
+        const upcomingGroup = document.createElement('optgroup');
+        upcomingGroup.label = 'Upcoming Trips';
+        MOCK_UPCOMING_TRIPS.forEach(trip => {
+            upcomingGroup.appendChild(this.createTripOption(trip, 'upcoming'));
+        });
+
+        const pastGroup = document.createElement('optgroup');
+        pastGroup.label = 'Past Trips';
+        MOCK_TRAVEL_HISTORY.forEach(trip => {
+            pastGroup.appendChild(this.createTripOption(trip, 'past'));
+        });
+
+        select.appendChild(upcomingGroup);
+        select.appendChild(pastGroup);
+
+        // Default to the next upcoming trip (earliest startDate that is today or later)
+        const defaultTrip = this.getNextUpcomingTrip();
+        if (defaultTrip) {
+            select.value = `upcoming:${defaultTrip.id}`;
+            this.applyTripSelection(defaultTrip, 'upcoming');
+        } else if (MOCK_TRAVEL_HISTORY.length > 0) {
+            // fallback: most recent past trip
+            const mostRecent = [...MOCK_TRAVEL_HISTORY].sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
+            select.value = `past:${mostRecent.id}`;
+            this.applyTripSelection(mostRecent, 'past');
+        }
+
+        select.addEventListener('change', () => {
+            const value = select.value || '';
+            const [type, id] = value.split(':');
+            if (!type || !id) return;
+
+            const list = type === 'upcoming' ? MOCK_UPCOMING_TRIPS : MOCK_TRAVEL_HISTORY;
+            const trip = list.find(t => t.id === id);
+            if (trip) {
+                this.applyTripSelection(trip, type);
+            }
+        });
+
+        if (gpsBtn) {
+            gpsBtn.addEventListener('click', () => {
+                if (window.MapModule && MapModule.requestUserLocation) {
+                    MapModule.requestUserLocation();
+                } else if (window.MapModule && MapModule.getUserLocation) {
+                    MapModule.getUserLocation();
+                }
+            });
+        }
+
+        this.locationControlsInitialized = true;
+    },
+
     /**
+     * Create a dropdown option for a trip.
+     */
+    createTripOption(trip, type) {
+        const option = document.createElement('option');
+        option.value = `${type}:${trip.id}`;
+
+        const dateRange = this.formatDateRange(trip.startDate, trip.endDate);
+        // Label requested: hotel + dates (include city in parentheses for clarity)
+        option.textContent = `${trip.hotel} (${trip.city}) — ${dateRange}`;
+        return option;
+    },
+
+    /**
+     * Pick the next upcoming trip (earliest upcoming trip starting today or later).
+     */
+    getNextUpcomingTrip() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const upcomingSorted = [...MOCK_UPCOMING_TRIPS]
+            .filter(t => t.startDate)
+            .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+        return upcomingSorted.find(t => {
+            const start = new Date(t.startDate);
+            start.setHours(0, 0, 0, 0);
+            return start >= today;
+        }) || upcomingSorted[0] || null;
+    },
+
+    /**
+     * Format a date range for display.
+     * Examples:
+     * - Mar 15–19, 2026
+     * - Mar 30 – Apr 2, 2026
+     * - Dec 30, 2026 – Jan 2, 2027
+     */
+    formatDateRange(startDateStr, endDateStr) {
+        const start = new Date(startDateStr);
+        const end = new Date(endDateStr);
+
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+            return `${startDateStr} – ${endDateStr}`;
+        }
+
+        const sY = start.getFullYear();
+        const eY = end.getFullYear();
+        const sM = start.toLocaleString('en-US', { month: 'short' });
+        const eM = end.toLocaleString('en-US', { month: 'short' });
+        const sD = start.getDate();
+        const eD = end.getDate();
+
+        const sameYear = sY === eY;
+        const sameMonth = sameYear && start.getMonth() === end.getMonth();
+
+        if (sameYear && sameMonth) {
+            return `${sM} ${sD}–${eD}, ${sY}`;
+        }
+        if (sameYear) {
+            return `${sM} ${sD} – ${eM} ${eD}, ${sY}`;
+        }
+        return `${sM} ${sD}, ${sY} – ${eM} ${eD}, ${eY}`;
+    },
+
+    /**
+     * Apply trip selection: update active label, center map, and load restaurants.
+     */
+    applyTripSelection(trip, type) {
+        const dateRange = this.formatDateRange(trip.startDate, trip.endDate);
+        const label = `${trip.hotel} • ${dateRange}`;
+
+        const activeLabel = document.getElementById('activeLocationLabel');
+        if (activeLabel) {
+            activeLabel.textContent = `Active: ${trip.hotel} • ${dateRange}`;
+        }
+
+        this.activeSearchContext = { type, tripId: trip.id };
+
+        const lat = trip.coordinates?.latitude;
+        const lng = trip.coordinates?.longitude;
+
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            if (window.MapModule && MapModule.setSearchCenter) {
+                MapModule.setSearchCenter(lat, lng, label);
+            } else if (window.App && App.onLocationReady) {
+                App.onLocationReady(lat, lng);
+            }
+        }
+    },
+/**
      * Called when user location is ready
      * @param {number} latitude - User's latitude
      * @param {number} longitude - User's longitude
      */
     async onLocationReady(latitude, longitude) {
         console.log(`Location ready: ${latitude}, ${longitude}`);
-        
+
+        // Show loading state in local view
+        if (window.UI && UI.showLoadingState) {
+            UI.showLoadingState();
+        }
+
         try {
             // Fetch restaurants
             const restaurants = await API.fetchRestaurants(latitude, longitude);

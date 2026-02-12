@@ -13,8 +13,6 @@ const MapModule = {
         // Check if Leaflet is available
         if (typeof L === 'undefined') {
             console.warn('Leaflet library not loaded. Map functionality disabled.');
-            // Still try to get user location for the restaurant list
-            this.getUserLocation();
             return;
         }
 
@@ -39,9 +37,6 @@ const MapModule = {
                 this.searchAreaBtn.style.display = 'block';
             }
         });
-
-        // Try to get user's location
-        this.getUserLocation();
     },
 
     /**
@@ -89,45 +84,56 @@ const MapModule = {
         }
     },
 
-    /**
-     * Get user's current location using Geolocation API
+        /**
+     * Set the active search center (trip/hotel or GPS), update map, and load restaurants.
+     * This is the primary way the app centers searches without forcing a GPS permission prompt.
      */
-    getUserLocation() {
+    setSearchCenter(lat, lng, label = 'Search Center') {
+        const latitude = Number(lat);
+        const longitude = Number(lng);
+
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+        this.userLocation = { lat: latitude, lng: longitude };
+
+        // Update map view if map exists
+        if (this.map && typeof L !== 'undefined') {
+            this.map.setView([latitude, longitude], CONFIG.DEFAULT_ZOOM);
+        }
+
+        // Remove existing search center marker
+        if (this.userMarker && this.map) {
+            try { this.map.removeLayer(this.userMarker); } catch (_) {}
+        }
+
+        // Add/update search center marker
+        this.addUserMarker(latitude, longitude, label);
+
+        // Load restaurants for this search center
+        if (window.App && window.App.onLocationReady) {
+            window.App.onLocationReady(latitude, longitude);
+        }
+    },
+
+    /**
+     * Request the user's live GPS location on-demand.
+     * This should only be triggered by an explicit user action.
+     */
+    requestUserLocation() {
+        this.    getUserLocation() {
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    this.userLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    
-                    // Center map on user location
-                    if (this.map) {
-                        this.map.setView([this.userLocation.lat, this.userLocation.lng], CONFIG.DEFAULT_ZOOM);
-                    }
-                    
-                    // Add user location marker
-                    this.addUserMarker(this.userLocation.lat, this.userLocation.lng);
-                    
-                    // Notify app that location is ready
-                    if (window.App && window.App.onLocationReady) {
-                        window.App.onLocationReady(this.userLocation.lat, this.userLocation.lng);
-                    }
+                    this.setSearchCenter(
+                        position.coords.latitude,
+                        position.coords.longitude,
+                        'My Location'
+                    );
                 },
                 (error) => {
                     console.error('Geolocation error:', error);
                     this.handleGeolocationError(error);
-                    
-                    // Use default location
-                    this.userLocation = {
-                        lat: CONFIG.DEFAULT_LAT,
-                        lng: CONFIG.DEFAULT_LNG
-                    };
-                    
-                    // Notify app with default location
-                    if (window.App && window.App.onLocationReady) {
-                        window.App.onLocationReady(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG);
-                    }
+                    // Do not override the current trip/hotel search center on error
                 },
                 {
                     enableHighAccuracy: true,
@@ -137,13 +143,8 @@ const MapModule = {
             );
         } else {
             console.log('Geolocation not supported');
-            this.userLocation = {
-                lat: CONFIG.DEFAULT_LAT,
-                lng: CONFIG.DEFAULT_LNG
-            };
-            
-            // Notify app with default location
-            if (window.App && window.App.onLocationReady) {
+            // If we don't have a search center yet, fall back to the default coords
+            if (!this.userLocation && window.App && window.App.onLocationReady) {
                 window.App.onLocationReady(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG);
             }
         }
@@ -178,7 +179,7 @@ const MapModule = {
      * @param {number} lat - Latitude
      * @param {number} lng - Longitude
      */
-    addUserMarker(lat, lng) {
+    addUserMarker(lat, lng, label = "Search Center") {
         if (!this.map || typeof L === 'undefined') return;
         
         // Create custom icon for user location
@@ -193,7 +194,7 @@ const MapModule = {
 
         this.userMarker = L.marker([lat, lng], { icon: userIcon })
             .addTo(this.map)
-            .bindPopup('<strong>Your Location</strong>')
+            .bindPopup(`<strong>${label}</strong>`)
             .openPopup();
     },
 
@@ -223,8 +224,12 @@ const MapModule = {
 
         // Fit map to show all markers if there are any
         if (this.markers.length > 0) {
-            const group = L.featureGroup([...this.markers, this.userMarker]);
+            const layers = [...this.markers];
+        if (this.userMarker) layers.push(this.userMarker);
+        if (layers.length > 0) {
+            const group = L.featureGroup(layers);
             this.map.fitBounds(group.getBounds().pad(0.1));
+        }
         }
     },
 
