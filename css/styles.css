@@ -694,7 +694,7 @@ body {
     .container {
         flex-direction: column;
         height: auto;
-        min-height: calc(100vh - 110px);
+        min-height: calc(100vh - 120px);
     }
     
     .sidebar {
@@ -1919,21 +1919,5 @@ body {
     
     .travel-log-content {
         padding: 1rem;
-    }
-    
-    .travel-log-entries {
-        grid-template-columns: 1fr;
-    }
-    
-    .travel-log-stats {
-        padding: 1rem;
-        gap: 1rem;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .travel-log-entry-header {
-        flex-direction: column;
-        gap: 0.25rem;
     }
 }
