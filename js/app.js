@@ -121,6 +121,63 @@ const App = {
     },
 
     /**
+     * Programmatically show the Local (Restaurant List) view.
+     * Use this when you need to jump into Local view from other UI elements
+     * (e.g., clicking a trip marker on the World Map).
+     */
+    showLocalView() {
+        const worldView = document.getElementById('worldView');
+        const localView = document.getElementById('localView');
+        const travelLogView = document.getElementById('travelLogView');
+        const viewToggleBtn = document.getElementById('viewToggle');
+
+        if (travelLogView) travelLogView.style.display = 'none';
+        if (worldView) worldView.style.display = 'none';
+        if (localView) localView.style.display = 'flex';
+
+        this.currentView = CONFIG.VIEW_MODE_LOCAL;
+        if (viewToggleBtn) {
+            viewToggleBtn.innerHTML = '<i class="fas fa-globe"></i><span>World Map</span>';
+        }
+
+        // Ensure controls exist
+        this.setupLocationControls();
+
+        // Fix Leaflet sizing when the map container becomes visible
+        if (window.MapModule && MapModule.map) {
+            setTimeout(() => {
+                try { MapModule.map.invalidateSize(); } catch (e) {}
+            }, 120);
+        }
+    },
+
+    /**
+     * Called by the World Map when a trip marker/card is clicked.
+     * Switches to Local view, selects the trip in the dropdown, and loads restaurants.
+     *
+     * @param {string} tripId
+     * @param {boolean} isPast
+     */
+    openTripFromWorldMap(tripId, isPast) {
+        const type = isPast ? 'past' : 'upcoming';
+        const list = isPast ? MOCK_TRAVEL_HISTORY : MOCK_UPCOMING_TRIPS;
+        const trip = list.find(t => t.id === tripId);
+        if (!trip) return;
+
+        this.showLocalView();
+
+        const select = document.getElementById('tripLocationSelect');
+        if (select) {
+            select.value = `${type}:${trip.id}`;
+        }
+
+        // Apply after a short delay to allow the view/map to render
+        setTimeout(() => {
+            this.applyTripSelection(trip, type);
+        }, 160);
+    },
+
+    /**
      * Show My Travel Log view
      */
     showTravelLog() {

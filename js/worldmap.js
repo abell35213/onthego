@@ -68,6 +68,12 @@ const WorldMap = {
 
         var self = this;
         marker.on('click', function() {
+            // Preferred behavior: jump straight to Restaurant List (Local view)
+            if (window.App && typeof App.openTripFromWorldMap === 'function') {
+                App.openTripFromWorldMap(trip.id, isPast);
+                return;
+            }
+            // Fallback: keep existing world-map highlight behavior
             self.highlightTrip(trip.id, isPast);
         });
 
@@ -470,6 +476,11 @@ const WorldMap = {
 
         var self = this;
         card.addEventListener('click', function() {
+            // Same behavior as map markers: open Local view for the selected trip
+            if (window.App && typeof App.openTripFromWorldMap === 'function') {
+                App.openTripFromWorldMap(trip.id, isPast);
+                return;
+            }
             self.highlightTrip(trip.id, isPast);
         });
 
