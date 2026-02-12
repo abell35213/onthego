@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>OnTheGo — Find the perfect spot while on the go for work.</title>
+    <title>OnTheGo — Find the perfect spot for dinner while traveling for work.</title>
     <meta name="description" content="Find the best places to visit when traveling on sales trips. Curated nearby restaurant, hangouts, and bars with socials, ratings, and delivery links." />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <style>
@@ -88,15 +88,15 @@
     <div class="container">
         <header>
             <a class="brand" href="#">
-                <div class="logo">RS</div>
+                <div class="logo">OTG</div>
                 <div>
-                    <div style="font-weight:700">RoadStay</div>
-                    <div style="font-size:12px;color:var(--muted)">Short stays for sales trips</div>
+                    <div style="font-weight:700">OnTheGO</div>
+                    <div style="font-size:12px;color:var(--muted)">Perfect spots during sales trips</div>
                 </div>
             </a>
 
             <nav aria-label="Primary navigation">
-                <a class="nav-link" href="#features">Why RoadStay</a>
+                <a class="nav-link" href="#features">Why OnTheGo</a>
                 <a class="nav-link" href="#how">How it works</a>
                 <a class="nav-link" href="#nearby">Nearby spots</a>
             </nav>
@@ -106,8 +106,8 @@
 
         <main class="hero" role="main">
             <section class="card" aria-labelledby="hero-heading">
-                <h1 id="hero-heading" class="headline">Short stays, zero hassle — built for traveling salespeople</h1>
-                <p class="sub">In and out of a city for one or two nights? RoadStay finds quick options near your hotel, surfaces curated places with reviews, delivery links and social profiles.</p>
+                <h1 id="hero-heading" class="headline">Best spots, zero hassle — built for traveling salespeople</h1>
+                <p class="sub">In and out of a city for one or two nights? OnTheGo finds quick options near your hotel, surfaces curated places with reviews, delivery links and social profiles.</p>
 
                 <form class="lead-form" id="newsletterForm" onsubmit="event.preventDefault(); handleQuickSignup();">
                     <input class="lead-input" id="newsletterEmail" type="email" placeholder="Work email (ex: you@company.com)" required aria-label="Email">
@@ -115,7 +115,6 @@
                 </form>
 
                 <div class="features" id="features" aria-hidden="false">
-                    <div class="feature"><div class="icon">⚡</div><div><strong>Fast check-in</strong><span style="color:var(--muted);font-size:13px"> Book last-minute stays</span></div></div>
                     <div class="feature"><div class="icon">📍</div><div><strong>Near your meetings</strong><span style="color:var(--muted);font-size:13px"> Filter by neighborhood and travel time</span></div></div>
                     <div class="feature"><div class="icon">🔒</div><div><strong>Business-ready</strong><span style="color:var(--muted);font-size:13px"> Receipts and flexible check-out</span></div></div>
                     <div class="feature"><div class="icon">🤝</div><div><strong>Team-friendly</strong><span style="color:var(--muted);font-size:13px"> Corporate profiles and itinerary sync</span></div></div>
@@ -198,7 +197,7 @@
                     </div>
 
                     <div id="result" class="result" style="margin-top:12px;min-height:56px">
-                        <div class="small muted">Enter a city and date to see availability and nearby spots.</div>
+                        <div class="small muted">Enter a city and date to see dinning availability and nearby spots.</div>
                     </div>
                 </div>
             </aside>
@@ -232,7 +231,7 @@
     <!-- Signup/Reserve Modal -->
     <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
         <div class="modal" role="document" aria-labelledby="modalTitle" tabindex="-1">
-            <h2 id="modalTitle" style="margin:0 0 8px 0">Reserve your quick stay</h2>
+            <h2 id="modalTitle" style="margin:0 0 8px 0">Reserve Your Table Today</h2>
             <p class="small muted" style="margin:0 0 12px 0">Enter details to reserve (demo). We'll show confirmation and save locally.</p>
 
             <form id="fullForm" onsubmit="event.preventDefault(); submitReservation();">
