@@ -468,7 +468,29 @@ const WorldMap = {
         var dateRange = this.formatDate(trip.startDate) + ' - ' + this.formatDate(trip.endDate);
         var restaurantCount = isPast && trip.restaurantsVisited ? trip.restaurantsVisited.length : 0;
 
-        card.innerHTML = '<div class="trip-city">' + trip.city + ', ' + trip.state + '</div>' +
+        // Flighty-inspired countdown badge for upcoming trips
+        var countdownHtml = '';
+        if (!isPast && trip.startDate) {
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            var start = new Date(trip.startDate);
+            start.setHours(0, 0, 0, 0);
+            var diffDays = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
+            if (diffDays === 0) {
+                countdownHtml = '<span class="trip-countdown today">Today</span>';
+            } else if (diffDays === 1) {
+                countdownHtml = '<span class="trip-countdown soon">Tomorrow</span>';
+            } else if (diffDays > 0 && diffDays <= 7) {
+                countdownHtml = '<span class="trip-countdown soon">In ' + diffDays + ' days</span>';
+            } else if (diffDays > 7) {
+                countdownHtml = '<span class="trip-countdown">In ' + diffDays + ' days</span>';
+            }
+        }
+
+        card.innerHTML = '<div class="trip-card-top">' +
+                '<div class="trip-city">' + trip.city + ', ' + trip.state + '</div>' +
+                countdownHtml +
+            '</div>' +
             '<div class="trip-dates"><i class="fas fa-calendar"></i> ' + dateRange + '</div>' +
             '<div class="trip-hotel"><i class="fas fa-hotel"></i> ' + trip.hotel + '</div>' +
             (restaurantCount > 0 ? '<div class="trip-restaurants"><i class="fas fa-utensils"></i> ' + restaurantCount + ' restaurant' + (restaurantCount > 1 ? 's' : '') + ' visited</div>' : '') +

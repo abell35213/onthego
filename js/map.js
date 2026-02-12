@@ -310,7 +310,9 @@ const MapModule = {
 
         restaurants.forEach(restaurant => {
             const marker = this.createRestaurantMarker(restaurant);
-            this.markers.push(marker);
+            if (marker) {
+                this.markers.push(marker);
+            }
         });
 
         // Fit map to show all markers if there are any (unless explicitly skipped)
