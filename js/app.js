@@ -368,10 +368,10 @@ const App = {
             this.applyTripSelection(defaultTrip, 'upcoming');
         } else {
             // No upcoming trips: fall back to user's current GPS location
-            if (window.MapModule && MapModule.requestUserLocation) {
-                MapModule.requestUserLocation();
-            } else if (window.App && App.onLocationReady) {
-                App.onLocationReady(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG);
+            if (window.MapModule && window.MapModule.requestUserLocation) {
+                window.MapModule.requestUserLocation();
+            } else if (window.App && window.App.onLocationReady) {
+                window.App.onLocationReady(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG);
             }
         }
 
