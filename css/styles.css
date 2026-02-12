@@ -523,6 +523,15 @@ body {
 }
 
 /* ===== Search Area Button on Map ===== */
+.search-area-btn-wrapper {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: auto;
+}
+
 .search-area-btn {
     background-color: var(--bg-white);
     color: var(--text-dark);
@@ -537,7 +546,6 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    z-index: 1000;
 }
 
 .search-area-btn:hover {
@@ -548,6 +556,70 @@ body {
 }
 
 .search-area-btn i {
+    font-size: 1rem;
+}
+
+/* ===== Directions Control on Map ===== */
+.map-directions-control {
+    position: relative;
+}
+
+.directions-toggle-btn {
+    background-color: var(--bg-white);
+    color: var(--text-dark);
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.directions-toggle-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.directions-dropdown {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--shadow-hover);
+    min-width: 160px;
+    z-index: 1001;
+    overflow: hidden;
+}
+
+.directions-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    color: var(--text-dark);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.directions-option:hover {
+    background-color: var(--bg-light);
+    color: var(--primary-color);
+}
+
+.directions-option i {
+    width: 18px;
+    text-align: center;
     font-size: 1rem;
 }
 

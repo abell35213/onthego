@@ -22,14 +22,39 @@ const MapModule = {
             CONFIG.DEFAULT_ZOOM
         );
 
-        // Add Esri satellite tiles for Google Earth-style satellite view
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-            maxZoom: 19
-        }).addTo(this.map);
+        // Define tile layers
+        this.tileLayers = {
+            'Satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri',
+                maxZoom: 19
+            }),
+            'Google Roads': L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                attribution: '&copy; Google Maps',
+                maxZoom: 20
+            }),
+            'Google Hybrid': L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                attribution: '&copy; Google Maps',
+                maxZoom: 20
+            }),
+            'Street Map': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 19
+            })
+        };
+
+        // Add default satellite layer
+        this.tileLayers['Satellite'].addTo(this.map);
+
+        // Add layer control
+        L.control.layers(this.tileLayers, null, { position: 'topright', collapsed: true }).addTo(this.map);
 
         // Add "Search This Area" button
         this.addSearchAreaButton();
+
+        // Add directions control
+        this.addDirectionsControl();
 
         // Listen for map move to show search area button
         this.map.on('moveend', () => {
@@ -40,15 +65,16 @@ const MapModule = {
     },
 
     /**
-     * Add a "Search This Area" button overlay on the map
+     * Add a "Search This Area" button overlay on the map (bottom center)
      */
     addSearchAreaButton() {
         if (!this.map) return;
 
         const SearchAreaControl = L.Control.extend({
-            options: { position: 'topright' },
+            options: { position: 'bottomleft' },
             onAdd: () => {
-                const btn = L.DomUtil.create('button', 'search-area-btn');
+                const wrapper = L.DomUtil.create('div', 'search-area-btn-wrapper');
+                const btn = L.DomUtil.create('button', 'search-area-btn', wrapper);
                 btn.innerHTML = '<i class="fas fa-search-location"></i> Search This Area';
                 btn.style.display = 'none';
                 btn.onclick = (e) => {
@@ -56,9 +82,9 @@ const MapModule = {
                     this.searchCurrentArea();
                     btn.style.display = 'none';
                 };
-                L.DomEvent.disableClickPropagation(btn);
+                L.DomEvent.disableClickPropagation(wrapper);
                 this.searchAreaBtn = btn;
-                return btn;
+                return wrapper;
             }
         });
 
@@ -66,7 +92,64 @@ const MapModule = {
     },
 
     /**
-     * Search for restaurants in the current map view area
+     * Add directions control dropdown to the top-right of the map
+     */
+    addDirectionsControl() {
+        if (!this.map) return;
+
+        const DirectionsControl = L.Control.extend({
+            options: { position: 'topright' },
+            onAdd: () => {
+                const container = L.DomUtil.create('div', 'map-directions-control');
+                container.innerHTML = `
+                    <button class="directions-toggle-btn" title="Get Directions">
+                        <i class="fas fa-directions"></i>
+                    </button>
+                    <div class="directions-dropdown" style="display:none;">
+                        <a class="directions-option" data-provider="google" href="#" title="Google Maps">
+                            <i class="fas fa-map-marked-alt"></i> Google Maps
+                        </a>
+                        <a class="directions-option" data-provider="apple" href="#" title="Apple Maps">
+                            <i class="fab fa-apple"></i> Apple Maps
+                        </a>
+                    </div>
+                `;
+                const toggleBtn = container.querySelector('.directions-toggle-btn');
+                const dropdown = container.querySelector('.directions-dropdown');
+
+                toggleBtn.addEventListener('click', (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                });
+
+                container.querySelectorAll('.directions-option').forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        L.DomEvent.stopPropagation(e);
+                        const provider = opt.dataset.provider;
+                        const center = this.map.getCenter();
+                        let url;
+                        if (provider === 'apple') {
+                            url = `https://maps.apple.com/?daddr=${center.lat},${center.lng}`;
+                        } else {
+                            url = `https://www.google.com/maps/dir/?api=1&destination=${center.lat},${center.lng}`;
+                        }
+                        window.open(url, '_blank', 'noopener,noreferrer');
+                        dropdown.style.display = 'none';
+                    });
+                });
+
+                L.DomEvent.disableClickPropagation(container);
+                return container;
+            }
+        });
+
+        this.map.addControl(new DirectionsControl());
+    },
+
+    /**
+     * Search for restaurants in the current map view area.
+     * Preserves the current map zoom/position instead of re-fitting bounds.
      */
     async searchCurrentArea() {
         const center = this.map.getCenter();
@@ -78,7 +161,7 @@ const MapModule = {
         try {
             const restaurants = await API.fetchRestaurants(lat, lng);
             console.log(`Found ${restaurants.length} restaurants in area`);
-            UI.setRestaurants(restaurants);
+            UI.setRestaurants(restaurants, { skipFitBounds: true });
         } catch (error) {
             console.error('Error searching area:', error);
         }
@@ -210,8 +293,10 @@ const MapModule = {
     /**
      * Add restaurant markers to map
      * @param {Array} restaurants - Array of restaurant objects
+     * @param {Object} [options] - Options
+     * @param {boolean} [options.skipFitBounds=false] - When true, do not auto-zoom to fit markers
      */
-    addRestaurantMarkers(restaurants) {
+    addRestaurantMarkers(restaurants, options = {}) {
         if (!this.map || typeof L === 'undefined') return;
         
         this.clearMarkers();
@@ -221,14 +306,14 @@ const MapModule = {
             this.markers.push(marker);
         });
 
-        // Fit map to show all markers if there are any
-        if (this.markers.length > 0) {
+        // Fit map to show all markers if there are any (unless explicitly skipped)
+        if (!options.skipFitBounds && this.markers.length > 0) {
             const layers = [...this.markers];
-        if (this.userMarker) layers.push(this.userMarker);
-        if (layers.length > 0) {
-            const group = L.featureGroup(layers);
-            this.map.fitBounds(group.getBounds().pad(0.1));
-        }
+            if (this.userMarker) layers.push(this.userMarker);
+            if (layers.length > 0) {
+                const group = L.featureGroup(layers);
+                this.map.fitBounds(group.getBounds().pad(0.1));
+            }
         }
     },
 
@@ -308,7 +393,11 @@ const MapModule = {
             restaurant.name, 
             location ? location.city : ''
         );
-        const socialLinks = API.getSocialMediaLinks(restaurant.name);
+        const socialLinks = API.getSocialMediaLinks(
+            restaurant.name,
+            location ? location.city : '',
+            location ? location.state : ''
+        );
 
         return `
             <div class="popup-content popup-content-full">

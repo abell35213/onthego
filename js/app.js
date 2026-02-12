@@ -506,8 +506,9 @@ const App = {
             const restaurants = await API.fetchRestaurants(latitude, longitude);
             console.log(`Found ${restaurants.length} restaurants`);
             
-            // Update UI with restaurants
-            UI.setRestaurants(restaurants);
+            // Update UI with restaurants; skip fitBounds so the map stays at the
+            // zoom level set by setSearchCenter / requestUserLocation
+            UI.setRestaurants(restaurants, { skipFitBounds: true });
             
         } catch (error) {
             console.error('Error loading restaurants:', error);

@@ -205,7 +205,7 @@ const WorldMap = {
             // Get delivery, reservation, and social media links
             var deliveryLinks = API.getDeliveryLinks(restaurant.name, trip.city);
             var reservationLinks = API.getReservationLinks(restaurant.name, trip.city);
-            var socialLinks = API.getSocialMediaLinks(restaurant.name);
+            var socialLinks = API.getSocialMediaLinks(restaurant.name, trip.city, trip.state);
 
             var popupContent = '<div class="popup-content popup-content-full">' +
                 '<div class="popup-header"><div>' +
