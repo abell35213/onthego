@@ -97,19 +97,23 @@ const API = {
     /**
      * Generate social media search URLs
      * @param {string} restaurantName - Name of the restaurant
+     * @param {string} [city] - City name
+     * @param {string} [state] - State abbreviation
      * @returns {Object} - Object containing social media URLs
      */
-    getSocialMediaLinks(restaurantName) {
+    getSocialMediaLinks(restaurantName, city, state) {
+        const locationParts = [restaurantName, city, state].filter(Boolean);
         const encodedName = encodeURIComponent(restaurantName);
+        const encodedQuery = encodeURIComponent(locationParts.join(' '));
         
         return {
             instagram: `https://www.instagram.com/explore/tags/${encodedName.replace(/%20/g, '')}/`,
-            facebook: `https://www.facebook.com/search/top?q=${encodedName}`,
-            twitter: `https://twitter.com/search?q=${encodedName}`,
+            facebook: `https://www.facebook.com/search/top?q=${encodedQuery}`,
+            twitter: `https://twitter.com/search?q=${encodedQuery}`,
             // Fallback search links
-            instagramSearch: `https://www.google.com/search?q=${encodedName}+instagram`,
-            facebookSearch: `https://www.google.com/search?q=${encodedName}+facebook`,
-            twitterSearch: `https://www.google.com/search?q=${encodedName}+twitter`
+            instagramSearch: `https://www.google.com/search?q=${encodedQuery}+instagram`,
+            facebookSearch: `https://www.google.com/search?q=${encodedQuery}+facebook`,
+            twitterSearch: `https://www.google.com/search?q=${encodedQuery}+twitter`
         };
     },
 

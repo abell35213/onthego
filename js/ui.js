@@ -144,10 +144,13 @@ const UI = {
     /**
      * Set restaurants data and populate cuisine filter
      * @param {Array} restaurants - Array of restaurant objects
+     * @param {Object} [options] - Options
+     * @param {boolean} [options.skipFitBounds=false] - When true, do not auto-zoom map to fit markers
      */
-    setRestaurants(restaurants) {
+    setRestaurants(restaurants, options = {}) {
         this.restaurants = restaurants;
         this.filteredRestaurants = [...restaurants];
+        this._renderOptions = options;
         this.populateCuisineFilter();
         this.applyFilters();
     },
@@ -294,7 +297,9 @@ const UI = {
 
         // Update map markers
         if (window.MapModule && window.MapModule.addRestaurantMarkers) {
-            window.MapModule.addRestaurantMarkers(restaurants);
+            const opts = this._renderOptions || {};
+            window.MapModule.addRestaurantMarkers(restaurants, { skipFitBounds: !!opts.skipFitBounds });
+            this._renderOptions = null;
         }
     },
 
@@ -320,7 +325,11 @@ const UI = {
             : '';
 
         // Get social media links
-        const socialLinks = API.getSocialMediaLinks(restaurant.name);
+        const socialLinks = API.getSocialMediaLinks(
+            restaurant.name,
+            location ? location.city : '',
+            location ? location.state : ''
+        );
         
         // Get delivery links
         const deliveryLinks = API.getDeliveryLinks(restaurant.name, address);
