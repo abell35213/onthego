@@ -8,6 +8,7 @@ const UI = {
      */
     init() {
         this.setupEventListeners();
+        this.setupSidebarResize();
         this.showLoadingState();
     },
 
@@ -35,6 +36,67 @@ const UI = {
         if (ambianceFilter) ambianceFilter.addEventListener('change', () => this.applyFilters());
         if (sortBy) sortBy.addEventListener('change', () => this.applyFilters());
         if (visitedFilter) visitedFilter.addEventListener('change', () => this.applyFilters());
+    },
+
+    /**
+     * Setup sidebar resize handle and toggle button
+     */
+    setupSidebarResize() {
+        const sidebar = document.getElementById('searchSidebar');
+        const handle = document.getElementById('sidebarResizeHandle');
+        const toggleBtn = document.getElementById('sidebarToggleBtn');
+        if (!sidebar || !handle) return;
+
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+
+        handle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = sidebar.offsetWidth;
+            handle.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const newWidth = startWidth + (e.clientX - startX);
+            const clampedWidth = Math.max(280, Math.min(newWidth, 600));
+            sidebar.style.width = clampedWidth + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isResizing) return;
+            isResizing = false;
+            handle.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            // Refresh map size after resize
+            if (window.MapModule && MapModule.map) {
+                MapModule.map.invalidateSize();
+            }
+        });
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
+                if (isCollapsed) {
+                    sidebar.dataset.prevWidth = sidebar.style.width || '380px';
+                    sidebar.style.width = '0px';
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                } else {
+                    sidebar.style.width = sidebar.dataset.prevWidth || '380px';
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                }
+                // Refresh map size after toggle
+                if (window.MapModule && MapModule.map) {
+                    setTimeout(() => { MapModule.map.invalidateSize(); }, 200);
+                }
+            });
+        }
     },
 
     /**

@@ -61,12 +61,65 @@ body {
 
 /* ===== Sidebar ===== */
 .sidebar {
-    width: 450px;
+    width: 380px;
+    min-width: 280px;
     background-color: var(--bg-white);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative;
+}
+
+/* ===== Sidebar Resize Handle ===== */
+.sidebar-resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 10;
+    transition: background-color 0.2s;
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle.active {
+    background-color: var(--primary-color);
+}
+
+.sidebar-collapsed .filters,
+.sidebar-collapsed .search-container,
+.sidebar-collapsed .location-controls {
+    display: none;
+}
+
+/* ===== Sidebar Toggle Button ===== */
+.sidebar-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: -16px;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 48px;
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    font-size: 0.7rem;
+    color: var(--text-light);
+    transition: all 0.2s;
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
 }
 
 /* ===== Search Bar ===== */
@@ -417,6 +470,10 @@ body {
     box-shadow: var(--shadow-hover);
 }
 
+.leaflet-popup-content {
+    margin: 12px 16px;
+}
+
 .popup-content {
     min-width: 200px;
 }
@@ -437,24 +494,28 @@ body {
 
 .popup-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 0.75rem;
 }
 
 .popup-btn {
-    flex: 1;
-    padding: 0.5rem;
+    flex: 0 0 auto;
+    padding: 0.5rem 0.7rem;
     background-color: var(--primary-color);
     color: white;
     border: none;
     border-radius: 6px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.3s;
     text-align: center;
     text-decoration: none;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
 }
 
 .popup-btn:hover {
@@ -1354,8 +1415,8 @@ body {
 
 /* ===== Enhanced Popup Styles ===== */
 .popup-content-full {
-    min-width: 280px;
-    max-width: 320px;
+    min-width: 320px;
+    max-width: 400px;
 }
 
 .popup-header {
@@ -1540,6 +1601,36 @@ body {
     font-size: 0.85rem;
     color: var(--text-light);
     font-style: italic;
+}
+
+.travel-log-expense {
+    margin-left: auto;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.travel-log-trip-total {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    background-color: rgba(255, 107, 53, 0.08);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+}
+
+.travel-log-trip-total i {
+    color: var(--primary-color);
+}
+
+.concur-synced {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--success-color);
+    font-weight: 500;
 }
 
 .travel-log-stats {

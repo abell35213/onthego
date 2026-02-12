@@ -50,6 +50,22 @@ const Account = {
             this.connectAccount('tripit');
         });
 
+        // Marriott Bonvoy connection
+        const marriottConnectBtn = document.getElementById('marriottConnect');
+        if (marriottConnectBtn) {
+            marriottConnectBtn.addEventListener('click', () => {
+                this.connectAccount('marriott');
+            });
+        }
+
+        // Hilton Honors connection
+        const hiltonConnectBtn = document.getElementById('hiltonConnect');
+        if (hiltonConnectBtn) {
+            hiltonConnectBtn.addEventListener('click', () => {
+                this.connectAccount('hilton');
+            });
+        }
+
         // Disconnect buttons (delegated event)
         modal.addEventListener('click', (e) => {
             if (e.target.classList.contains('disconnect-btn')) {
@@ -238,8 +254,12 @@ const Account = {
             // Update user account state
             if (accountType === 'concur') {
                 USER_ACCOUNT.concurConnected = true;
-            } else {
+            } else if (accountType === 'tripit') {
                 USER_ACCOUNT.tripitConnected = true;
+            } else if (accountType === 'marriott') {
+                USER_ACCOUNT.marriottConnected = true;
+            } else if (accountType === 'hilton') {
+                USER_ACCOUNT.hiltonConnected = true;
             }
             USER_ACCOUNT.lastSync = new Date().toISOString();
 
@@ -248,10 +268,17 @@ const Account = {
             statusDiv.style.display = 'flex';
             this.updateSyncInfo();
 
+            const displayNames = {
+                concur: 'Concur',
+                tripit: 'TripIt',
+                marriott: 'Marriott Bonvoy',
+                hilton: 'Hilton Honors'
+            };
+
             console.log(`${accountType} connected successfully`);
             
             // Show success message
-            this.showNotification(`${accountType === 'concur' ? 'Concur' : 'TripIt'} connected successfully!`);
+            this.showNotification(`${displayNames[accountType] || accountType} connected successfully!`);
         }, 1500);
     },
 
@@ -266,21 +293,32 @@ const Account = {
         // Update user account state
         if (accountType === 'concur') {
             USER_ACCOUNT.concurConnected = false;
-        } else {
+        } else if (accountType === 'tripit') {
             USER_ACCOUNT.tripitConnected = false;
+        } else if (accountType === 'marriott') {
+            USER_ACCOUNT.marriottConnected = false;
+        } else if (accountType === 'hilton') {
+            USER_ACCOUNT.hiltonConnected = false;
         }
+
+        const displayNames = {
+            concur: 'Concur',
+            tripit: 'TripIt',
+            marriott: 'Marriott Bonvoy',
+            hilton: 'Hilton Honors'
+        };
 
         // Update UI
         connectBtn.style.display = 'flex';
         statusDiv.style.display = 'none';
         connectBtn.disabled = false;
         connectBtn.innerHTML = '<i class="fas fa-plug"></i> <span class="connect-text">Connect ' + 
-                               (accountType === 'concur' ? 'Concur' : 'TripIt') + '</span>';
+                               (displayNames[accountType] || accountType) + '</span>';
 
         this.updateSyncInfo();
 
         console.log(`${accountType} disconnected`);
-        this.showNotification(`${accountType === 'concur' ? 'Concur' : 'TripIt'} disconnected.`);
+        this.showNotification(`${displayNames[accountType] || accountType} disconnected.`);
     },
 
     /**
@@ -297,6 +335,20 @@ const Account = {
             document.getElementById('tripitStatus').style.display = 'flex';
         }
 
+        if (USER_ACCOUNT.marriottConnected) {
+            const btn = document.getElementById('marriottConnect');
+            const status = document.getElementById('marriottStatus');
+            if (btn) btn.style.display = 'none';
+            if (status) status.style.display = 'flex';
+        }
+
+        if (USER_ACCOUNT.hiltonConnected) {
+            const btn = document.getElementById('hiltonConnect');
+            const status = document.getElementById('hiltonStatus');
+            if (btn) btn.style.display = 'none';
+            if (status) status.style.display = 'flex';
+        }
+
         this.updateSyncInfo();
     },
 
@@ -307,7 +359,7 @@ const Account = {
         const syncInfo = document.getElementById('syncInfo');
         const lastSyncTime = document.getElementById('lastSyncTime');
 
-        if (USER_ACCOUNT.concurConnected || USER_ACCOUNT.tripitConnected) {
+        if (USER_ACCOUNT.concurConnected || USER_ACCOUNT.tripitConnected || USER_ACCOUNT.marriottConnected || USER_ACCOUNT.hiltonConnected) {
             syncInfo.style.display = 'block';
             
             if (USER_ACCOUNT.lastSync) {

@@ -178,13 +178,28 @@ const App = {
     },
 
     /**
-     * Show My Travel Log view
+     * Show My Travel Log view (toggles back to World Map if already viewing)
      */
     showTravelLog() {
         const worldView = document.getElementById('worldView');
         const localView = document.getElementById('localView');
         const travelLogView = document.getElementById('travelLogView');
         const viewToggleBtn = document.getElementById('viewToggle');
+
+        if (this.currentView === CONFIG.VIEW_MODE_TRAVEL_LOG) {
+            // Toggle back to world map
+            if (travelLogView) travelLogView.style.display = 'none';
+            worldView.style.display = 'flex';
+            this.currentView = CONFIG.VIEW_MODE_WORLD;
+            viewToggleBtn.innerHTML = '<i class="fas fa-list"></i><span>Restaurant List</span>';
+
+            if (WorldMap._leafletMap) {
+                setTimeout(() => {
+                    WorldMap._leafletMap.invalidateSize();
+                }, 100);
+            }
+            return;
+        }
 
         worldView.style.display = 'none';
         localView.style.display = 'none';
@@ -213,6 +228,10 @@ const App = {
         const totalCities = new Set(allTrips.map(t => t.city)).size;
         const totalRestaurantsVisited = allTrips.reduce((sum, t) => sum + (t.restaurantsVisited ? t.restaurantsVisited.length : 0), 0);
         const totalHotels = new Set(allTrips.map(t => t.hotel)).size;
+        const totalDiningSpent = allTrips.reduce((sum, t) => {
+            if (!t.diningExpenses) return sum;
+            return sum + t.diningExpenses.reduce((s, e) => s + e.amount, 0);
+        }, 0);
 
         statsContainer.innerHTML = `
             <div class="travel-log-stat">
@@ -230,6 +249,10 @@ const App = {
             <div class="travel-log-stat">
                 <div class="travel-log-stat-number">${totalRestaurantsVisited}</div>
                 <div class="travel-log-stat-label">Places Eaten</div>
+            </div>
+            <div class="travel-log-stat">
+                <div class="travel-log-stat-number">$${totalDiningSpent.toFixed(2)}</div>
+                <div class="travel-log-stat-label">Dining Spent</div>
             </div>
         `;
 
@@ -257,11 +280,14 @@ const App = {
                     ${trips.map(trip => {
                         const dateRange = `${WorldMap.formatDate(trip.startDate)} - ${WorldMap.formatDate(trip.endDate)}`;
                         const visitedRestaurants = trip.restaurantsVisited || [];
+                        const diningExpenses = trip.diningExpenses || [];
+                        const tripDiningTotal = diningExpenses.reduce((s, e) => s + e.amount, 0);
                         
                         // Look up restaurant names from MOCK_RESTAURANTS
                         const restaurantDetails = visitedRestaurants.map(id => {
                             const r = MOCK_RESTAURANTS.find(mr => mr.id === id);
-                            return r ? r : null;
+                            const expense = diningExpenses.find(e => e.restaurantId === id);
+                            return r ? { ...r, expenseAmount: expense ? expense.amount : null } : null;
                         }).filter(r => r !== null);
 
                         return `
@@ -283,9 +309,16 @@ const App = {
                                                 <span class="stars">${API.getStarRating(r.rating)}</span>
                                                 <span>${r.name}</span>
                                                 <span style="color:var(--success-color);font-weight:700;">${r.price || ''}</span>
+                                                ${r.expenseAmount !== null ? `<span class="travel-log-expense">$${r.expenseAmount.toFixed(2)}</span>` : ''}
                                             </div>
                                         `).join('')}
                                     </div>
+                                    ${tripDiningTotal > 0 ? `
+                                        <div class="travel-log-trip-total">
+                                            <i class="fas fa-receipt"></i> Trip Dining Total: <strong>$${tripDiningTotal.toFixed(2)}</strong>
+                                            ${USER_ACCOUNT.concurConnected ? '<span class="concur-synced"><i class="fas fa-check-circle"></i> Synced with Concur</span>' : ''}
+                                        </div>
+                                    ` : ''}
                                 ` : `
                                     <div class="travel-log-no-restaurants">No dining records for this trip</div>
                                 `}

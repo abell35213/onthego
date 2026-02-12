@@ -120,7 +120,6 @@ const MapModule = {
      * This should only be triggered by an explicit user action.
      */
     requestUserLocation() {
-        this.    getUserLocation() {
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -260,7 +259,7 @@ const MapModule = {
         // Create and return marker
         const marker = L.marker([lat, lng], { icon: restaurantIcon })
             .addTo(this.map)
-            .bindPopup(popupContent, { maxWidth: 350, minWidth: 280 });
+            .bindPopup(popupContent, { maxWidth: 420, minWidth: 320 });
 
         // Add click event to highlight corresponding card
         marker.on('click', () => {
