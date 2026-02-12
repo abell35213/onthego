@@ -65,7 +65,8 @@ const MapModule = {
     },
 
     /**
-     * Add a "Search This Area" button overlay on the map (bottom center)
+     * Add a "Search This Area" button overlay on the map.
+     * Uses Leaflet's 'bottomleft' position; CSS centers it horizontally via transform.
      */
     addSearchAreaButton() {
         if (!this.map) return;

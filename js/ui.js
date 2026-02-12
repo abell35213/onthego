@@ -299,8 +299,7 @@ const UI = {
         if (window.MapModule && window.MapModule.addRestaurantMarkers) {
             const opts = this._renderOptions || {};
             window.MapModule.addRestaurantMarkers(restaurants, { skipFitBounds: !!opts.skipFitBounds });
-            // Clear render options after use so subsequent filter changes don't inherit them
-            this._renderOptions = {};
+            this._renderOptions = null;
         }
     },
 
