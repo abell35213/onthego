@@ -129,6 +129,38 @@
                             <button class="disconnect-btn">Disconnect</button>
                         </div>
                     </div>
+
+                    <div class="account-card" data-account-type="marriott">
+                        <div class="account-header">
+                            <i class="fas fa-crown account-icon"></i>
+                            <h3>Marriott Bonvoy</h3>
+                        </div>
+                        <p>Sync your Marriott Bonvoy stays and rewards</p>
+                        <button id="marriottConnect" class="connect-btn">
+                            <i class="fas fa-plug"></i>
+                            <span class="connect-text">Connect Marriott Bonvoy</span>
+                        </button>
+                        <div id="marriottStatus" class="connection-status" style="display: none;">
+                            <i class="fas fa-check-circle"></i> Connected
+                            <button class="disconnect-btn">Disconnect</button>
+                        </div>
+                    </div>
+
+                    <div class="account-card" data-account-type="hilton">
+                        <div class="account-header">
+                            <i class="fas fa-star account-icon"></i>
+                            <h3>Hilton Honors</h3>
+                        </div>
+                        <p>Sync your Hilton Honors stays and rewards</p>
+                        <button id="hiltonConnect" class="connect-btn">
+                            <i class="fas fa-plug"></i>
+                            <span class="connect-text">Connect Hilton Honors</span>
+                        </button>
+                        <div id="hiltonStatus" class="connection-status" style="display: none;">
+                            <i class="fas fa-check-circle"></i> Connected
+                            <button class="disconnect-btn">Disconnect</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div id="syncInfo" class="sync-info" style="display: none;">
@@ -242,7 +274,13 @@
         <!-- Restaurant List View (Toggle-able) -->
         <div id="localView" class="local-view" style="display: none;">
         <!-- Sidebar with Restaurant List -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="searchSidebar">
+            <!-- Resize handle -->
+            <div class="sidebar-resize-handle" id="sidebarResizeHandle"></div>
+            <!-- Toggle button -->
+            <button class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle search panel">
+                <i class="fas fa-chevron-left"></i>
+            </button>
             <!-- Search Bar -->
             <div class="location-controls">
               <label for="tripLocationSelect" class="location-label">

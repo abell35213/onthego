@@ -584,60 +584,76 @@ const MOCK_TRAVEL_HISTORY = [
         city: 'San Francisco',
         state: 'CA',
         country: 'USA',
-        coordinates: { latitude: 37.7749, longitude: -122.4194 },
+        coordinates: { latitude: 37.7856, longitude: -122.4023 },
         startDate: '2024-11-12',
         endDate: '2024-11-16',
         purpose: 'Business',
         hotel: 'The St. Regis San Francisco',
-        restaurantsVisited: ['1', '7']
+        restaurantsVisited: ['1', '7'],
+        diningExpenses: [
+            { restaurantId: '1', amount: 85.50, date: '2024-11-13' },
+            { restaurantId: '7', amount: 215.00, date: '2024-11-14' }
+        ]
     },
     {
         id: 'trip2',
         city: 'New York',
         state: 'NY',
         country: 'USA',
-        coordinates: { latitude: 40.7128, longitude: -74.0060 },
+        coordinates: { latitude: 40.7645, longitude: -73.9744 },
         startDate: '2024-10-20',
         endDate: '2024-10-24',
         purpose: 'Business',
         hotel: 'The Plaza Hotel',
-        restaurantsVisited: ['2']
+        restaurantsVisited: ['2'],
+        diningExpenses: [
+            { restaurantId: '2', amount: 142.75, date: '2024-10-21' }
+        ]
     },
     {
         id: 'trip3',
         city: 'Chicago',
         state: 'IL',
         country: 'USA',
-        coordinates: { latitude: 41.8781, longitude: -87.6298 },
+        coordinates: { latitude: 41.8887, longitude: -87.6354 },
         startDate: '2024-09-01',
         endDate: '2024-09-06',
         purpose: 'Business',
         hotel: 'The Langham Chicago',
-        restaurantsVisited: ['6']
+        restaurantsVisited: ['6'],
+        diningExpenses: [
+            { restaurantId: '6', amount: 178.25, date: '2024-09-03' }
+        ]
     },
     {
         id: 'trip4',
         city: 'Los Angeles',
         state: 'CA',
         country: 'USA',
-        coordinates: { latitude: 34.0522, longitude: -118.2437 },
+        coordinates: { latitude: 34.0816, longitude: -118.4130 },
         startDate: '2024-08-15',
         endDate: '2024-08-20',
         purpose: 'Business',
         hotel: 'The Beverly Hills Hotel',
-        restaurantsVisited: ['10']
+        restaurantsVisited: ['10'],
+        diningExpenses: [
+            { restaurantId: '10', amount: 67.30, date: '2024-08-17' }
+        ]
     },
     {
         id: 'trip5',
         city: 'Miami',
         state: 'FL',
         country: 'USA',
-        coordinates: { latitude: 25.7617, longitude: -80.1918 },
+        coordinates: { latitude: 25.8139, longitude: -80.1229 },
         startDate: '2025-01-08',
         endDate: '2025-01-12',
         purpose: 'Business',
         hotel: 'Fontainebleau Miami Beach',
-        restaurantsVisited: ['4']
+        restaurantsVisited: ['4'],
+        diningExpenses: [
+            { restaurantId: '4', amount: 93.60, date: '2025-01-09' }
+        ]
     }
 ];
 
@@ -648,7 +664,7 @@ const MOCK_UPCOMING_TRIPS = [
         city: 'Seattle',
         state: 'WA',
         country: 'USA',
-        coordinates: { latitude: 47.6062, longitude: -122.3321 },
+        coordinates: { latitude: 47.6076, longitude: -122.3385 },
         startDate: '2026-03-15',
         endDate: '2026-03-19',
         purpose: 'Business',
@@ -660,7 +676,7 @@ const MOCK_UPCOMING_TRIPS = [
         city: 'Austin',
         state: 'TX',
         country: 'USA',
-        coordinates: { latitude: 30.2672, longitude: -97.7431 },
+        coordinates: { latitude: 30.2672, longitude: -97.7394 },
         startDate: '2026-04-10',
         endDate: '2026-04-14',
         purpose: 'Conference',
@@ -672,7 +688,7 @@ const MOCK_UPCOMING_TRIPS = [
         city: 'Boston',
         state: 'MA',
         country: 'USA',
-        coordinates: { latitude: 42.3601, longitude: -71.0589 },
+        coordinates: { latitude: 42.3625, longitude: -71.0661 },
         startDate: '2026-05-05',
         endDate: '2026-05-09',
         purpose: 'Business',
@@ -688,5 +704,7 @@ const USER_ACCOUNT = {
     phone: '',
     concurConnected: false,
     tripitConnected: false,
+    marriottConnected: false,
+    hiltonConnected: false,
     lastSync: null
 };
