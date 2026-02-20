@@ -84,11 +84,11 @@ const UI = {
             toggleBtn.addEventListener('click', () => {
                 const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
                 if (isCollapsed) {
-                    sidebar.dataset.prevWidth = sidebar.style.width || '380px';
+                    sidebar.dataset.prevWidth = sidebar.style.width || '320px';
                     sidebar.style.width = '0px';
                     toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
                 } else {
-                    sidebar.style.width = sidebar.dataset.prevWidth || '380px';
+                    sidebar.style.width = sidebar.dataset.prevWidth || '320px';
                     toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
                 }
                 // Refresh map size after toggle

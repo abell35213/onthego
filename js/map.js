@@ -271,14 +271,13 @@ const MapModule = {
     addUserMarker(lat, lng, label = "Search Center") {
         if (!this.map || typeof L === 'undefined') return;
         
-        // Create custom icon for user location
-        const userIcon = L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
+        // iOS-style pin for user/search center location (blue)
+        const userIcon = L.divIcon({
+            className: '',
+            html: '<div class="ios-pin-marker user-location"><div class="ios-pin-circle"></div><div class="ios-pin-tail"></div></div>',
+            iconSize: [30, 43],
+            iconAnchor: [15, 43],
+            popupAnchor: [0, -43]
         });
 
         this.userMarker = L.marker([lat, lng], { icon: userIcon })
@@ -338,14 +337,13 @@ const MapModule = {
         const lat = restaurant.coordinates.latitude;
         const lng = restaurant.coordinates.longitude;
 
-        // Create custom icon for restaurant
-        const restaurantIcon = L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
+        // iOS-style pin for restaurant markers (red)
+        const restaurantIcon = L.divIcon({
+            className: '',
+            html: '<div class="ios-pin-marker restaurant"><div class="ios-pin-circle"></div><div class="ios-pin-tail"></div></div>',
+            iconSize: [30, 43],
+            iconAnchor: [15, 43],
+            popupAnchor: [0, -43]
         });
 
         // Create popup content matching the restaurant list card format

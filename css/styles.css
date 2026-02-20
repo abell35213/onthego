@@ -61,8 +61,8 @@ body {
 
 /* ===== Sidebar ===== */
 .sidebar {
-    width: 380px;
-    min-width: 280px;
+    width: 320px;
+    min-width: 220px;
     background-color: var(--bg-white);
     border-right: 1px solid var(--border-color);
     display: flex;
@@ -87,12 +87,6 @@ body {
 .sidebar-resize-handle:hover,
 .sidebar-resize-handle.active {
     background-color: var(--primary-color);
-}
-
-.sidebar-collapsed .filters,
-.sidebar-collapsed .search-container,
-.sidebar-collapsed .location-controls {
-    display: none;
 }
 
 /* ===== Sidebar Toggle Button ===== */
@@ -464,6 +458,63 @@ body {
     height: 100%;
 }
 
+/* ===== iOS-style Map Pins ===== */
+.ios-pin-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+}
+
+.ios-pin-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(255, 255, 255, 0.5);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.ios-pin-circle::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 50%;
+    top: 5px;
+    left: 5px;
+}
+
+.ios-pin-tail {
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    margin-top: -2px;
+}
+
+.ios-pin-marker.restaurant .ios-pin-circle {
+    background: radial-gradient(circle at 38% 32%, #ff8a78, #e8362a 55%, #bd2017);
+}
+
+.ios-pin-marker.restaurant .ios-pin-tail {
+    border-top: 13px solid #bd2017;
+}
+
+.ios-pin-marker.user-location .ios-pin-circle {
+    background: radial-gradient(circle at 38% 32%, #6db8ff, #1a73e8 55%, #0d5cbf);
+}
+
+.ios-pin-marker.user-location .ios-pin-tail {
+    border-top: 13px solid #0d5cbf;
+}
+
+.leaflet-div-icon {
+    background: none;
+    border: none;
+}
+
 /* ===== Leaflet Popup Customization ===== */
 .leaflet-popup-content-wrapper {
     border-radius: 8px;
@@ -681,12 +732,8 @@ body {
 
 /* ===== Responsive Design ===== */
 @media (max-width: 1024px) {
-    .filters {
-        grid-template-columns: 1fr 1fr;
-    }
-    
     .sidebar {
-        width: 400px;
+        width: 300px;
     }
 }
 
@@ -711,11 +758,6 @@ body {
     
     .header-content h1 {
         font-size: 1.5rem;
-    }
-    
-    .filters {
-        grid-template-columns: 1fr 1fr;
-        gap: 0.75rem;
     }
     
     .restaurant-card {
@@ -759,22 +801,16 @@ body {
         padding: 0.5rem 0.7rem;
     }
 
-    .search-container,
-    .filters {
-        padding: 0.75rem;
+    .local-topbar .search-container {
+        flex: 1 1 100%;
     }
 
-    .filters {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
+    .local-topbar .location-controls {
+        flex-wrap: wrap;
     }
 
-    .location-controls {
-        grid-template-columns: 1fr;
-    }
-
-    .location-btn {
-        width: 100%;
+    .local-topbar .filters {
+        gap: 0.4rem;
     }
     
     .restaurant-actions {
@@ -1191,6 +1227,101 @@ body {
     width: 100%;
     height: 100%;
     display: flex;
+    flex-direction: column;
+}
+
+/* ===== Local Top Filter Bar ===== */
+.local-topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    background-color: var(--bg-white);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    z-index: 5;
+}
+
+.local-topbar .location-controls {
+    margin-top: 0;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.local-topbar .location-label {
+    grid-column: unset;
+    white-space: nowrap;
+    margin-bottom: 0;
+}
+
+.local-topbar .location-select {
+    width: auto;
+    min-width: 140px;
+}
+
+.local-topbar .active-location {
+    grid-column: unset;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.local-topbar .search-container {
+    padding: 0;
+    border-bottom: none;
+    position: relative;
+    flex: 0 1 200px;
+    min-width: 130px;
+}
+
+.local-topbar .search-input {
+    padding: 0.45rem 2rem 0.45rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.local-topbar .search-icon {
+    right: 0.6rem;
+    font-size: 0.85rem;
+}
+
+.local-topbar .filters {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0;
+    background: transparent;
+    border-bottom: none;
+    flex: 1;
+}
+
+.local-topbar .filter-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.local-topbar .filter-group label {
+    margin-bottom: 0;
+    white-space: nowrap;
+    font-size: 0.8rem;
+}
+
+.local-topbar .filter-select {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.82rem;
+}
+
+/* ===== Local Main (sidebar + map) ===== */
+.local-main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 /* ===== Location Circle Markers ===== */
@@ -1319,13 +1450,9 @@ body {
         border-top: 2px solid var(--border-color);
     }
 
-    .local-view {
-        flex-direction: column;
-    }
-
     .local-view .sidebar {
         width: 100% !important;
-        max-height: 55vh;
+        max-height: 45vh;
         border-right: none;
         border-bottom: 2px solid var(--border-color);
     }
@@ -1335,16 +1462,21 @@ body {
         min-height: 250px;
     }
 
+    .local-topbar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .local-topbar .location-controls {
+        flex-wrap: wrap;
+    }
+
     .sidebar-resize-handle {
         display: none;
     }
 
     .sidebar-toggle-btn {
         display: none;
-    }
-    
-    .filters {
-        grid-template-columns: 1fr 1fr;
     }
 
     .modal-content {
