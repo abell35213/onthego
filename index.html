@@ -273,15 +273,10 @@
         
         <!-- Restaurant List View (Toggle-able) -->
         <div id="localView" class="local-view" style="display: none;">
-        <!-- Sidebar with Restaurant List -->
-        <aside class="sidebar" id="searchSidebar">
-            <!-- Resize handle -->
-            <div class="sidebar-resize-handle" id="sidebarResizeHandle"></div>
-            <!-- Toggle button -->
-            <button class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle search panel">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <!-- Search Bar -->
+
+        <!-- Top Filter Bar -->
+        <div class="local-topbar">
+            <!-- Location Controls -->
             <div class="location-controls">
               <label for="tripLocationSelect" class="location-label">
                 Search near:
@@ -298,8 +293,9 @@
               <div id="activeLocationLabel" class="active-location"></div>
             </div>
 
+            <!-- Search Bar -->
             <div class="search-container">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search by name, cuisine, city, state, or zip...">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search restaurants...">
                 <i class="fas fa-search search-icon"></i>
             </div>
 
@@ -311,7 +307,7 @@
                         <option value="">All Cuisines</option>
                     </select>
                 </div>
-                
+
                 <div class="filter-group">
                     <label for="priceFilter">Price:</label>
                     <select id="priceFilter" class="filter-select">
@@ -322,7 +318,7 @@
                         <option value="$$$$">$$$$ - Very Expensive</option>
                     </select>
                 </div>
-                
+
                 <div class="filter-group">
                     <label for="ambianceFilter">Ambiance:</label>
                     <select id="ambianceFilter" class="filter-select">
@@ -333,7 +329,7 @@
                         <option value="Local Spots">Local Spots</option>
                     </select>
                 </div>
-                
+
                 <div class="filter-group">
                     <label for="sortBy">Sort By:</label>
                     <select id="sortBy" class="filter-select">
@@ -342,37 +338,50 @@
                         <option value="review_count">Reviews</option>
                     </select>
                 </div>
-                
+
                 <div class="filter-group">
                     <label>
                         <input type="checkbox" id="visitedFilter" class="filter-checkbox">
-                        Show Only Visited
+                        Visited Only
                     </label>
                 </div>
             </div>
+        </div>
 
-            <!-- Restaurant List -->
-            <div id="restaurantList" class="restaurant-list">
-                <!-- Loading state -->
-                <div id="loadingState" class="loading-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Finding restaurants near you...</p>
+        <!-- Main Content: Restaurant List + Map -->
+        <div class="local-main">
+            <!-- Sidebar with Restaurant List only -->
+            <aside class="sidebar" id="searchSidebar">
+                <!-- Resize handle -->
+                <div class="sidebar-resize-handle" id="sidebarResizeHandle"></div>
+                <!-- Toggle button -->
+                <button class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle restaurant list">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+
+                <!-- Restaurant List -->
+                <div id="restaurantList" class="restaurant-list">
+                    <!-- Loading state -->
+                    <div id="loadingState" class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Finding restaurants near you...</p>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div id="emptyState" class="empty-state" style="display: none;">
+                        <i class="fas fa-search"></i>
+                        <p>No restaurants found</p>
+                        <small>Try adjusting your filters</small>
+                    </div>
+
+                    <!-- Restaurants will be dynamically added here -->
                 </div>
-                
-                <!-- Empty state -->
-                <div id="emptyState" class="empty-state" style="display: none;">
-                    <i class="fas fa-search"></i>
-                    <p>No restaurants found</p>
-                    <small>Try adjusting your filters</small>
-                </div>
-                
-                <!-- Restaurants will be dynamically added here -->
+            </aside>
+
+            <!-- Map Container -->
+            <div class="map-container">
+                <div id="map"></div>
             </div>
-        </aside>
-
-        <!-- Map Container -->
-        <div class="map-container">
-            <div id="map"></div>
         </div>
         </div>
 
