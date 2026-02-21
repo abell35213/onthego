@@ -1,4 +1,3 @@
-<homepage.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,226 +5,1784 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>OnTheGo — Find the perfect spot for dinner while traveling for work.</title>
     <meta name="description" content="Find the best places to visit when traveling on sales trips. Curated nearby restaurant, hangouts, and bars with socials, ratings, and delivery links." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <style>
-        :root{
-            --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#6ee7b7; --glass: rgba(255,255,255,0.04);
-            --max-w:1100px; --radius:12px;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        /* ── Design tokens ── */
+        :root {
+            --bg: #080b12;
+            --bg-card: #0d1220;
+            --bg-elevated: #111827;
+            --glass: rgba(255,255,255,0.04);
+            --glass-hover: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.07);
+            --border-accent: rgba(110,231,183,0.35);
+            --muted: #6b7a99;
+            --dim: #9aa4b8;
+            --accent: #6ee7b7;
+            --accent-2: #60a5fa;
+            --gold: #f59e0b;
+            --purple: #7c3aed;
+            --red: #ef4444;
+            --green: #22c55e;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --max-w: 1120px;
+            --nav-h: 64px;
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             color-scheme: dark;
         }
-        *{box-sizing:border-box}
-        html,body{height:100%}
-        body{
-            margin:0;
-            background:
-                radial-gradient(800px 400px at 10% 10%, rgba(110,231,183,0.06), transparent 8%),
-                radial-gradient(600px 300px at 90% 90%, rgba(99,102,241,0.04), transparent 8%),
-                var(--bg);
-            color:#e6eef8;padding:48px 20px;
-            -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;line-height:1.45;
-            display:flex;justify-content:center;align-items:flex-start;
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg);
+            color: #e2e8f4;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.5;
+            overflow-x: hidden;
         }
 
-        .container{width:100%;max-width:var(--max-w)}
-        header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
-        .brand{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit}
-        .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#60a5fa);display:flex;align-items:center;justify-content:center;font-weight:700;color:#042022;box-shadow:0 6px 18px rgba(2,6,23,0.6);}
-        nav{display:flex;gap:18px;align-items:center}
-        .nav-link{color:var(--muted);text-decoration:none;font-size:15px;padding:8px 10px;border-radius:8px}
-        .nav-link:hover{background:var(--glass);color:#fff}
-        .cta{background:linear-gradient(90deg,var(--accent),#60a5fa);color:#042022;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:600;box-shadow:0 8px 30px rgba(102,126,234,0.12)}
-        .hero{display:grid;grid-template-columns:1fr 420px;gap:28px;align-items:stretch}
-        @media (max-width:1000px){.hero{grid-template-columns:1fr;padding-bottom:22px}header{flex-wrap:wrap;row-gap:12px}nav{display:none}}
-        .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border:1px solid rgba(255,255,255,0.04);padding:28px;border-radius:var(--radius);box-shadow:0 10px 40px rgba(2,6,23,0.6)}
-        .headline{font-size:30px;margin:0 0 10px 0;line-height:1.05;font-weight:700;letter-spacing:-0.02em}
-        .sub{color:var(--muted);margin:0 0 18px 0;max-width:60ch}
-        .features{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px}
-        .feature{display:flex;gap:12px;align-items:flex-start}
-        .icon{width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;color:var(--accent);flex:0 0 44px;font-weight:700}
-        .lead-form{display:flex;gap:8px;margin-top:18px}
-        .lead-input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
-        .lead-btn{padding:12px 16px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#60a5fa);color:#042022;font-weight:700}
-        .card-side{display:flex;flex-direction:column;gap:14px;justify-content:flex-start}
-        .small{font-size:13px;color:var(--muted)}
-        .muted{color:var(--muted)}
-        .field{display:flex;flex-direction:column;gap:6px}
-        .input, .select{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:14px}
-        .row{display:flex;gap:8px}
-        .btn{padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#60a5fa);color:#042022;font-weight:700;cursor:pointer}
-        .result{padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)}
-        .specs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-        .pill{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:999px;font-size:13px;color:var(--muted)}
-        .testimonials{display:flex;flex-direction:column;gap:12px;margin-top:18px}
-        .t{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,0.02);padding:10px;border-radius:10px}
-        .avatar{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#60a5fa,#6ee7b7);display:flex;align-items:center;justify-content:center;font-weight:700;color:#042022}
-        footer{margin-top:34px;color:var(--muted);text-align:center;font-size:14px}
-        .nearby-wrap{display:grid;grid-template-columns:360px 1fr;gap:18px;margin-top:18px}
-        @media (max-width:1000px){ .nearby-wrap{grid-template-columns:1fr} }
-        #map{height:420px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);overflow:hidden}
-        .place-list{display:flex;flex-direction:column;gap:12px;max-height:420px;overflow:auto;padding-right:6px}
-        .place{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);cursor:pointer}
-        .place .meta{flex:1}
-        .place .meta h4{margin:0 0 6px 0}
-        .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-        .tag{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px;font-size:12px;color:var(--muted)}
-        .links{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-        .link-btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:6px 8px;border-radius:8px;color:var(--muted);font-size:13px;text-decoration:none}
-        .link-btn:hover{border-color:rgba(255,255,255,0.12);color:#fff}
-        .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;padding:20px}
-        .modal{max-width:520px;width:100%;background:var(--card);padding:20px;border-radius:12px;border:1px solid rgba(255,255,255,0.04)}
-        .modal.show{display:block}
-        .row-stack{display:flex;gap:8px}
-        .note{font-size:13px;color:var(--muted);margin-top:8px}
-        .filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-        .filter-btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:999px;color:var(--muted);cursor:pointer}
-        .filter-btn.active{background:rgba(255,255,255,0.04);color:#fff;border-color:rgba(255,255,255,0.12)}
-        .hotel-pill{background:rgba(255,255,255,0.02);padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;gap:8px;align-items:center}
-        .distance{font-size:12px;color:var(--muted);margin-left:6px}
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+
+        /* ── NAV ── */
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            height: var(--nav-h);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            background: rgba(8,11,18,0.82);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-inner {
+            width: 100%;
+            max-width: var(--max-w);
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: inherit;
+            font-weight: 700;
+            font-size: 17px;
+            flex-shrink: 0;
+        }
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            color: #041410;
+            box-shadow: 0 4px 14px rgba(110,231,183,0.3);
+        }
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex: 1;
+        }
+        .nav-link {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 7px 12px;
+            border-radius: 8px;
+            transition: color .15s, background .15s;
+        }
+        .nav-link:hover { color: #fff; background: var(--glass); }
+        .nav-cta {
+            background: #fff;
+            color: #080b12;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 9px 18px;
+            border-radius: 99px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: opacity .15s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-cta:hover { opacity: .88; }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .nav-cta { padding: 8px 14px; font-size: 13px; }
+        }
+
+        /* ── Layout helpers ── */
+        .page-wrap { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+        /* ── HERO ── */
+        .hero {
+            position: relative;
+            padding: 96px 24px 80px;
+            text-align: center;
+            overflow: hidden;
+            background: linear-gradient(160deg, #080b12 0%, #0d0f1f 40%, #100c22 70%, #080b12 100%);
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 900px 500px at 50% -60px, rgba(124,58,237,0.14), transparent 65%),
+                radial-gradient(ellipse 700px 400px at 20% 70%, rgba(96,165,250,0.07), transparent 60%),
+                radial-gradient(ellipse 500px 300px at 85% 40%, rgba(110,231,183,0.06), transparent 60%);
+            pointer-events: none;
+        }
+        /* ghosted background stats texture (like sample 4) */
+        .hero-ghost {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .hero-ghost-item {
+            position: absolute;
+            color: rgba(255,255,255,0.045);
+            font-weight: 800;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(110,231,183,0.1);
+            border: 1px solid rgba(110,231,183,0.25);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 99px;
+            margin-bottom: 28px;
+            letter-spacing: .03em;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-title {
+            font-size: clamp(40px, 6vw, 72px);
+            font-weight: 800;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            max-width: 820px;
+            margin: 0 auto 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-title span { color: var(--accent); }
+        .hero-sub {
+            font-size: clamp(16px, 2vw, 19px);
+            color: var(--dim);
+            max-width: 580px;
+            margin: 0 auto 40px;
+            font-weight: 400;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 64px;
+            position: relative;
+            z-index: 1;
+        }
+        .btn-primary {
+            background: #fff;
+            color: #080b12;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 13px 26px;
+            border-radius: 99px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity .15s, transform .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+        .btn-outline {
+            background: transparent;
+            color: #e2e8f4;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 13px 26px;
+            border-radius: 99px;
+            border: 1px solid rgba(255,255,255,0.18);
+            cursor: pointer;
+            text-decoration: none;
+            transition: background .15s, border-color .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-outline:hover { background: var(--glass); border-color: rgba(255,255,255,0.3); }
+
+        /* floating notification cards around the hero visual */
+        .hero-stage {
+            position: relative;
+            max-width: 860px;
+            margin: 0 auto;
+            z-index: 1;
+        }
+        .hero-phone {
+            width: 260px;
+            height: 460px;
+            margin: 0 auto;
+            background: linear-gradient(160deg, #141d2e 0%, #0d1220 100%);
+            border-radius: 36px;
+            border: 2px solid rgba(255,255,255,0.1);
+            box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) inset;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 28px 16px 20px;
+            gap: 10px;
+            position: relative;
+            z-index: 2;
+        }
+        .phone-notch {
+            width: 90px;
+            height: 26px;
+            background: #080b12;
+            border-radius: 99px;
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .phone-status {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 11px;
+            color: var(--muted);
+            padding-top: 22px;
+            font-weight: 600;
+        }
+        .phone-header {
+            width: 100%;
+            text-align: center;
+            padding: 4px 0 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .phone-header-title { font-size: 13px; font-weight: 700; }
+        .phone-header-sub { font-size: 11px; color: var(--muted); }
+        .phone-rest-card {
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .phone-rest-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .phone-rest-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+        .phone-rest-meta { font-size: 11px; color: var(--muted); }
+        .phone-rest-badge {
+            margin-left: auto;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 6px;
+            background: var(--green);
+            color: #000;
+            white-space: nowrap;
+        }
+        .phone-rest-badge.closed { background: var(--red); }
+        .phone-map-thumb {
+            width: 100%;
+            height: 90px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #1a2a1a 0%, #162635 50%, #1a2030 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            font-size: 11px;
+            position: relative;
+            overflow: hidden;
+        }
+        .phone-map-thumb::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 28px),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 28px);
+        }
+        .phone-map-pin {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 3px rgba(110,231,183,0.3);
+            position: absolute;
+        }
+
+        /* floating cards around phone */
+        .float-card {
+            position: absolute;
+            background: #111827;
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 14px;
+            padding: 12px 16px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            min-width: 210px;
+            max-width: 260px;
+            z-index: 3;
+            animation: floatIn .7s ease both;
+        }
+        .float-card:nth-child(1) { animation-delay: .1s; }
+        .float-card:nth-child(2) { animation-delay: .25s; }
+        .float-card:nth-child(3) { animation-delay: .4s; }
+        .float-card:nth-child(4) { animation-delay: .55s; }
+        @keyframes floatIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .float-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .float-card-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+        .float-card-sub { font-size: 12px; color: var(--dim); line-height: 1.4; }
+        .fc-left-top  { left: -18px;  top: 40px; }
+        .fc-left-bot  { left: -24px;  bottom: 80px; }
+        .fc-right-top { right: -18px; top: 60px; }
+        .fc-right-bot { right: -24px; bottom: 60px; }
+        @media (max-width: 860px) {
+            .float-card { display: none; }
+            .hero-phone  { width: 220px; height: 380px; }
+        }
+
+        /* ── BADGE ROW ── */
+        .badge-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 40px 24px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 20px;
+            min-width: 200px;
+        }
+        .badge-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            background: rgba(255,255,255,0.05);
+            flex-shrink: 0;
+        }
+        .badge-label { font-size: 12px; font-weight: 700; margin-bottom: 2px; color: #fff; }
+        .badge-sub { font-size: 11px; color: var(--muted); }
+
+        /* ── SECTION TITLE ── */
+        .section-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: clamp(28px, 4vw, 44px);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+        .section-body {
+            font-size: 16px;
+            color: var(--dim);
+            line-height: 1.7;
+            max-width: 52ch;
+        }
+
+        /* ── FEATURE PAIR (2-col dark cards) ── */
+        .feature-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+        @media (max-width: 760px) { .feature-pair { grid-template-columns: 1fr; } }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 36px 36px 0;
+            overflow: hidden;
+            position: relative;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .feature-card-body { margin-bottom: 28px; }
+        .feature-card-visual {
+            flex: 1;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-bottom: none;
+            margin: 0 -0px;
+            position: relative;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 16px;
+        }
+        .feature-tag {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 99px;
+            margin-bottom: 6px;
+        }
+        .tag-green  { background: rgba(34,197,94,0.15);  color: var(--green); }
+        .tag-amber  { background: rgba(245,158,11,0.15); color: var(--gold); }
+        .tag-blue   { background: rgba(96,165,250,0.15); color: var(--accent-2); }
+        .tag-purple { background: rgba(124,58,237,0.15); color: #a78bfa; }
+
+        /* mini restaurant rows inside feature cards */
+        .mini-rest {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        .mini-rest-icon {
+            width: 34px; height: 34px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; flex-shrink: 0;
+        }
+        .mini-rest-name { font-size: 12px; font-weight: 600; }
+        .mini-rest-meta { font-size: 11px; color: var(--muted); }
+        .mini-rest-badge {
+            margin-left: auto;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+        .mini-map {
+            border-radius: 10px;
+            height: 120px;
+            background: linear-gradient(160deg, #1a2630 0%, #101e2a 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .mini-map::before {
+            content: '';
+            position: absolute; inset: 0;
+            background:
+                repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 32px),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 32px);
+        }
+        .map-dot {
+            position: absolute;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.15);
+        }
+
+        /* ── GLOW FEATURE SECTION ── */
+        .glow-section {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            border: 1px solid transparent;
+            background-clip: padding-box;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+        .glow-section::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(124,58,237,0.6), rgba(96,165,250,0.4), rgba(110,231,183,0.3));
+            z-index: -1;
+        }
+        .glow-section-inner {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: calc(var(--radius) - 1px);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            overflow: hidden;
+        }
+        @media (max-width: 760px) { .glow-section-inner { grid-template-columns: 1fr; } }
+        .glow-section-text {
+            padding: 48px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .glow-section-visual {
+            position: relative;
+            background: #0a0f1a;
+            border-left: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 24px;
+            min-height: 300px;
+        }
+        @media (max-width: 760px) {
+            .glow-section-text { padding: 36px 28px; }
+            .glow-section-visual { border-left: none; border-top: 1px solid rgba(255,255,255,0.06); }
+        }
+
+        /* alert card inside glow section */
+        .alert-card {
+            background: #0d1525;
+            border: 1px solid rgba(124,58,237,0.4);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 0 40px rgba(124,58,237,0.2), 0 8px 32px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 310px;
+        }
+        .alert-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .alert-icon {
+            font-size: 20px;
+        }
+        .alert-title { font-size: 17px; font-weight: 800; }
+        .alert-desc { font-size: 13px; color: var(--dim); line-height: 1.5; margin-bottom: 14px; }
+        .alert-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .alert-row-name { font-size: 13px; color: var(--dim); }
+        .alert-row-val { font-size: 18px; font-weight: 800; }
+        .alert-row-sub { font-size: 11px; color: var(--muted); }
+        .alert-badge {
+            font-size: 11px; font-weight: 700;
+            padding: 4px 9px; border-radius: 7px;
+        }
+        .ab-green { background: rgba(34,197,94,0.2); color: var(--green); }
+        .ab-amber { background: rgba(245,158,11,0.2); color: var(--gold); }
+
+        /* ── SECTION WRAPPER ── */
+        .section {
+            padding: 80px 24px;
+            max-width: var(--max-w);
+            margin: 0 auto;
+        }
+        .section-header { margin-bottom: 40px; }
+
+        /* ── HOW IT WORKS ── */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+        }
+        @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
+        .step {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+        }
+        .step-num {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            background: rgba(110,231,183,0.12);
+            border: 1px solid rgba(110,231,183,0.25);
+            color: var(--accent);
+            font-size: 16px;
+            font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+        }
+        .step-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+        .step-body  { font-size: 14px; color: var(--dim); line-height: 1.6; }
+
+        /* ── TOOL BAR SECTION ── */
+        .toolbar-section {
+            padding: 32px 24px;
+            background: rgba(255,255,255,0.02);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .toolbar-inner {
+            max-width: var(--max-w);
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .toolbar-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 99px;
+            padding: 10px 20px;
+            color: var(--dim);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background .15s, color .15s, border-color .15s;
+            text-decoration: none;
+        }
+        .toolbar-btn.active,
+        .toolbar-btn:hover {
+            background: rgba(110,231,183,0.12);
+            color: var(--accent);
+            border-color: rgba(110,231,183,0.3);
+        }
+
+        /* ── HOTEL QUICK-CHECK ── */
+        .quick-check {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 36px;
+        }
+        .quick-check-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .quick-check-sub { font-size: 14px; color: var(--dim); margin-bottom: 24px; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field-label { font-size: 13px; color: var(--dim); font-weight: 500; }
+        .input, .select {
+            padding: 11px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: inherit;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color .15s;
+        }
+        .input:focus, .select:focus {
+            outline: none;
+            border-color: rgba(110,231,183,0.4);
+        }
+        .input::placeholder { color: var(--muted); }
+        .form-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+        .btn {
+            padding: 11px 18px;
+            border-radius: 10px;
+            border: 0;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: opacity .15s, transform .15s;
+            font-family: inherit;
+        }
+        .btn:hover { opacity: .86; transform: translateY(-1px); }
+        .btn-accent {
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            color: #041410;
+        }
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--dim);
+        }
+        .btn-ghost:hover { background: var(--glass); color: #fff; border-color: rgba(255,255,255,0.2); }
+        .result {
+            padding: 14px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--dim);
+            min-height: 48px;
+        }
+        .connect-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .hotel-pill {
+            background: rgba(110,231,183,0.07);
+            border: 1px solid rgba(110,231,183,0.2);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 12px;
+        }
+        .filters-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .filter-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 99px;
+            padding: 7px 14px;
+            color: var(--muted);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .15s;
+            font-family: inherit;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: rgba(110,231,183,0.1);
+            border-color: rgba(110,231,183,0.3);
+            color: var(--accent);
+        }
+
+        /* ── NEARBY MAP ── */
+        .nearby-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 16px;
+            margin-top: 24px;
+        }
+        @media (max-width: 860px) { .nearby-grid { grid-template-columns: 1fr; } }
+        #map {
+            height: 440px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .place-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 440px;
+            overflow: auto;
+            padding-right: 4px;
+        }
+        .place {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: background .15s, border-color .15s;
+        }
+        .place:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+        .place .meta { flex: 1; }
+        .place .meta h4 { margin: 0 0 4px 0; font-size: 14px; font-weight: 600; }
+        .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+        .tag {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            padding: 4px 9px;
+            border-radius: 99px;
+            font-size: 11px;
+            color: var(--muted);
+        }
+        .links { display: flex; gap: 7px; margin-top: 8px; flex-wrap: wrap; }
+        .link-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 5px 9px;
+            border-radius: 7px;
+            color: var(--muted);
+            font-size: 12px;
+            text-decoration: none;
+            transition: border-color .15s, color .15s;
+        }
+        .link-btn:hover { border-color: rgba(255,255,255,0.2); color: #fff; }
+        .distance { font-size: 11px; color: var(--muted); }
+
+        /* ── TESTIMONIALS ── */
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 40px;
+        }
+        @media (max-width: 640px) { .testimonial-grid { grid-template-columns: 1fr; } }
+        .testimonial {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+        }
+        .testimonial-quote {
+            font-size: 15px;
+            line-height: 1.65;
+            color: var(--dim);
+            margin-bottom: 20px;
+        }
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .avatar {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700;
+            color: #041410;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .author-name { font-size: 14px; font-weight: 700; }
+        .author-title { font-size: 12px; color: var(--muted); }
+
+        /* ── LEAD CAPTURE ── */
+        .lead-section {
+            text-align: center;
+            padding: 96px 24px;
+            position: relative;
+        }
+        .lead-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 700px 400px at 50% 50%, rgba(110,231,183,0.05), transparent 70%);
+            pointer-events: none;
+        }
+        .lead-form {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            max-width: 460px;
+            margin: 32px auto 0;
+            flex-wrap: wrap;
+        }
+        .lead-input {
+            flex: 1;
+            min-width: 220px;
+            padding: 13px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: inherit;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .lead-input:focus { outline: none; border-color: rgba(110,231,183,0.4); }
+        .lead-input::placeholder { color: var(--muted); }
+        .lead-btn {
+            padding: 13px 22px;
+            border-radius: 10px;
+            border: 0;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            color: #041410;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity .15s;
+            font-family: inherit;
+        }
+        .lead-btn:hover { opacity: .88; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 40px 24px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: #fff; }
+        .footer-inner {
+            max-width: var(--max-w);
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+
+        /* ── LOOK BACK SECTION (light bg, sample 5 style) ── */
+        .lookback-section {
+            background: #f8f9fc;
+            padding: 100px 24px;
+            color: #0a0f1a;
+        }
+        .lookback-inner {
+            max-width: var(--max-w);
+            margin: 0 auto;
+        }
+        .lookback-headline {
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+            color: #0a0f1a;
+            max-width: 520px;
+            margin-bottom: 20px;
+        }
+        .lookback-body {
+            font-size: 16px;
+            color: #4a5568;
+            max-width: 56ch;
+            line-height: 1.7;
+            margin-bottom: 60px;
+        }
+        .lookback-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 860px) { .lookback-grid { grid-template-columns: 1fr; } }
+        .lookback-card {
+            background: #0d1220;
+            border-radius: var(--radius);
+            padding: 36px;
+            color: #e2e8f4;
+        }
+        .lookback-card-title {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 14px;
+            letter-spacing: -0.02em;
+        }
+        .lookback-card-body {
+            font-size: 14px;
+            color: #9aa4b8;
+            line-height: 1.65;
+        }
+        .passport-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 500px) { .passport-grid { grid-template-columns: 1fr; } }
+        .passport-card {
+            background: #fff;
+            border: 1px solid #e8ecf0;
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .passport-card-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #6b7280;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .passport-card-value {
+            font-size: clamp(28px, 4vw, 44px);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            color: #0a0f1a;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .passport-card-sub {
+            font-size: 13px;
+            color: #9aa4b8;
+        }
+        .passport-card-bar {
+            margin-top: 12px;
+            height: 5px;
+            border-radius: 99px;
+            background: #e8ecf0;
+            overflow: hidden;
+        }
+        .passport-card-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #7c3aed, #60a5fa);
+        }
+        /* color variants for passport cards */
+        .pc-green .passport-card-value { color: #059669; }
+        .pc-blue  .passport-card-value { color: #2563eb; }
+        .pc-amber .passport-card-value { color: #d97706; }
+        .pc-purple .passport-card-value { color: #7c3aed; }
+
+        /* ── STICKY BOTTOM TAB BAR (sample 4 style) ── */
+        .tab-bar {
+            position: sticky;
+            bottom: 0;
+            z-index: 90;
+            background: rgba(8,11,18,0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 0 24px;
+        }
+        .tab-bar-inner {
+            max-width: var(--max-w);
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            padding: 10px 0;
+        }
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 22px;
+            border-radius: 99px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background .15s, color .15s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { color: var(--dim); background: rgba(255,255,255,0.05); }
+        .tab-btn.active {
+            background: var(--gold);
+            color: #1a0f00;
+        }
+        @media (max-width: 600px) {
+            .tab-btn span { display: none; }
+            .tab-btn { padding: 10px 16px; }
+        }
+
+        /* ── MODALS ── */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(2,6,23,0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 200;
+        }
+        .modal-backdrop.show { display: flex; }
+        .modal {
+            max-width: 520px;
+            width: 100%;
+            background: #0d1525;
+            padding: 28px;
+            border-radius: var(--radius);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+        }
+        .modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .note { font-size: 13px; color: var(--muted); margin-top: 10px; }
+        .row-stack { display: flex; gap: 8px; }
+
+        /* small text helpers */
+        .small { font-size: 13px; }
+        .muted { color: var(--muted); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
+
+    <!-- ── NAVIGATION ── -->
+    <nav class="nav" role="navigation" aria-label="Main navigation">
+        <div class="nav-inner">
             <a class="brand" href="#">
-                <div class="logo">OTG</div>
-                <div>
-                    <div style="font-weight:700">OnTheGO</div>
-                    <div style="font-size:12px;color:var(--muted)">Perfect spots during sales trips</div>
-                </div>
+                <div class="brand-icon">OTG</div>
+                OnTheGo
             </a>
-
-            <nav aria-label="Primary navigation">
-                <a class="nav-link" href="#features">Why OnTheGo</a>
-                <a class="nav-link" href="#how">How it works</a>
+            <div class="nav-links">
+                <a class="nav-link" href="#features">Features</a>
+                <a class="nav-link" href="#how-it-works">How it works</a>
                 <a class="nav-link" href="#nearby">Nearby spots</a>
-            </nav>
+                <a class="nav-link" href="#travel-log">Dining Log</a>
+                <a class="nav-link" href="#testimonials">Reviews</a>
+            </div>
+            <a class="nav-cta" href="#signup" id="openSignUp">
+                ✦ Get started
+            </a>
+        </div>
+    </nav>
 
-            <a class="cta" href="#signup" id="openSignUp">Sign up</a>
-        </header>
+    <!-- ── HERO ── -->
+    <section class="hero" aria-labelledby="hero-heading">
 
-        <main class="hero" role="main">
-            <section class="card" aria-labelledby="hero-heading">
-                <h1 id="hero-heading" class="headline">Best spots, zero hassle — built for traveling salespeople</h1>
-                <p class="sub">In and out of a city for one or two nights? OnTheGo finds quick options near your hotel, surfaces curated places with reviews, delivery links and social profiles.</p>
+        <!-- ghosted data texture (sample 4 style) -->
+        <div class="hero-ghost" aria-hidden="true">
+            <span class="hero-ghost-item" style="top:8%;left:2%;font-size:13px">The Golden Spoon · ⭐ 4.5 · Italian</span>
+            <span class="hero-ghost-item" style="top:14%;right:3%;font-size:22px;font-weight:900">1.4 km</span>
+            <span class="hero-ghost-item" style="top:22%;left:7%;font-size:32px;font-weight:900">4.9 ★</span>
+            <span class="hero-ghost-item" style="top:18%;right:8%;font-size:13px">Business Meal · Open Now</span>
+            <span class="hero-ghost-item" style="top:35%;left:1%;font-size:18px">Sushi Paradise · $$$</span>
+            <span class="hero-ghost-item" style="top:42%;right:2%;font-size:28px;font-weight:900">356 reviews</span>
+            <span class="hero-ghost-item" style="top:50%;left:4%;font-size:13px">Chicago Loop · Grand Hyatt</span>
+            <span class="hero-ghost-item" style="top:55%;right:5%;font-size:13px">DoorDash · Uber Eats · OpenTable</span>
+            <span class="hero-ghost-item" style="top:65%;left:2%;font-size:24px;font-weight:900">14 spots nearby</span>
+            <span class="hero-ghost-item" style="top:72%;right:3%;font-size:32px;font-weight:900">0.6 km</span>
+            <span class="hero-ghost-item" style="top:78%;left:6%;font-size:13px">La Bella Vita · Private dining available</span>
+            <span class="hero-ghost-item" style="top:85%;right:7%;font-size:18px">5 cities · 28 restaurants</span>
+            <span class="hero-ghost-item" style="top:90%;left:3%;font-size:13px">Taco Fiesta · Fun · 1.2 km</span>
+        </div>
+        <div class="hero-eyebrow">✦ Built for traveling salespeople</div>
+        <h1 id="hero-heading" class="hero-title">
+            The perfect dining spot,<br><span>every trip.</span>
+        </h1>
+        <p class="hero-sub">
+            In and out of a city for a night or two? OnTheGo surfaces the best restaurants near your hotel — with reviews, delivery links, social profiles, and reservation options instantly.
+        </p>
+        <div class="hero-actions">
+            <a class="btn-primary" href="#nearby">🍽 Explore nearby spots</a>
+            <a class="btn-outline" href="#how-it-works">How it works</a>
+        </div>
 
-                <form class="lead-form" id="newsletterForm" onsubmit="event.preventDefault(); handleQuickSignup();">
-                    <input class="lead-input" id="newsletterEmail" type="email" placeholder="Work email (ex: you@company.com)" required aria-label="Email">
-                    <button class="lead-btn" type="submit">Join waitlist</button>
-                </form>
-
-                <div class="features" id="features" aria-hidden="false">
-                    <div class="feature"><div class="icon">📍</div><div><strong>Near your meetings</strong><span style="color:var(--muted);font-size:13px"> Filter by neighborhood and travel time</span></div></div>
-                    <div class="feature"><div class="icon">🔒</div><div><strong>Business-ready</strong><span style="color:var(--muted);font-size:13px"> Receipts and flexible check-out</span></div></div>
-                    <div class="feature"><div class="icon">🤝</div><div><strong>Team-friendly</strong><span style="color:var(--muted);font-size:13px"> Corporate profiles and itinerary sync</span></div></div>
-                </div>
-
-                <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-                    <div class="pill">Perfect for overnight or two night trips</div>
-                    <div class="pill">Last-minute availability</div>
-                    <div class="pill">Receive corporate invoices</div>
-                </div>
-                <div style="margin-top:18px" id="how">
-                    <h3 style="margin:0 0 8px 0">How it works</h3>
-                    <ol style="margin:0 0 0 18px;color:var(--muted);font-size:14px">
-                        <li>Import hotel information from TripIt or Concur (or enter manually).</li>
-                        <li>OnTheGo centers the map at your hotel and shows the best spots nearby.</li>
-                        <li>Open reviews, socials, or order delivery via direct links (API proxies optional).</li>
-                    </ol>
-                </div>
-            </section>
-
-            <aside class="card card-side" aria-labelledby="quick-check">
+        <!-- phone mockup with floating cards -->
+        <div class="hero-stage">
+            <!-- floating card top-left -->
+            <div class="float-card fc-left-top">
+                <div class="float-card-icon" style="background:rgba(34,197,94,0.15)">🥩</div>
                 <div>
-                    <h3 id="quick-check" style="margin:0 0 6px 0">Import reservation / hotel</h3>
-                    <p class="small muted" style="margin:0 0 12px 0">Connect TripIt or Concur to import your upcoming hotel automatically, or enter it manually.</p>
+                    <div class="float-card-title">The Steakhouse</div>
+                    <div class="float-card-sub">⭐ 4.9 · $$$$  · Open Now</div>
+                </div>
+            </div>
+            <!-- floating card bottom-left -->
+            <div class="float-card fc-left-bot">
+                <div class="float-card-icon" style="background:rgba(96,165,250,0.15)">🍱</div>
+                <div>
+                    <div class="float-card-title">Sushi Paradise</div>
+                    <div class="float-card-sub">⭐ 4.8 · $$$  · 0.9 km away</div>
+                </div>
+            </div>
+            <!-- floating card top-right -->
+            <div class="float-card fc-right-top">
+                <div class="float-card-icon" style="background:rgba(245,158,11,0.15)">🌮</div>
+                <div>
+                    <div class="float-card-title">Taco Fiesta</div>
+                    <div class="float-card-sub">Business meal · $$  · Delivery</div>
+                </div>
+            </div>
+            <!-- floating card bottom-right -->
+            <div class="float-card fc-right-bot">
+                <div class="float-card-icon" style="background:rgba(124,58,237,0.15)">🍝</div>
+                <div>
+                    <div class="float-card-title">La Bella Vita</div>
+                    <div class="float-card-sub">⭐ 4.7 · Chill · OpenTable ›</div>
+                </div>
+            </div>
 
-                    <div class="row" style="margin-bottom:8px;gap:10px">
-                        <button id="btnTripIt" class="btn" type="button">Connect TripIt</button>
-                        <button id="btnConcur" class="btn" type="button" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)">Connect Concur</button>
+            <!-- center phone -->
+            <div class="hero-phone" aria-hidden="true">
+                <div class="phone-notch"></div>
+                <div class="phone-status">
+                    <span>9:41</span>
+                    <span>▲ ◀ ■</span>
+                </div>
+                <div class="phone-header">
+                    <div class="phone-header-title">Restaurants near hotel</div>
+                    <div class="phone-header-sub">San Francisco · 5 mi radius</div>
+                </div>
+                <div class="phone-rest-card">
+                    <div class="phone-rest-icon">🥩</div>
+                    <div>
+                        <div class="phone-rest-name">The Steakhouse</div>
+                        <div class="phone-rest-meta">⭐ 4.9 · $$$$ · 0.6 km</div>
                     </div>
-
-                    <div style="margin-top:6px" class="field">
-                        <label class="small muted">Or enter hotel manually</label>
-                        <input id="manualHotel" class="input" type="text" placeholder="Hotel name or address" aria-label="Manual hotel">
-                        <div style="display:flex;gap:8px;margin-top:8px">
-                            <button id="useManual" class="btn" type="button">Use hotel</button>
-                            <button id="openManualModal" class="btn" type="button" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)">Advanced</button>
-                        </div>
-                        <div id="currentHotel" style="margin-top:10px;display:none" class="hotel-pill" aria-live="polite"></div>
+                    <div class="phone-rest-badge">Open</div>
+                </div>
+                <div class="phone-rest-card">
+                    <div class="phone-rest-icon">🍱</div>
+                    <div>
+                        <div class="phone-rest-name">Sushi Paradise</div>
+                        <div class="phone-rest-meta">⭐ 4.8 · $$$ · 0.9 km</div>
                     </div>
+                    <div class="phone-rest-badge">Open</div>
+                </div>
+                <div class="phone-rest-card">
+                    <div class="phone-rest-icon">🍝</div>
+                    <div>
+                        <div class="phone-rest-name">La Bella Vita</div>
+                        <div class="phone-rest-meta">⭐ 4.7 · $$$ · 1.4 km</div>
+                    </div>
+                    <div class="phone-rest-badge closed">Closes 10p</div>
+                </div>
+                <div class="phone-map-thumb">
+                    <div class="phone-map-pin" style="top:44%;left:48%;"></div>
+                    <div class="phone-map-pin" style="top:30%;left:62%;background:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,0.3);"></div>
+                    <div class="phone-map-pin" style="top:56%;left:35%;background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,0.3);"></div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                    <div style="margin-top:12px">
-                        <h4 style="margin:0 0 6px 0">Filters</h4>
-                        <div class="filters" id="filters">
-                            <button class="filter-btn active" data-filter="all">All</button>
-                            <button class="filter-btn" data-filter="business">Business meals</button>
-                            <button class="filter-btn" data-filter="trendy">Trendy</button>
-                            <button class="filter-btn" data-filter="chill">Chill</button>
-                            <button class="filter-btn" data-filter="delivery">Has delivery</button>
+    <!-- ── BADGE ROW ── -->
+    <div class="badge-row">
+        <div class="badge">
+            <div class="badge-icon">🏆</div>
+            <div>
+                <div class="badge-label">Built for Road Warriors</div>
+                <div class="badge-sub">Overnight &amp; two-night trips</div>
+            </div>
+        </div>
+        <div class="badge">
+            <div class="badge-icon">⚡</div>
+            <div>
+                <div class="badge-label">Zero Setup</div>
+                <div class="badge-sub">Import from TripIt or Concur</div>
+            </div>
+        </div>
+        <div class="badge">
+            <div class="badge-icon">🔗</div>
+            <div>
+                <div class="badge-label">All Links in One Place</div>
+                <div class="badge-sub">Yelp, Uber Eats, OpenTable &amp; more</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── FEATURES ── -->
+    <section class="section" id="features" aria-label="Features">
+        <div class="section-header">
+            <div class="section-label">Features</div>
+            <h2 class="section-title">Everything you need.<br>Nothing you don't.</h2>
+            <p class="section-body">OnTheGo is purpose-built for the traveling salesperson who needs a great meal, fast — without the research rabbit hole.</p>
+        </div>
+
+        <!-- pair 1 -->
+        <div class="feature-pair">
+            <div class="feature-card">
+                <div class="feature-card-body">
+                    <div class="feature-tag tag-green">Instant curation</div>
+                    <h3 class="section-title" style="font-size:26px">Know before<br>you land.</h3>
+                    <p class="section-body" style="font-size:14px">Import your hotel from TripIt or Concur and we'll surface the top-rated spots within walking distance the moment your reservation is confirmed.</p>
+                </div>
+                <div class="feature-card-visual">
+                    <div class="mini-rest">
+                        <div class="mini-rest-icon">🥩</div>
+                        <div>
+                            <div class="mini-rest-name">The Steakhouse</div>
+                            <div class="mini-rest-meta">⭐ 4.9 · Business Meal · 0.6 km</div>
                         </div>
-                        <div class="small muted" style="margin-top:8px">Filters update the nearby list and map.</div>
+                        <div class="mini-rest-badge ab-green">Open Now</div>
+                    </div>
+                    <div class="mini-rest">
+                        <div class="mini-rest-icon">🍱</div>
+                        <div>
+                            <div class="mini-rest-name">Sushi Paradise</div>
+                            <div class="mini-rest-meta">⭐ 4.8 · Chill · 0.9 km</div>
+                        </div>
+                        <div class="mini-rest-badge ab-green">Open Now</div>
+                    </div>
+                    <div class="mini-rest">
+                        <div class="mini-rest-icon">🌮</div>
+                        <div>
+                            <div class="mini-rest-name">Taco Fiesta</div>
+                            <div class="mini-rest-meta">⭐ 4.6 · Fun · 1.2 km</div>
+                        </div>
+                        <div class="mini-rest-badge ab-amber">Closes 10pm</div>
                     </div>
                 </div>
+            </div>
 
-                <div style="margin-top:8px">
-                    <h4 style="margin:0 0 8px 0">Quick availability</h4>
-                    <p class="small muted" style="margin:0">Find options for one or two nights in your next city and see curated places nearby.</p>
+            <div class="feature-card">
+                <div class="feature-card-body">
+                    <div class="feature-tag tag-blue">Smart maps</div>
+                    <h3 class="section-title" style="font-size:26px">Putting the map<br>to work for you.</h3>
+                    <p class="section-body" style="font-size:14px">Interactive map view with pinned restaurants, your hotel at center, and real-time distance calculations — all without leaving the app.</p>
+                </div>
+                <div class="feature-card-visual">
+                    <div class="mini-map">
+                        <div class="map-dot" style="top:38%;left:46%;background:var(--accent-2);box-shadow:0 0 0 4px rgba(96,165,250,0.25);"></div>
+                        <div class="map-dot" style="top:52%;left:62%;background:var(--accent);box-shadow:0 0 0 4px rgba(110,231,183,0.25);"></div>
+                        <div class="map-dot" style="top:65%;left:35%;background:var(--gold);box-shadow:0 0 0 4px rgba(245,158,11,0.25);"></div>
+                        <div class="map-dot" style="top:30%;left:72%;background:#f87171;box-shadow:0 0 0 4px rgba(248,113,113,0.25);"></div>
+                    </div>
+                    <div class="mini-rest" style="margin-top:10px">
+                        <div class="mini-rest-icon">📍</div>
+                        <div>
+                            <div class="mini-rest-name">Your hotel · Chicago Loop</div>
+                            <div class="mini-rest-meta">4 top-rated spots nearby</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="field" style="margin-top:8px">
-                        <label class="small muted">City (try Chicago, New York, San Francisco)</label>
+        <!-- glow section -->
+        <div class="glow-section">
+            <div class="glow-section-inner">
+                <div class="glow-section-text">
+                    <div class="feature-tag tag-purple" style="display:inline-block;width:fit-content;margin-bottom:16px">AI-powered picks</div>
+                    <h3 class="section-title" style="font-size:32px">See the best spots.<br>Finally!</h3>
+                    <p class="section-body" style="margin-bottom:24px">Business travelers often miss the best local gems because they rely on generic search results. OnTheGo curates spots specifically for your night — business-friendly ambiance, quick service, and reliable quality.</p>
+                    <a href="#nearby" class="btn-primary" style="display:inline-flex;width:fit-content">Explore now →</a>
+                </div>
+                <div class="glow-section-visual">
+                    <div class="alert-card">
+                        <div class="alert-top">
+                            <div class="alert-icon">✦</div>
+                            <div class="alert-title" style="color:var(--accent)">Top pick tonight</div>
+                        </div>
+                        <div class="alert-desc">La Bella Vita is perfect for a business dinner — private booths, excellent wine list, walking distance from your hotel.</div>
+                        <div class="alert-row">
+                            <div>
+                                <div class="alert-row-name">Your hotel · Chicago</div>
+                                <div class="alert-row-val" style="color:var(--accent)">1.4 km</div>
+                                <div class="alert-row-sub">7 min walk</div>
+                            </div>
+                            <div class="alert-badge ab-green">Open Now</div>
+                        </div>
+                        <div class="alert-row">
+                            <div>
+                                <div class="alert-row-name">Rating</div>
+                                <div class="alert-row-val">⭐ 4.7</div>
+                                <div class="alert-row-sub">356 reviews</div>
+                            </div>
+                            <div class="alert-badge ab-amber">$$$</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- pair 2 -->
+        <div class="feature-pair" style="margin-top:16px">
+            <div class="feature-card">
+                <div class="feature-card-body">
+                    <div class="feature-tag tag-amber">All-in-one links</div>
+                    <h3 class="section-title" style="font-size:26px">Every link, one tap.</h3>
+                    <p class="section-body" style="font-size:14px">Yelp reviews, Google Maps, Instagram photos, DoorDash, Uber Eats, and OpenTable reservations — all surfaced directly from each restaurant card.</p>
+                </div>
+                <div class="feature-card-visual">
+                    <div class="mini-rest">
+                        <div class="mini-rest-icon">🍝</div>
+                        <div style="flex:1">
+                            <div class="mini-rest-name">La Bella Vita · Italian</div>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+                                <span style="background:rgba(234,67,53,0.15);color:#f87171;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px">Yelp</span>
+                                <span style="background:rgba(66,133,244,0.15);color:#60a5fa;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px">Maps</span>
+                                <span style="background:rgba(131,58,180,0.15);color:#c084fc;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px">Instagram</span>
+                                <span style="background:rgba(245,158,11,0.15);color:#fbbf24;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px">DoorDash</span>
+                                <span style="background:rgba(34,197,94,0.15);color:#4ade80;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px">OpenTable</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mini-rest">
+                        <div class="mini-rest-icon">🥩</div>
+                        <div style="flex:1">
+                            <div class="mini-rest-name">The Steakhouse · American</div>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+                                <span style="background:rgba(234,67,53,0.15);color:#f87171;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px">Yelp</span>
+                                <span style="background:rgba(66,133,244,0.15);color:#60a5fa;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px">Maps</span>
+                                <span style="background:rgba(245,158,11,0.15);color:#fbbf24;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px">Uber Eats</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-card-body">
+                    <div class="feature-tag tag-green">Travel sync</div>
+                    <h3 class="section-title" style="font-size:26px">Business travel,<br>simplified.</h3>
+                    <p class="section-body" style="font-size:14px">Connect TripIt or Concur to automatically import your hotel and trip details. Filter for business meals, track your visit history, and access your travel log anytime.</p>
+                </div>
+                <div class="feature-card-visual">
+                    <div class="mini-rest">
+                        <div class="mini-rest-icon">✈️</div>
+                        <div>
+                            <div class="mini-rest-name">TripIt connected</div>
+                            <div class="mini-rest-meta">Grand Central Hotel · Chicago Loop imported</div>
+                        </div>
+                        <div class="mini-rest-badge ab-green">✓ Synced</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px">
+                            <div style="font-size:22px;font-weight:800;color:var(--accent)">5</div>
+                            <div style="font-size:11px;color:var(--muted)">Cities visited</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px">
+                            <div style="font-size:22px;font-weight:800;color:var(--accent-2)">14</div>
+                            <div style="font-size:11px;color:var(--muted)">Restaurants tried</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── TOOLBAR TABS ── -->
+    <div class="toolbar-section">
+        <div class="toolbar-inner">
+            <a class="toolbar-btn active" href="#hotel-check">🏨 Import Hotel</a>
+            <a class="toolbar-btn" href="#nearby">🗺 Find Spots</a>
+            <a class="toolbar-btn" href="#features">🔗 Open Links</a>
+            <a class="toolbar-btn" href="index.html">🚀 Launch App</a>
+        </div>
+    </div>
+
+    <!-- ── HOW IT WORKS ── -->
+    <section class="section" id="how-it-works" aria-label="How it works">
+        <div class="section-header">
+            <div class="section-label">How it works</div>
+            <h2 class="section-title">Three steps to a great dinner.</h2>
+            <p class="section-body">No complicated setup. No wasted time. Just the best spots near wherever you're staying tonight.</p>
+        </div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-title">Import your hotel</div>
+                <div class="step-body">Connect TripIt or Concur to pull your upcoming reservation automatically, or enter your hotel name manually in seconds.</div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-title">Browse curated spots</div>
+                <div class="step-body">OnTheGo centers the map at your hotel and surfaces the highest-rated restaurants nearby — filtered for business meals, delivery, or chill vibes.</div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-title">Open any link instantly</div>
+                <div class="step-body">Tap Yelp, Google Maps, Instagram, DoorDash, Uber Eats, or OpenTable directly from each restaurant card. Every resource, one place.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── HOTEL QUICK CHECK + MAP ── -->
+    <section class="section" id="hotel-check" aria-label="Check availability">
+        <div class="section-header">
+            <div class="section-label">Try it now</div>
+            <h2 class="section-title">Find spots near your next stay.</h2>
+        </div>
+
+        <div class="quick-check">
+            <div class="quick-check-title">Import reservation / hotel</div>
+            <div class="quick-check-sub">Connect TripIt or Concur to auto-import, or enter your hotel manually.</div>
+
+            <div class="connect-row">
+                <button id="btnTripIt" class="btn btn-accent" type="button">✈ Connect TripIt</button>
+                <button id="btnConcur" class="btn btn-ghost" type="button">Connect Concur</button>
+            </div>
+
+            <div class="field" style="margin-bottom:12px">
+                <label class="field-label" for="manualHotel">Or enter hotel manually</label>
+                <input id="manualHotel" class="input" type="text" placeholder="Hotel name or address" aria-label="Manual hotel">
+                <div style="display:flex;gap:8px;margin-top:8px">
+                    <button id="useManual" class="btn btn-accent" type="button">Use hotel</button>
+                    <button id="openManualModal" class="btn btn-ghost" type="button">Advanced</button>
+                </div>
+                <div id="currentHotel" style="display:none" class="hotel-pill" aria-live="polite"></div>
+            </div>
+
+            <div>
+                <div class="field-label" style="margin-bottom:8px">Filter restaurants</div>
+                <div class="filters-row" id="filters">
+                    <button class="filter-btn active" data-filter="all">All spots</button>
+                    <button class="filter-btn" data-filter="business">Business meals</button>
+                    <button class="filter-btn" data-filter="trendy">Trendy</button>
+                    <button class="filter-btn" data-filter="chill">Chill</button>
+                    <button class="filter-btn" data-filter="delivery">Has delivery</button>
+                </div>
+            </div>
+
+            <div style="margin-top:24px">
+                <div class="quick-check-title" style="font-size:16px">Quick availability</div>
+                <div class="quick-check-sub">Enter a city and date to preview curated spots nearby.</div>
+                <div class="form-grid">
+                    <div class="field">
+                        <label class="field-label" for="city">City <span style="color:var(--muted)">(try Chicago, New York, San Francisco)</span></label>
                         <input id="city" class="input" type="text" placeholder="e.g., Chicago" aria-label="City">
                     </div>
-
-                    <div class="row" style="margin-top:10px">
-                        <div style="flex:1" class="field">
-                            <label class="small muted">Arrival</label>
-                            <input id="date" class="input" type="date" aria-label="Arrival date">
-                        </div>
-                        <div style="width:120px" class="field">
-                            <label class="small muted">Nights</label>
-                            <select id="nights" class="select" aria-label="Nights">
-                                <option value="1">1 night</option>
-                                <option value="2">2 nights</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div style="margin-top:12px;display:flex;gap:8px">
-                        <button id="checkBtn" class="btn" type="button">Check availability</button>
-                        <button id="notifyBtn" class="btn" type="button" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)">Notify me</button>
-                    </div>
-
-                    <div id="result" class="result" style="margin-top:12px;min-height:56px">
-                        <div class="small muted">Enter a city and date to see dinning availability and nearby spots.</div>
+                    <div class="field">
+                        <label class="field-label" for="date">Arrival date</label>
+                        <input id="date" class="input" type="date" aria-label="Arrival date">
                     </div>
                 </div>
-            </aside>
-        </main>
-
-        <section class="card" id="nearby" style="margin-top:22px">
-            <h3 style="margin:0 0 8px 0">Curated spots around your hotel</h3>
-            <p class="small muted" style="margin:0 0 12px 0">Click a place to open reviews, socials, or order delivery when available.</p>
-
-            <div class="nearby-wrap">
-                <div>
-                    <div class="place-list" id="placeList" aria-live="polite"></div>
+                <div class="field" style="margin-bottom:16px">
+                    <label class="field-label" for="nights">Nights</label>
+                    <select id="nights" class="select" aria-label="Nights" style="max-width:180px">
+                        <option value="1">1 night</option>
+                        <option value="2">2 nights</option>
+                    </select>
                 </div>
-                <div id="map" aria-label="Map of nearby spots">Loading map…</div>
+                <div class="form-actions">
+                    <button id="checkBtn" class="btn btn-accent" type="button">🍽 Find spots</button>
+                    <button id="notifyBtn" class="btn btn-ghost" type="button">🔔 Notify me</button>
+                </div>
+                <div id="result" class="result">
+                    <span class="muted">Enter a city and date to see dining availability and nearby spots.</span>
+                </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section class="card" style="margin-top:22px">
-            <h3 style="margin:0 0 8px 0">Created by traveling reps, trusted by traveling reps</h3>
-            <div class="testimonials">
-                <div class="t"><div class="avatar">MB</div><div><strong>Mark B.</strong><div class="small muted">"Booked twice during a week-long road trip — saved hours."</div></div></div>
-                <div class="t"><div class="avatar">AL</div><div><strong>Alice L.</strong><div class="small muted">"Easy corporate invoicing and last-minute options."</div></div></div>
+    <!-- ── NEARBY MAP ── -->
+    <section class="section" id="nearby" aria-label="Curated spots near you">
+        <div class="section-header">
+            <div class="section-label">Live map</div>
+            <h2 class="section-title">Curated spots near your hotel.</h2>
+            <p class="section-body">Click any restaurant to zoom in on the map, or tap the links to open Yelp, Google Maps, Instagram, and delivery services.</p>
+        </div>
+        <div class="nearby-grid">
+            <div class="place-list" id="placeList" aria-live="polite"></div>
+            <div id="map" aria-label="Map of nearby spots">Loading map…</div>
+        </div>
+    </section>
+
+    <!-- ── TESTIMONIALS ── -->
+    <section class="section" id="testimonials" aria-label="Testimonials">
+        <div class="section-header">
+            <div class="section-label">From the road</div>
+            <h2 class="section-title">Trusted by traveling reps.</h2>
+            <p class="section-body">Built by salespeople who have been in your shoes — flying into a city at 6pm with a client dinner at 7.</p>
+        </div>
+        <div class="testimonial-grid">
+            <div class="testimonial">
+                <div class="testimonial-quote">"I used OnTheGo on a five-city road trip and it saved me hours of research every single night. The business meal filter is a game-changer when you're entertaining a client."</div>
+                <div class="testimonial-author">
+                    <div class="avatar">MB</div>
+                    <div>
+                        <div class="author-name">Mark B.</div>
+                        <div class="author-title">Regional Sales Manager · SaaS</div>
+                    </div>
+                </div>
             </div>
-        </section>
+            <div class="testimonial">
+                <div class="testimonial-quote">"The TripIt integration is seamless. My hotel loads automatically and I can see the best spots within minutes of landing. DoorDash links are a lifesaver on late nights."</div>
+                <div class="testimonial-author">
+                    <div class="avatar">AL</div>
+                    <div>
+                        <div class="author-name">Alice L.</div>
+                        <div class="author-title">Enterprise AE · FinTech</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial">
+                <div class="testimonial-quote">"I've tried every travel app. OnTheGo is the only one that actually understands what a sales rep needs — quick, nearby, business-appropriate, and easy to expense."</div>
+                <div class="testimonial-author">
+                    <div class="avatar">JC</div>
+                    <div>
+                        <div class="author-name">James C.</div>
+                        <div class="author-title">VP of Sales · MedTech</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial">
+                <div class="testimonial-quote">"The Instagram links are underrated — I check the vibe of a restaurant before walking in. Never show up to a dive bar for a client dinner again."</div>
+                <div class="testimonial-author">
+                    <div class="avatar">SR</div>
+                    <div>
+                        <div class="author-name">Sarah R.</div>
+                        <div class="author-title">Account Executive · MarTech</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <footer>
-            <div style="max-width:700px;margin:18px auto 0 auto">© <span id="year"></span> OnTheGo — Built by salespeople for salespeople. <a class="small" href="#privacy">Privacy</a> · <a class="small" href="#terms">Terms</a></div>
-        </footer>
+    <!-- ── LOOK BACK SECTION (sample 5 style – light bg) ── -->
+    <section class="lookback-section" id="travel-log" aria-label="Your dining history">
+        <div class="lookback-inner">
+            <h2 class="lookback-headline">Look back on your dining history, near and far.</h2>
+            <p class="lookback-body">Whether you visit one city a month or ten, OnTheGo keeps a record of every restaurant you've tried. How many spots have you discovered? What was your best business dinner? Browse your full dining passport, city by city.</p>
+
+            <div class="lookback-grid">
+                <!-- left: dark card -->
+                <div class="lookback-card">
+                    <div class="lookback-card-title">A hall of fame for your dining history.</div>
+                    <div class="lookback-card-body" style="margin-bottom:24px">Kick back and scroll through a beautifully curated log of every spot you've visited while on the road. Yes, you can import past trips from TripIt and Concur.</div>
+                    <a href="index.html" class="btn btn-accent" style="font-size:14px;text-decoration:none">Open my travel log →</a>
+                </div>
+
+                <!-- right: 2×2 passport stats -->
+                <div class="passport-grid">
+                    <div class="passport-card pc-purple">
+                        <div class="passport-card-label">Restaurants visited</div>
+                        <div class="passport-card-value">28</div>
+                        <div class="passport-card-sub">Across 5 cities</div>
+                        <div class="passport-card-bar"><div class="passport-card-bar-fill" style="width:56%"></div></div>
+                    </div>
+                    <div class="passport-card pc-blue">
+                        <div class="passport-card-label">Cities explored</div>
+                        <div class="passport-card-value">5</div>
+                        <div class="passport-card-sub">SF · NYC · CHI · LA · MIA</div>
+                        <div class="passport-card-bar"><div class="passport-card-bar-fill" style="width:42%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div>
+                    </div>
+                    <div class="passport-card pc-green">
+                        <div class="passport-card-label">Business meals logged</div>
+                        <div class="passport-card-value">14</div>
+                        <div class="passport-card-sub">$1,842 total expensed</div>
+                        <div class="passport-card-bar"><div class="passport-card-bar-fill" style="width:70%;background:linear-gradient(90deg,#059669,#6ee7b7)"></div></div>
+                    </div>
+                    <div class="passport-card pc-amber">
+                        <div class="passport-card-label">Avg. rating</div>
+                        <div class="passport-card-value">4.6 ★</div>
+                        <div class="passport-card-sub">You have great taste</div>
+                        <div class="passport-card-bar"><div class="passport-card-bar-fill" style="width:92%;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── LEAD CAPTURE ── -->
+    <section class="lead-section" id="signup" aria-label="Join the waitlist">
+        <div class="section-label">Get early access</div>
+        <h2 class="section-title">Ready to dine smarter?</h2>
+        <p class="section-body" style="margin:0 auto">Join the waitlist and be the first to get OnTheGo when we launch full access — including AI concierge picks and Concur expense sync.</p>
+        <form class="lead-form" id="newsletterForm" onsubmit="event.preventDefault(); handleQuickSignup();">
+            <input class="lead-input" id="newsletterEmail" type="email" placeholder="Work email (e.g. you@company.com)" required aria-label="Email">
+            <button class="lead-btn" type="submit">Join waitlist</button>
+        </form>
+    </section>
+
+    <!-- ── STICKY TAB BAR (sample 4 style) ── -->
+    <div class="tab-bar" role="navigation" aria-label="Quick navigation">
+        <div class="tab-bar-inner">
+            <a class="tab-btn" href="#hotel-check"><span>🏨</span> <span>Import Hotel</span></a>
+            <a class="tab-btn active" href="#nearby"><span>🗺</span> <span>Find Spots</span></a>
+            <a class="tab-btn" href="#travel-log"><span>📖</span> <span>My Dining Log</span></a>
+            <a class="tab-btn" href="index.html"><span>🚀</span> <span>Launch App</span></a>
+        </div>
+    </div>
+
+    <!-- ── FOOTER ── -->
+        <div class="footer-inner">
+            <div>
+                <a class="brand" href="#" style="display:inline-flex;gap:8px;align-items:center;text-decoration:none;color:var(--dim);font-size:14px">
+                    <div class="brand-icon" style="width:28px;height:28px;font-size:11px">OTG</div>
+                    OnTheGo
+                </a>
+            </div>
+            <div class="footer-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How it works</a>
+                <a href="index.html">Launch App</a>
+                <a href="#privacy">Privacy</a>
+                <a href="#terms">Terms</a>
+            </div>
+            <div>© <span id="year"></span> OnTheGo. Built by salespeople for salespeople.</div>
+        </div>
+    </footer>
+
+    <!-- ── MODALS ── -->
+    <!-- Signup Modal -->
+    <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal" role="document" aria-labelledby="modalTitle" tabindex="-1">
+            <h2 id="modalTitle">Reserve Your Spot</h2>
+            <p class="small muted" style="margin:0 0 20px 0">Enter details to join the waitlist and explore dining spots in your next city.</p>
+
+            <form id="fullForm" onsubmit="event.preventDefault(); submitReservation();">
+                <div class="field"><label class="field-label">Full name</label><input id="fullName" class="input" required></div>
+                <div class="field" style="margin-top:10px"><label class="field-label">Email</label><input id="fullEmail" class="input" type="email" required></div>
+                <div class="row-stack" style="gap:10px;margin-top:10px">
+                    <div style="flex:1" class="field"><label class="field-label">City</label><input id="modalCity" class="input" required></div>
+                    <div style="width:120px" class="field"><label class="field-label">Nights</label><select id="modalNights" class="select" aria-label="Nights"><option value="1">1</option><option value="2">2</option></select></div>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+                    <button type="button" class="btn btn-ghost" id="closeModal">Cancel</button>
+                    <button type="submit" class="btn btn-accent">Reserve →</button>
+                </div>
+                <div id="modalNote" class="note"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manual hotel detail modal -->
+    <div id="hotelModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal" role="document" tabindex="-1">
+            <h2>Enter hotel details</h2>
+            <p class="small muted" style="margin:0 0 16px 0">Provide hotel name and address (or lat/lng). This centers the map and shows curated spots nearby.</p>
+            <div class="field"><label class="field-label">Hotel name</label><input id="hmName" class="input"></div>
+            <div class="field" style="margin-top:10px"><label class="field-label">Address</label><input id="hmAddr" class="input"></div>
+            <div class="row-stack" style="gap:10px;margin-top:10px">
+                <div style="flex:1" class="field"><label class="field-label">Latitude</label><input id="hmLat" class="input" placeholder="Optional"></div>
+                <div style="width:140px" class="field"><label class="field-label">Longitude</label><input id="hmLng" class="input" placeholder="Optional"></div>
+            </div>
+            <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+                <button class="btn btn-ghost" id="closeHotelModal" type="button">Cancel</button>
+                <button class="btn btn-accent" id="saveHotelManual" type="button">Save hotel</button>
+            </div>
+            <div class="note" id="hotelModalNote"></div>
+        </div>
     </div>
 
     <!-- Signup/Reserve Modal -->
