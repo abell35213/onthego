@@ -338,8 +338,8 @@ const App = {
             yearSection.querySelectorAll('.travel-log-entry').forEach(entry => {
                 entry.addEventListener('click', () => {
                     const tripId = entry.dataset.tripId;
-                    if (tripId && window.App && typeof App.openTripFromWorldMap === 'function') {
-                        App.openTripFromWorldMap(tripId, true);
+                    if (tripId && window.App && typeof window.App.openTripFromWorldMap === 'function') {
+                        window.App.openTripFromWorldMap(tripId, true);
                     }
                 });
             });
