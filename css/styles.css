@@ -1023,7 +1023,11 @@ a:hover { color: #fff; }
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    background: var(--bg-glass);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
 }
 
 .travel-log-city {
@@ -1044,6 +1048,10 @@ a:hover { color: #fff; }
     align-items: center;
     gap: 0.4rem;
     margin-bottom: 0.75rem;
+    background: var(--bg-glass);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.6rem 1rem;
 }
 
 .travel-log-restaurants-title {
