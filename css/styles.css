@@ -75,7 +75,7 @@ a:hover { color: var(--text); }
 .lucide {
     width: 18px;
     height: 18px;
-    stroke-width: 1.75;
+    stroke-width: 1.75px;
     vertical-align: middle;
     flex-shrink: 0;
 }
