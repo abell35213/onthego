@@ -15,6 +15,11 @@ const App = {
         if (typeof Account !== 'undefined') {
             Account.init();
         }
+
+        // Initialize AI Concierge
+        if (typeof Concierge !== 'undefined') {
+            Concierge.init();
+        }
         
         // Initialize World Map (default view)
         if (typeof WorldMap !== 'undefined') {
@@ -535,3 +540,4 @@ window.UI = UI;
 window.MapModule = MapModule;
 window.WorldMap = WorldMap;
 window.Account = Account;
+window.Concierge = Concierge;
