@@ -494,8 +494,8 @@ a:hover { color: #fff; }
 
 /* ===== Sidebar ===== */
 .sidebar {
-    width: 340px;
-    min-width: 220px;
+    width: 400px;
+    min-width: 280px;
     background: var(--bg-surface);
     border-right: 1px solid var(--border);
     display: flex;
@@ -603,7 +603,7 @@ a:hover { color: #fff; }
     cursor: pointer;
     transition: var(--transition);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .restaurant-card::before {
@@ -634,7 +634,7 @@ a:hover { color: #fff; }
 }
 
 .restaurant-name {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--text);
     line-height: 1.3;
@@ -1010,11 +1010,13 @@ a:hover { color: #fff; }
     border-radius: var(--radius-lg);
     padding: 1.25rem;
     transition: var(--transition);
+    cursor: pointer;
 }
 
 .travel-log-entry:hover {
     border-color: var(--border-accent);
     box-shadow: var(--shadow);
+    transform: translateY(-2px);
 }
 
 .travel-log-entry-header {
@@ -2050,6 +2052,234 @@ a:hover { color: #fff; }
 .leaflet-container {
     background: var(--bg-base) !important;
     font-family: 'Inter', sans-serif !important;
+}
+
+/* ===== iOS-style Map Pin Markers ===== */
+.ios-pin-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ios-pin-marker .ios-pin-circle {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.ios-pin-marker .ios-pin-tail {
+    width: 2px;
+    height: 14px;
+    background: #fff;
+    border-radius: 0 0 1px 1px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    margin-top: -1px;
+}
+
+.ios-pin-marker.restaurant .ios-pin-circle {
+    background: #e74c3c;
+}
+
+.ios-pin-marker.restaurant .ios-pin-tail {
+    background: #e74c3c;
+}
+
+.ios-pin-marker.user-location .ios-pin-circle {
+    background: #3b82f6;
+}
+
+.ios-pin-marker.user-location .ios-pin-tail {
+    background: #3b82f6;
+}
+
+/* ===== Popup Content (Map Marker Popups) ===== */
+.popup-content-full {
+    font-size: 0.85rem;
+}
+
+.popup-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.popup-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+}
+
+.popup-image {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+}
+
+.popup-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.4rem;
+}
+
+.popup-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.popup-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.popup-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+}
+
+.popup-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    background: var(--bg-glass);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    transition: var(--transition);
+    text-decoration: none;
+}
+
+.popup-btn:hover {
+    background: var(--primary-dim);
+    border-color: var(--border-accent);
+    color: var(--primary);
+}
+
+.popup-social-links {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.popup-social-links .social-link {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+}
+
+/* ===== Directions Control ===== */
+.map-directions-control {
+    position: relative;
+}
+
+.directions-toggle-btn {
+    width: 44px;
+    height: 44px;
+    background: var(--bg-elevated);
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+
+.directions-toggle-btn:hover {
+    background: var(--primary-dim);
+    color: var(--primary);
+}
+
+.directions-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    min-width: 160px;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.directions-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.directions-option:hover {
+    background: var(--primary-dim);
+    color: var(--primary);
+}
+
+.directions-option i {
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* ===== Search This Area Button ===== */
+.search-area-btn-wrapper {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.search-area-btn {
+    pointer-events: auto;
+    padding: 0.5rem 1.1rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.search-area-btn:hover {
+    background: var(--primary-dim);
+    border-color: var(--border-accent);
+    color: var(--primary);
 }
 
 /* ===== Responsive ===== */
