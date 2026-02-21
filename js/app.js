@@ -296,7 +296,7 @@ const App = {
                         }).filter(r => r !== null);
 
                         return `
-                            <div class="travel-log-entry">
+                            <div class="travel-log-entry" data-trip-id="${trip.id}">
                                 <div class="travel-log-entry-header">
                                     <div class="travel-log-city">${trip.city}, ${trip.state}</div>
                                     <div class="travel-log-dates">${dateRange}</div>
@@ -333,6 +333,16 @@ const App = {
                 </div>
             `;
             contentContainer.appendChild(yearSection);
+
+            // Attach click handlers to each travel-log-entry in this year section
+            yearSection.querySelectorAll('.travel-log-entry').forEach(entry => {
+                entry.addEventListener('click', () => {
+                    const tripId = entry.dataset.tripId;
+                    if (tripId && window.App && typeof window.App.openTripFromWorldMap === 'function') {
+                        window.App.openTripFromWorldMap(tripId, true);
+                    }
+                });
+            });
         });
     },
 
