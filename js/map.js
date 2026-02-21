@@ -84,7 +84,7 @@ const MapModule = {
         wrapper.className = 'search-area-btn-wrapper';
         const btn = document.createElement('button');
         btn.className = 'search-area-btn';
-        btn.innerHTML = '<i class="fas fa-search-location"></i> Search This Area';
+        btn.innerHTML = '<i data-lucide="search"></i> Search This Area';
         btn.style.display = 'none';
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -95,6 +95,9 @@ const MapModule = {
         mapContainer.appendChild(wrapper);
         L.DomEvent.disableClickPropagation(wrapper);
         this.searchAreaBtn = btn;
+
+        // Refresh Lucide icons for the new button
+        if (window.lucide) lucide.createIcons();
     },
 
     /**
@@ -109,14 +112,14 @@ const MapModule = {
                 const container = L.DomUtil.create('div', 'map-directions-control');
                 container.innerHTML = `
                     <button class="directions-toggle-btn" title="Get Directions">
-                        <i class="fas fa-directions"></i>
+                        <i data-lucide="navigation"></i>
                     </button>
                     <div class="directions-dropdown" style="display:none;">
                         <a class="directions-option" data-provider="google" href="#" title="Google Maps">
-                            <i class="fas fa-map-marked-alt"></i> Google Maps
+                            <i data-lucide="map-pin"></i> Google Maps
                         </a>
                         <a class="directions-option" data-provider="apple" href="#" title="Apple Maps">
-                            <i class="fab fa-apple"></i> Apple Maps
+                            <i data-lucide="smartphone"></i> Apple Maps
                         </a>
                     </div>
                 `;
@@ -151,6 +154,9 @@ const MapModule = {
         });
 
         this.map.addControl(new DirectionsControl());
+
+        // Refresh Lucide icons for new controls
+        if (window.lucide) lucide.createIcons();
     },
 
     /**
@@ -361,6 +367,11 @@ const MapModule = {
             }
         });
 
+        // Refresh Lucide icons when popup opens
+        marker.on('popupopen', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+
         return marker;
     },
 
@@ -420,40 +431,40 @@ const MapModule = {
                     <span class="stars">${stars}</span>
                     <span class="rating-number">${restaurant.rating}</span>
                     <span class="review-count">(${restaurant.review_count} reviews)</span>
-                    ${restaurant.visited ? '<span class="visited-indicator" style="font-size:0.7rem;padding:0.2rem 0.4rem;margin-left:0.3rem;"><i class="fas fa-check"></i> Visited</span>' : ''}
+                    ${restaurant.visited ? '<span class="visited-indicator" style="font-size:0.7rem;padding:0.2rem 0.4rem;margin-left:0.3rem;"><i data-lucide="check"></i> Visited</span>' : ''}
                 </div>
                 <div class="popup-info">
-                    <span><i class="fas fa-dollar-sign" style="color:var(--primary-color)"></i> ${restaurant.price || 'N/A'}</span>
-                    <span><i class="fas fa-walking" style="color:var(--primary-color)"></i> ${API.formatDistance(restaurant.distance)}</span>
-                    ${restaurant.display_phone ? `<span><i class="fas fa-phone" style="color:var(--primary-color)"></i> ${restaurant.display_phone}</span>` : ''}
+                    <span><i data-lucide="dollar-sign" style="color:var(--primary-color)"></i> ${restaurant.price || 'N/A'}</span>
+                    <span><i data-lucide="footprints" style="color:var(--primary-color)"></i> ${API.formatDistance(restaurant.distance)}</span>
+                    ${restaurant.display_phone ? `<span><i data-lucide="phone" style="color:var(--primary-color)"></i> ${restaurant.display_phone}</span>` : ''}
                 </div>
                 ${tagsHtml}
                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">
-                    <i class="fas fa-map-marker-alt" style="color:var(--primary-color)"></i> ${address}
+                    <i data-lucide="map-pin" style="color:var(--primary-color)"></i> ${address}
                 </div>
                 <div class="popup-actions">
                     <a href="${restaurant.url}" target="_blank" rel="noopener noreferrer" class="popup-btn" style="background-color:#D32323;">
-                        <i class="fab fa-yelp"></i> Yelp
+                        <i data-lucide="external-link"></i> Yelp
                     </a>
                     <a href="${deliveryLinks.ubereats}" target="_blank" rel="noopener noreferrer" class="popup-btn">
-                        <i class="fas fa-hamburger"></i> Uber Eats
+                        <i data-lucide="truck"></i> Uber Eats
                     </a>
                     <a href="${deliveryLinks.doordash}" target="_blank" rel="noopener noreferrer" class="popup-btn">
-                        <i class="fas fa-motorcycle"></i> DoorDash
+                        <i data-lucide="package"></i> DoorDash
                     </a>
                     <a href="${reservationLinks.opentable}" target="_blank" rel="noopener noreferrer" class="popup-btn">
-                        <i class="fas fa-calendar-check"></i> OpenTable
+                        <i data-lucide="calendar-check"></i> OpenTable
                     </a>
                 </div>
                 <div class="popup-social-links">
                     <a href="${socialLinks.instagram}" target="_blank" rel="noopener noreferrer" class="social-link instagram" title="Instagram">
-                        <i class="fab fa-instagram"></i>
+                        <i data-lucide="camera"></i>
                     </a>
                     <a href="${socialLinks.facebook}" target="_blank" rel="noopener noreferrer" class="social-link facebook" title="Facebook">
-                        <i class="fab fa-facebook-f"></i>
+                        <i data-lucide="share-2"></i>
                     </a>
                     <a href="${socialLinks.twitter}" target="_blank" rel="noopener noreferrer" class="social-link twitter" title="Twitter">
-                        <i class="fab fa-twitter"></i>
+                        <i data-lucide="message-circle"></i>
                     </a>
                 </div>
             </div>

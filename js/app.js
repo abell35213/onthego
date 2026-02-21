@@ -44,6 +44,9 @@ const App = {
         this.setupTravelLogToggle();
         
         console.log('OnTheGo App Ready!');
+
+        // Initialize Lucide icons
+        if (window.lucide) lucide.createIcons();
     },
 
     /**
@@ -87,7 +90,7 @@ const App = {
             localView.style.display = 'none';
             worldView.style.display = 'flex';
             this.currentView = CONFIG.VIEW_MODE_WORLD;
-            viewToggleBtn.innerHTML = '<i class="fas fa-list"></i><span>Restaurant List</span>';
+            viewToggleBtn.innerHTML = '<i data-lucide="list"></i><span>Restaurant List</span>';
             
             // Refresh world map
             if (WorldMap._leafletMap) {
@@ -99,7 +102,7 @@ const App = {
             // From travel log, go back to world map
             worldView.style.display = 'flex';
             this.currentView = CONFIG.VIEW_MODE_WORLD;
-            viewToggleBtn.innerHTML = '<i class="fas fa-list"></i><span>Restaurant List</span>';
+            viewToggleBtn.innerHTML = '<i data-lucide="list"></i><span>Restaurant List</span>';
             
             if (WorldMap._leafletMap) {
                 setTimeout(() => {
@@ -111,7 +114,7 @@ const App = {
             worldView.style.display = 'none';
             localView.style.display = 'flex';
             this.currentView = CONFIG.VIEW_MODE_LOCAL;
-            viewToggleBtn.innerHTML = '<i class="fas fa-globe"></i><span>World Map</span>';
+            viewToggleBtn.innerHTML = '<i data-lucide="globe"></i><span>World Map</span>';
             
             
             // Ensure location controls are initialized and default trip is selected
@@ -123,6 +126,9 @@ const App = {
                 }, 100);
             }
         }
+
+        // Refresh Lucide icons after view toggle
+        if (window.lucide) lucide.createIcons();
     },
 
     /**
@@ -142,11 +148,14 @@ const App = {
 
         this.currentView = CONFIG.VIEW_MODE_LOCAL;
         if (viewToggleBtn) {
-            viewToggleBtn.innerHTML = '<i class="fas fa-globe"></i><span>World Map</span>';
+            viewToggleBtn.innerHTML = '<i data-lucide="globe"></i><span>World Map</span>';
         }
 
         // Ensure controls exist
         this.setupLocationControls();
+
+        // Refresh Lucide icons
+        if (window.lucide) lucide.createIcons();
 
         // Fix Leaflet sizing when the map container becomes visible
         if (window.MapModule && MapModule.map) {
@@ -196,7 +205,7 @@ const App = {
             if (travelLogView) travelLogView.style.display = 'none';
             worldView.style.display = 'flex';
             this.currentView = CONFIG.VIEW_MODE_WORLD;
-            viewToggleBtn.innerHTML = '<i class="fas fa-list"></i><span>Restaurant List</span>';
+            viewToggleBtn.innerHTML = '<i data-lucide="list"></i><span>Restaurant List</span>';
 
             if (WorldMap._leafletMap) {
                 setTimeout(() => {
@@ -211,10 +220,13 @@ const App = {
         if (travelLogView) travelLogView.style.display = 'flex';
 
         this.currentView = CONFIG.VIEW_MODE_TRAVEL_LOG;
-        viewToggleBtn.innerHTML = '<i class="fas fa-globe"></i><span>World Map</span>';
+        viewToggleBtn.innerHTML = '<i data-lucide="globe"></i><span>World Map</span>';
 
         // Render travel log content
         this.renderTravelLog();
+
+        // Refresh Lucide icons
+        if (window.lucide) lucide.createIcons();
     },
 
     /**
@@ -280,7 +292,7 @@ const App = {
             const trips = tripsByYear[year];
 
             yearSection.innerHTML = `
-                <h3><i class="fas fa-calendar-alt"></i> ${year}</h3>
+                <h3><i data-lucide="calendar"></i> ${year}</h3>
                 <div class="travel-log-entries">
                     ${trips.map(trip => {
                         const dateRange = `${WorldMap.formatDate(trip.startDate)} - ${WorldMap.formatDate(trip.endDate)}`;
@@ -302,11 +314,11 @@ const App = {
                                     <div class="travel-log-dates">${dateRange}</div>
                                 </div>
                                 <div class="travel-log-hotel">
-                                    <i class="fas fa-hotel"></i> ${trip.hotel}
+                                    <i data-lucide="building"></i> ${trip.hotel}
                                 </div>
                                 ${restaurantDetails.length > 0 ? `
                                     <div class="travel-log-restaurants-title">
-                                        <i class="fas fa-utensils"></i> Places Visited
+                                        <i data-lucide="utensils"></i> Places Visited
                                     </div>
                                     <div class="travel-log-restaurant-list">
                                         ${restaurantDetails.map(r => `
@@ -320,8 +332,8 @@ const App = {
                                     </div>
                                     ${tripDiningTotal > 0 ? `
                                         <div class="travel-log-trip-total">
-                                            <i class="fas fa-receipt"></i> Trip Dining Total: <strong>$${tripDiningTotal.toFixed(2)}</strong>
-                                            ${USER_ACCOUNT.concurConnected ? '<span class="concur-synced"><i class="fas fa-check-circle"></i> Synced with Concur</span>' : ''}
+                                            <i data-lucide="receipt"></i> Trip Dining Total: <strong>$${tripDiningTotal.toFixed(2)}</strong>
+                                            ${USER_ACCOUNT.concurConnected ? '<span class="concur-synced"><i data-lucide="circle-check"></i> Synced with Concur</span>' : ''}
                                         </div>
                                     ` : ''}
                                 ` : `
@@ -344,9 +356,12 @@ const App = {
                 });
             });
         });
+
+        // Refresh Lucide icons in rendered travel log
+        if (window.lucide) lucide.createIcons();
     },
 
-        /**
+    /**
      * Setup trip/hotel selector (Upcoming + Past) and optional GPS button.
      * Default selection: next upcoming trip.
      */

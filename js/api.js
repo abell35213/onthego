@@ -202,13 +202,13 @@ const API = {
         
         let stars = '';
         for (let i = 0; i < fullStars; i++) {
-            stars += '<i class="fas fa-star"></i>';
+            stars += '<i data-lucide="star" class="star-icon star-filled"></i>';
         }
         if (hasHalfStar) {
-            stars += '<i class="fas fa-star-half-alt"></i>';
+            stars += '<i data-lucide="star-half" class="star-icon star-half"></i>';
         }
         for (let i = 0; i < emptyStars; i++) {
-            stars += '<i class="far fa-star"></i>';
+            stars += '<i data-lucide="star" class="star-icon star-empty"></i>';
         }
         
         return stars;

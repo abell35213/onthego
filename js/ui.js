@@ -86,10 +86,12 @@ const UI = {
                 if (isCollapsed) {
                     sidebar.dataset.prevWidth = sidebar.style.width || '320px';
                     sidebar.style.width = '0px';
-                    toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                    toggleBtn.innerHTML = '<i data-lucide="chevron-right"></i>';
+                    if (window.lucide) lucide.createIcons();
                 } else {
                     sidebar.style.width = sidebar.dataset.prevWidth || '320px';
-                    toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                    toggleBtn.innerHTML = '<i data-lucide="chevron-left"></i>';
+                    if (window.lucide) lucide.createIcons();
                 }
                 // Refresh map size after toggle
                 if (window.MapModule && MapModule.map) {
@@ -302,6 +304,9 @@ const UI = {
             window.MapModule.addRestaurantMarkers(restaurants, { skipFitBounds: !!opts.skipFitBounds });
             this._renderOptions = null;
         }
+
+        // Refresh Lucide icons in newly rendered cards
+        if (window.lucide) lucide.createIcons();
     },
 
     /**
@@ -355,21 +360,21 @@ const UI = {
                 <span class="stars">${API.getStarRating(restaurant.rating)}</span>
                 <span class="rating-number">${restaurant.rating}</span>
                 <span class="review-count">(${restaurant.review_count} reviews)</span>
-                ${restaurant.visited ? '<span class="visited-indicator"><i class="fas fa-check"></i> Visited</span>' : ''}
+                ${restaurant.visited ? '<span class="visited-indicator"><i data-lucide="check"></i> Visited</span>' : ''}
             </div>
             
             <div class="restaurant-info">
                 <div class="info-item">
-                    <i class="fas fa-dollar-sign"></i>
+                    <i data-lucide="dollar-sign"></i>
                     <span class="price-level">${restaurant.price || 'N/A'}</span>
                 </div>
                 <div class="info-item">
-                    <i class="fas fa-walking"></i>
+                    <i data-lucide="footprints"></i>
                     <span>${API.formatDistance(restaurant.distance)}</span>
                 </div>
                 ${restaurant.display_phone ? `
                 <div class="info-item">
-                    <i class="fas fa-phone"></i>
+                    <i data-lucide="phone"></i>
                     <span>${restaurant.display_phone}</span>
                 </div>
                 ` : ''}
@@ -391,50 +396,50 @@ const UI = {
             ` : ''}
             
             <div class="restaurant-address">
-                <i class="fas fa-map-marker-alt"></i>
+                <i data-lucide="map-pin"></i>
                 <span>${address}</span>
             </div>
             
             <div class="restaurant-actions">
                 <a href="${restaurant.url}" target="_blank" rel="noopener noreferrer" class="action-link yelp">
-                    <i class="fab fa-yelp"></i> View on Yelp
+                    <i data-lucide="external-link"></i> View on Yelp
                 </a>
                 <a href="${deliveryLinks.ubereats}" target="_blank" rel="noopener noreferrer" class="action-link">
-                    <i class="fas fa-hamburger"></i> Uber Eats
+                    <i data-lucide="truck"></i> Uber Eats
                 </a>
                 <a href="${deliveryLinks.doordash}" target="_blank" rel="noopener noreferrer" class="action-link">
-                    <i class="fas fa-motorcycle"></i> DoorDash
+                    <i data-lucide="package"></i> DoorDash
                 </a>
                 <a href="${deliveryLinks.grubhub}" target="_blank" rel="noopener noreferrer" class="action-link">
-                    <i class="fas fa-utensils"></i> Grubhub
+                    <i data-lucide="utensils"></i> Grubhub
                 </a>
                 <a href="${reservationLinks.opentable}" target="_blank" rel="noopener noreferrer" class="action-link">
-                    <i class="fas fa-calendar-check"></i> OpenTable
+                    <i data-lucide="calendar-check"></i> OpenTable
                 </a>
                 <a href="${reservationLinks.resy}" target="_blank" rel="noopener noreferrer" class="action-link">
-                    <i class="fas fa-bookmark"></i> Resy
+                    <i data-lucide="bookmark"></i> Resy
                 </a>
             </div>
             
             <div class="social-links">
                 <a href="${socialLinks.instagram}" target="_blank" rel="noopener noreferrer" 
                    class="social-link instagram" title="View on Instagram">
-                    <i class="fab fa-instagram"></i>
+                    <i data-lucide="camera"></i>
                 </a>
                 <a href="${socialLinks.facebook}" target="_blank" rel="noopener noreferrer" 
                    class="social-link facebook" title="View on Facebook">
-                    <i class="fab fa-facebook-f"></i>
+                    <i data-lucide="share-2"></i>
                 </a>
                 <a href="${socialLinks.twitter}" target="_blank" rel="noopener noreferrer" 
                    class="social-link twitter" title="View on Twitter">
-                    <i class="fab fa-twitter"></i>
+                    <i data-lucide="message-circle"></i>
                 </a>
             </div>
             
             ${restaurant.instagram_photos && restaurant.instagram_photos.length > 0 ? `
             <div class="instagram-section">
                 <div class="instagram-header">
-                    <i class="fab fa-instagram"></i>
+                    <i data-lucide="camera"></i>
                     <span>Recent Instagram Posts</span>
                 </div>
                 <div class="instagram-photos">
