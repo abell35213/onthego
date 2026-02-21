@@ -70,7 +70,7 @@
 - **Backend**: Node.js + Express (Yelp proxy)
 - **Mapping**: [Leaflet.js](https://leafletjs.com/) with OpenStreetMap tiles
 - **API**: [Yelp Fusion API](https://www.yelp.com/developers) for restaurant data
-- **Icons**: [Font Awesome 6](https://fontawesome.com/)
+- **Icons**: [Lucide Icons](https://lucide.dev/) (vanilla JS)
 - **Styling**: Custom CSS with CSS Variables for theming
 - **Geolocation**: Browser Geolocation API
 
@@ -326,7 +326,7 @@ Contributions, issues, and feature requests are welcome!
 - [Leaflet.js](https://leafletjs.com/) for the amazing mapping library
 - [OpenStreetMap](https://www.openstreetmap.org/) for map tiles
 - [Yelp Fusion API](https://www.yelp.com/developers) for restaurant data
-- [Font Awesome](https://fontawesome.com/) for beautiful icons
+- [Lucide Icons](https://lucide.dev/) for clean, minimal icons
 - [Unsplash](https://unsplash.com/) for sample restaurant images
 
 ---

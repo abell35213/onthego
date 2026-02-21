@@ -17,11 +17,6 @@
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
     
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -30,25 +25,25 @@
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <h1><i class="fas fa-utensils"></i> OnTheGo</h1>
+            <h1><i data-lucide="utensils"></i> OnTheGo</h1>
             <p class="tagline">Your elite travel dining concierge</p>
         </div>
         <div class="header-actions">
             <button id="conciergeOpenBtn" class="concierge-btn" title="AI Dining Concierge">
-                <i class="fas fa-concierge-bell"></i>
+                <i data-lucide="bell"></i>
                 <span>AI Concierge</span>
                 <span class="concierge-badge">NEW</span>
             </button>
             <button id="viewToggle" class="view-toggle-btn" title="Switch View">
-                <i class="fas fa-list"></i>
+                <i data-lucide="list"></i>
                 <span>Restaurant List</span>
             </button>
             <button id="travelLogBtn" class="view-toggle-btn" title="My Travel Log">
-                <i class="fas fa-book"></i>
+                <i data-lucide="book-open"></i>
                 <span>My Travel Log</span>
             </button>
             <button id="accountBtn" class="account-btn" title="Account Settings">
-                <i class="fas fa-user-circle"></i>
+                <i data-lucide="circle-user"></i>
             </button>
         </div>
     </header>
@@ -60,14 +55,14 @@
     <aside id="conciergePanel" class="concierge-panel" aria-label="AI Dining Concierge">
         <div class="concierge-panel-header">
             <div class="concierge-header-left">
-                <div class="concierge-header-icon"><i class="fas fa-concierge-bell"></i></div>
+                <div class="concierge-header-icon"><i data-lucide="bell"></i></div>
                 <div>
                     <div class="concierge-header-title">AI Dining Concierge</div>
                     <div class="concierge-header-sub">Powered by OpenAI</div>
                 </div>
             </div>
             <button id="conciergeCloseBtn" class="concierge-close-btn" aria-label="Close concierge">
-                <i class="fas fa-times"></i>
+                <i data-lucide="x"></i>
             </button>
         </div>
 
@@ -79,16 +74,16 @@
                 </div>
                 <form id="conciergeForm" class="concierge-form">
                     <div class="concierge-form-group">
-                        <label for="conciergeDestination"><i class="fas fa-map-marker-alt"></i> Destination</label>
+                        <label for="conciergeDestination"><i data-lucide="map-pin"></i> Destination</label>
                         <input type="text" id="conciergeDestination" class="concierge-input" placeholder="e.g. Chicago, IL" required>
                     </div>
                     <div class="concierge-form-row">
                         <div class="concierge-form-group">
-                            <label for="conciergeDate"><i class="fas fa-calendar-alt"></i> Date</label>
+                            <label for="conciergeDate"><i data-lucide="calendar"></i> Date</label>
                             <input type="date" id="conciergeDate" class="concierge-input">
                         </div>
                         <div class="concierge-form-group">
-                            <label for="conciergePartySize"><i class="fas fa-users"></i> Guests</label>
+                            <label for="conciergePartySize"><i data-lucide="users"></i> Guests</label>
                             <select id="conciergePartySize" class="concierge-input">
                                 <option value="1">1</option>
                                 <option value="2" selected>2</option>
@@ -102,7 +97,7 @@
                         </div>
                     </div>
                     <div class="concierge-form-group">
-                        <label for="conciergeMealType"><i class="fas fa-utensils"></i> Meal Type</label>
+                        <label for="conciergeMealType"><i data-lucide="utensils"></i> Meal Type</label>
                         <select id="conciergeMealType" class="concierge-input">
                             <option value="business lunch">Business Lunch</option>
                             <option value="business dinner" selected>Business Dinner</option>
@@ -111,11 +106,11 @@
                         </select>
                     </div>
                     <div class="concierge-form-group">
-                        <label for="conciergePreferences"><i class="fas fa-sliders-h"></i> Preferences <small>(optional)</small></label>
+                        <label for="conciergePreferences"><i data-lucide="sliders-horizontal"></i> Preferences <small>(optional)</small></label>
                         <input type="text" id="conciergePreferences" class="concierge-input" placeholder="e.g. steak, private dining, wine list">
                     </div>
                     <button type="submit" class="concierge-submit-btn">
-                        <i class="fas fa-magic"></i> Get My Top 3 Picks
+                        <i data-lucide="sparkles"></i> Get My Top 3 Picks
                     </button>
                 </form>
             </div>
@@ -133,131 +128,131 @@
             <!-- Account Tabs -->
             <div class="account-tabs">
                 <button class="account-tab active" data-tab="profile">
-                    <i class="fas fa-user"></i> Profile
+                    <i data-lucide="user"></i> Profile
                 </button>
                 <button class="account-tab" data-tab="connections">
-                    <i class="fas fa-link"></i> Connections
+                    <i data-lucide="link"></i> Connections
                 </button>
                 <button class="account-tab" data-tab="settings">
-                    <i class="fas fa-cog"></i> Settings
+                    <i data-lucide="settings"></i> Settings
                 </button>
             </div>
 
             <!-- Profile Tab (Create Account / View Profile) -->
             <div id="profileTab" class="tab-content active">
-                <h2><i class="fas fa-user-circle"></i> Your Profile</h2>
+                <h2><i data-lucide="circle-user"></i> Your Profile</h2>
                 <p class="modal-description">Create your account or update your profile information.</p>
                 
                 <form id="accountForm" class="account-form">
                     <div class="form-group">
-                        <label for="userName"><i class="fas fa-user"></i> Full Name *</label>
+                        <label for="userName"><i data-lucide="user"></i> Full Name *</label>
                         <input type="text" id="userName" class="form-input" placeholder="Enter your full name" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="userEmail"><i class="fas fa-envelope"></i> Email Address *</label>
+                        <label for="userEmail"><i data-lucide="mail"></i> Email Address *</label>
                         <input type="email" id="userEmail" class="form-input" placeholder="you@example.com" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="userPhone"><i class="fas fa-phone"></i> Phone Number * <small>(for text alerts)</small></label>
+                        <label for="userPhone"><i data-lucide="phone"></i> Phone Number * <small>(for text alerts)</small></label>
                         <input type="tel" id="userPhone" class="form-input" placeholder="(555) 123-4567" required>
                     </div>
                     
                     <button type="submit" id="saveProfileBtn" class="save-profile-btn">
-                        <i class="fas fa-save"></i> Save Profile
+                        <i data-lucide="save"></i> Save Profile
                     </button>
                     
                     <div id="profileSavedMsg" class="profile-saved-msg" style="display: none;">
-                        <i class="fas fa-check-circle"></i> Profile saved successfully!
+                        <i data-lucide="circle-check"></i> Profile saved successfully!
                     </div>
                 </form>
             </div>
 
             <!-- Connections Tab -->
             <div id="connectionsTab" class="tab-content" style="display: none;">
-                <h2><i class="fas fa-link"></i> Connect Your Accounts</h2>
+                <h2><i data-lucide="link"></i> Connect Your Accounts</h2>
                 <p class="modal-description">Link your travel accounts to sync your trip history and upcoming reservations.</p>
                 
                 <div class="account-connections">
                     <div class="account-card" data-account-type="concur">
                         <div class="account-header">
-                            <i class="fas fa-briefcase account-icon"></i>
+                            <i data-lucide="briefcase" class="account-icon"></i>
                             <h3>Concur</h3>
                         </div>
                         <p>Sync your business travel expenses and itineraries</p>
                         <button id="concurConnect" class="connect-btn">
-                            <i class="fas fa-plug"></i>
+                            <i data-lucide="plug"></i>
                             <span class="connect-text">Connect Concur</span>
                         </button>
                         <div id="concurStatus" class="connection-status" style="display: none;">
-                            <i class="fas fa-check-circle"></i> Connected
+                            <i data-lucide="circle-check"></i> Connected
                             <button class="disconnect-btn">Disconnect</button>
                         </div>
                     </div>
                     
                     <div class="account-card" data-account-type="tripit">
                         <div class="account-header">
-                            <i class="fas fa-plane account-icon"></i>
+                            <i data-lucide="plane" class="account-icon"></i>
                             <h3>TripIt</h3>
                         </div>
                         <p>Import your travel plans and reservations</p>
                         <button id="tripitConnect" class="connect-btn">
-                            <i class="fas fa-plug"></i>
+                            <i data-lucide="plug"></i>
                             <span class="connect-text">Connect TripIt</span>
                         </button>
                         <div id="tripitStatus" class="connection-status" style="display: none;">
-                            <i class="fas fa-check-circle"></i> Connected
+                            <i data-lucide="circle-check"></i> Connected
                             <button class="disconnect-btn">Disconnect</button>
                         </div>
                     </div>
 
                     <div class="account-card" data-account-type="marriott">
                         <div class="account-header">
-                            <i class="fas fa-crown account-icon"></i>
+                            <i data-lucide="crown" class="account-icon"></i>
                             <h3>Marriott Bonvoy</h3>
                         </div>
                         <p>Sync your Marriott Bonvoy stays and rewards</p>
                         <button id="marriottConnect" class="connect-btn">
-                            <i class="fas fa-plug"></i>
+                            <i data-lucide="plug"></i>
                             <span class="connect-text">Connect Marriott Bonvoy</span>
                         </button>
                         <div id="marriottStatus" class="connection-status" style="display: none;">
-                            <i class="fas fa-check-circle"></i> Connected
+                            <i data-lucide="circle-check"></i> Connected
                             <button class="disconnect-btn">Disconnect</button>
                         </div>
                     </div>
 
                     <div class="account-card" data-account-type="hilton">
                         <div class="account-header">
-                            <i class="fas fa-star account-icon"></i>
+                            <i data-lucide="star" class="account-icon"></i>
                             <h3>Hilton Honors</h3>
                         </div>
                         <p>Sync your Hilton Honors stays and rewards</p>
                         <button id="hiltonConnect" class="connect-btn">
-                            <i class="fas fa-plug"></i>
+                            <i data-lucide="plug"></i>
                             <span class="connect-text">Connect Hilton Honors</span>
                         </button>
                         <div id="hiltonStatus" class="connection-status" style="display: none;">
-                            <i class="fas fa-check-circle"></i> Connected
+                            <i data-lucide="circle-check"></i> Connected
                             <button class="disconnect-btn">Disconnect</button>
                         </div>
                     </div>
                 </div>
                 
                 <div id="syncInfo" class="sync-info" style="display: none;">
-                    <i class="fas fa-sync-alt"></i>
+                    <i data-lucide="refresh-cw"></i>
                     <span id="lastSyncTime">Last synced: Never</span>
                 </div>
             </div>
 
             <!-- Settings Tab -->
             <div id="settingsTab" class="tab-content" style="display: none;">
-                <h2><i class="fas fa-cog"></i> Settings</h2>
+                <h2><i data-lucide="settings"></i> Settings</h2>
                 <p class="modal-description">Customize your OnTheGo experience.</p>
                 
                 <div class="settings-section">
-                    <h3><i class="fas fa-bell"></i> Notifications</h3>
+                    <h3><i data-lucide="bell"></i> Notifications</h3>
                     <div class="settings-group">
                         <label class="settings-toggle">
                             <input type="checkbox" id="settingTextAlerts" checked>
@@ -275,7 +270,7 @@
                 </div>
                 
                 <div class="settings-section">
-                    <h3><i class="fas fa-map-marker-alt"></i> Map Preferences</h3>
+                    <h3><i data-lucide="map-pin"></i> Map Preferences</h3>
                     <div class="settings-group">
                         <div class="form-group">
                             <label for="settingRadius">Search Radius</label>
@@ -303,7 +298,7 @@
                 </div>
                 
                 <div class="settings-section">
-                    <h3><i class="fas fa-utensils"></i> Dining Preferences</h3>
+                    <h3><i data-lucide="utensils"></i> Dining Preferences</h3>
                     <div class="settings-group">
                         <div class="form-group">
                             <label for="settingPrice">Default Price Range</label>
@@ -323,11 +318,11 @@
                 </div>
                 
                 <button id="saveSettingsBtn" class="save-profile-btn">
-                    <i class="fas fa-save"></i> Save Settings
+                    <i data-lucide="save"></i> Save Settings
                 </button>
                 
                 <div id="settingsSavedMsg" class="profile-saved-msg" style="display: none;">
-                    <i class="fas fa-check-circle"></i> Settings saved successfully!
+                    <i data-lucide="circle-check"></i> Settings saved successfully!
                 </div>
             </div>
         </div>
@@ -341,12 +336,12 @@
             
             <!-- Trip History Sidebar -->
             <aside class="trip-sidebar">
-                <h2><i class="fas fa-history"></i> Travel History</h2>
+                <h2><i data-lucide="clock"></i> Travel History</h2>
                 <div id="tripHistory" class="trip-history-list">
                     <!-- Trip history items will be added here -->
                 </div>
                 
-                <h2 style="margin-top: 2rem;"><i class="fas fa-calendar-alt"></i> Upcoming Trips</h2>
+                <h2 style="margin-top: 2rem;"><i data-lucide="calendar"></i> Upcoming Trips</h2>
                 <div id="upcomingTrips" class="upcoming-trips-list">
                     <!-- Upcoming trips will be added here -->
                 </div>
@@ -369,7 +364,7 @@
               </select>
 
               <button id="useGpsBtn" class="location-btn">
-                <i class="fas fa-location-crosshairs"></i> Use My Location
+                <i data-lucide="locate"></i> Use My Location
               </button>
 
               <div id="activeLocationLabel" class="active-location"></div>
@@ -378,7 +373,7 @@
             <!-- Search Bar -->
             <div class="search-container">
                 <input type="text" id="searchInput" class="search-input" placeholder="Search restaurants...">
-                <i class="fas fa-search search-icon"></i>
+                <i data-lucide="search" class="search-icon"></i>
             </div>
 
             <!-- Filters -->
@@ -438,20 +433,20 @@
                 <div class="sidebar-resize-handle" id="sidebarResizeHandle"></div>
                 <!-- Toggle button -->
                 <button class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle restaurant list">
-                    <i class="fas fa-chevron-left"></i>
+                    <i data-lucide="chevron-left"></i>
                 </button>
 
                 <!-- Restaurant List -->
                 <div id="restaurantList" class="restaurant-list">
                     <!-- Loading state -->
                     <div id="loadingState" class="loading-state">
-                        <i class="fas fa-spinner fa-spin"></i>
+                        <i data-lucide="loader" class="spin"></i>
                         <p>Finding restaurants near you...</p>
                     </div>
 
                     <!-- Empty state -->
                     <div id="emptyState" class="empty-state" style="display: none;">
-                        <i class="fas fa-search"></i>
+                        <i data-lucide="search"></i>
                         <p>No restaurants found</p>
                         <small>Try adjusting your filters</small>
                     </div>
@@ -470,7 +465,7 @@
         <!-- My Travel Log View -->
         <div id="travelLogView" class="travel-log-view" style="display: none;">
             <div class="travel-log-header">
-                <h2><i class="fas fa-book"></i> My Travel Log</h2>
+                <h2><i data-lucide="book-open"></i> My Travel Log</h2>
                 <p>A yearly record of your hotels and places visited</p>
             </div>
             <div class="travel-log-stats" id="travelLogStats">
@@ -487,6 +482,9 @@
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
     
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+
     <!-- Application Scripts -->
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>

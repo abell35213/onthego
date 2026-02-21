@@ -248,7 +248,8 @@ const Account = {
         const statusDiv = document.getElementById(`${accountType}Status`);
         
         connectBtn.disabled = true;
-        connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+        connectBtn.innerHTML = '<i data-lucide="loader" class="spin"></i> Connecting...';
+        if (window.lucide) lucide.createIcons();
 
         setTimeout(() => {
             // Update user account state
@@ -312,8 +313,9 @@ const Account = {
         connectBtn.style.display = 'flex';
         statusDiv.style.display = 'none';
         connectBtn.disabled = false;
-        connectBtn.innerHTML = '<i class="fas fa-plug"></i> <span class="connect-text">Connect ' + 
+        connectBtn.innerHTML = '<i data-lucide="plug"></i> <span class="connect-text">Connect ' + 
                                (displayNames[accountType] || accountType) + '</span>';
+        if (window.lucide) lucide.createIcons();
 
         this.updateSyncInfo();
 

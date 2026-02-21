@@ -182,17 +182,17 @@ const Concierge = {
         resultsSection.style.display = 'block';
         resultsSection.innerHTML = `
             <div class="concierge-ai-message">
-                <div class="concierge-avatar"><i class="fas fa-concierge-bell"></i></div>
+                <div class="concierge-avatar"><i data-lucide="bell"></i></div>
                 <div class="concierge-bubble">${message || 'Here are my top picks for your business dining experience:'}</div>
             </div>
             <div class="concierge-picks-label">
-                <i class="fas fa-crown"></i> Top 3 Picks for ${this.escapeHtml(mealType)}
+                <i data-lucide="crown"></i> Top 3 Picks for ${this.escapeHtml(mealType)}
             </div>
             <div class="concierge-cards">
                 ${recommendations.map((rec, idx) => this.buildRecommendationCard(rec, idx)).join('')}
             </div>
             <button class="concierge-back-btn" id="conciergeResetBtn">
-                <i class="fas fa-arrow-left"></i> New Search
+                <i data-lucide="arrow-left"></i> New Search
             </button>
         `;
 
@@ -205,6 +205,9 @@ const Concierge = {
             const btn = document.getElementById(`concierge-select-${idx}`);
             if (btn) btn.addEventListener('click', () => this.selectRestaurant(rec));
         });
+
+        // Refresh Lucide icons
+        if (window.lucide) lucide.createIcons();
     },
 
     /**
@@ -227,14 +230,14 @@ const Concierge = {
                         </div>
                     </div>
                     <div class="concierge-rec-rating">${stars} <span>${rec.rating || ''}</span></div>
-                    <div class="concierge-rec-address"><i class="fas fa-map-marker-alt"></i> ${this.escapeHtml(rec.address || '')}</div>
+                    <div class="concierge-rec-address"><i data-lucide="map-pin"></i> ${this.escapeHtml(rec.address || '')}</div>
                     <p class="concierge-rec-desc">${this.escapeHtml(rec.description || '')}</p>
                     <div class="concierge-rec-why">
-                        <i class="fas fa-briefcase"></i> ${this.escapeHtml(rec.whyBusinessMeal || '')}
+                        <i data-lucide="briefcase"></i> ${this.escapeHtml(rec.whyBusinessMeal || '')}
                     </div>
-                    ${rec.mustTry ? `<div class="concierge-rec-musttry"><i class="fas fa-star"></i> Must Try: ${this.escapeHtml(rec.mustTry)}</div>` : ''}
+                    ${rec.mustTry ? `<div class="concierge-rec-musttry"><i data-lucide="star"></i> Must Try: ${this.escapeHtml(rec.mustTry)}</div>` : ''}
                     <button class="concierge-select-btn" id="concierge-select-${idx}">
-                        <i class="fas fa-calendar-check"></i> Reserve This Table
+                        <i data-lucide="calendar-check"></i> Reserve This Table
                     </button>
                 </div>
             </div>
@@ -250,9 +253,9 @@ const Concierge = {
         const full = Math.floor(rating);
         const half = rating % 1 >= 0.5 ? 1 : 0;
         const empty = 5 - full - half;
-        return '<i class="fas fa-star"></i>'.repeat(full) +
-               (half ? '<i class="fas fa-star-half-alt"></i>' : '') +
-               '<i class="far fa-star"></i>'.repeat(empty);
+        return '<i data-lucide="star" class="star-icon star-filled"></i>'.repeat(full) +
+               (half ? '<i data-lucide="star-half" class="star-icon star-half"></i>' : '') +
+               '<i data-lucide="star" class="star-icon star-empty"></i>'.repeat(empty);
     },
 
     /**
@@ -266,7 +269,7 @@ const Concierge = {
 
         resultsSection.innerHTML = `
             <div class="concierge-ai-message">
-                <div class="concierge-avatar"><i class="fas fa-concierge-bell"></i></div>
+                <div class="concierge-avatar"><i data-lucide="bell"></i></div>
                 <div class="concierge-bubble">
                     Excellent choice! <strong>${this.escapeHtml(rec.name)}</strong> is a superb selection.
                     ${rec.reservationTip ? `<br><em>${this.escapeHtml(rec.reservationTip)}</em>` : ''}
@@ -275,36 +278,36 @@ const Concierge = {
             </div>
             <div class="concierge-reservation-card">
                 <div class="concierge-res-title">
-                    <i class="fas fa-utensils"></i> ${this.escapeHtml(rec.name)}
+                    <i data-lucide="utensils"></i> ${this.escapeHtml(rec.name)}
                 </div>
-                <div class="concierge-res-detail"><i class="fas fa-map-marker-alt"></i> ${this.escapeHtml(rec.address || '')}</div>
-                <div class="concierge-res-detail"><i class="fas fa-tag"></i> ${this.escapeHtml(rec.priceRange || '')} · ${this.escapeHtml(rec.cuisineType || '')}</div>
+                <div class="concierge-res-detail"><i data-lucide="map-pin"></i> ${this.escapeHtml(rec.address || '')}</div>
+                <div class="concierge-res-detail"><i data-lucide="tag"></i> ${this.escapeHtml(rec.priceRange || '')} · ${this.escapeHtml(rec.cuisineType || '')}</div>
                 <div class="concierge-res-actions">
                     <a href="${rec.openTableUrl || `https://www.opentable.com/s?term=${encodeURIComponent(rec.name)}`}" 
                        target="_blank" rel="noopener noreferrer" class="concierge-res-btn opentable">
-                        <i class="fas fa-calendar-check"></i> Book on OpenTable
+                        <i data-lucide="calendar-check"></i> Book on OpenTable
                     </a>
                     <a href="${rec.resyUrl || `https://resy.com/?search=${encodeURIComponent(rec.name)}`}" 
                        target="_blank" rel="noopener noreferrer" class="concierge-res-btn resy">
-                        <i class="fas fa-bookmark"></i> Book on Resy
+                        <i data-lucide="bookmark"></i> Book on Resy
                     </a>
                     <a href="${rec.googleMapsUrl || `https://maps.google.com/?q=${encodeURIComponent(rec.name)}`}" 
                        target="_blank" rel="noopener noreferrer" class="concierge-res-btn maps">
-                        <i class="fas fa-directions"></i> Get Directions
+                        <i data-lucide="navigation"></i> Get Directions
                     </a>
                 </div>
                 <div class="concierge-res-note">
-                    <i class="fas fa-info-circle"></i> 
+                    <i data-lucide="info"></i> 
                     Clicking a booking link will open the reservation platform in a new tab. 
                     For same-day reservations, calling the restaurant directly is recommended.
                 </div>
             </div>
             <div class="concierge-back-row">
                 <button class="concierge-back-btn" id="conciergeBackToRecs">
-                    <i class="fas fa-arrow-left"></i> Back to Picks
+                    <i data-lucide="arrow-left"></i> Back to Picks
                 </button>
                 <button class="concierge-back-btn" id="conciergeResetBtn">
-                    <i class="fas fa-search"></i> New Search
+                    <i data-lucide="search"></i> New Search
                 </button>
             </div>
         `;
@@ -314,6 +317,9 @@ const Concierge = {
             this.renderRecommendations(null, this.currentRecommendations, mealType);
         });
         document.getElementById('conciergeResetBtn')?.addEventListener('click', () => this.resetToForm());
+
+        // Refresh Lucide icons
+        if (window.lucide) lucide.createIcons();
     },
 
     /**

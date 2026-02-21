@@ -147,15 +147,15 @@ const WorldMap = {
         });
 
         var hotelPopup = '<div class="popup-content popup-content-full">' +
-            '<div class="popup-name"><i class="fas fa-hotel"></i> ' + trip.hotel + '</div>' +
-            '<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">' + trip.city + ', ' + trip.state + '</div>' +
+            '<div class="popup-name"><i data-lucide="building"></i> ' + trip.hotel + '</div>' +
+            '<div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">' + trip.city + ', ' + trip.state + '</div>' +
             '<div class="popup-info">' +
-                '<span><i class="fas fa-star" style="color:#F77F00"></i> 4.5 (Google)</span>' +
-                '<span><i class="fas fa-phone" style="color:var(--primary-color)"></i> (800) 555-0199</span>' +
+                '<span><i data-lucide="star" class="star-icon star-filled"></i> 4.5 (Google)</span>' +
+                '<span><i data-lucide="phone"></i> (800) 555-0199</span>' +
             '</div>' +
             '<div class="popup-actions">' +
                 '<a href="https://www.google.com/maps/search/' + encodeURIComponent(trip.hotel + ' ' + trip.city) + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
-                    '<i class="fas fa-map"></i> Google Maps' +
+                    '<i data-lucide="map"></i> Google Maps' +
                 '</a>' +
             '</div>' +
             '</div>';
@@ -165,6 +165,10 @@ const WorldMap = {
             { icon: hotelIcon }
         ).addTo(this._leafletMap)
          .bindPopup(hotelPopup, { maxWidth: 350, minWidth: 280 });
+
+        hotelMarker.on('popupopen', function() {
+            if (window.lucide) lucide.createIcons();
+        });
 
         this._restaurantMarkers.push(hotelMarker);
 
@@ -189,12 +193,12 @@ const WorldMap = {
 
             var stars = API.getStarRating(restaurant.rating);
             var typeIcons = {
-                'restaurant': 'fa-utensils',
-                'bar': 'fa-cocktail',
-                'brewery': 'fa-beer',
-                'club': 'fa-music'
+                'restaurant': 'utensils',
+                'bar': 'wine',
+                'brewery': 'beer',
+                'club': 'music'
             };
-            var typeIcon = typeIcons[restaurant.type] || 'fa-utensils';
+            var typeIcon = typeIcons[restaurant.type] || 'utensils';
             var typeLabel = restaurant.type ? restaurant.type.charAt(0).toUpperCase() + restaurant.type.slice(1) : 'Restaurant';
 
             var distanceMeters = API.calculateDistance(
@@ -210,48 +214,48 @@ const WorldMap = {
             var popupContent = '<div class="popup-content popup-content-full">' +
                 '<div class="popup-header"><div>' +
                     '<div class="popup-name">' + restaurant.name + '</div>' +
-                    '<div style="color: #666; font-size: 0.85rem;"><i class="fas ' + typeIcon + '"></i> ' + typeLabel + ' &middot; ' + restaurant.cuisine + '</div>' +
+                    '<div style="color: var(--text-muted); font-size: 0.85rem;"><i data-lucide="' + typeIcon + '"></i> ' + typeLabel + ' &middot; ' + restaurant.cuisine + '</div>' +
                 '</div></div>' +
                 '<div class="popup-rating">' +
                     '<span class="stars">' + stars + '</span>' +
                     '<span class="rating-number">' + restaurant.rating + '</span>' +
                 '</div>' +
                 '<div class="popup-info">' +
-                    '<span><i class="fas fa-dollar-sign" style="color:var(--primary-color)"></i> ' + restaurant.price + '</span>' +
-                    '<span><i class="fas fa-walking" style="color:var(--primary-color)"></i> ' + API.formatDistance(distanceMeters) + '</span>' +
+                    '<span><i data-lucide="dollar-sign"></i> ' + restaurant.price + '</span>' +
+                    '<span><i data-lucide="footprints"></i> ' + API.formatDistance(distanceMeters) + '</span>' +
                 '</div>' +
                 '<div class="popup-actions">' +
-                    '<a href="https://www.yelp.com/search?find_desc=' + encodeURIComponent(restaurant.name) + '&find_loc=' + encodeURIComponent(trip.city) + '" target="_blank" rel="noopener noreferrer" class="popup-btn" style="background-color:#D32323;">' +
-                        '<i class="fab fa-yelp"></i> Yelp' +
+                    '<a href="https://www.yelp.com/search?find_desc=' + encodeURIComponent(restaurant.name) + '&find_loc=' + encodeURIComponent(trip.city) + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
+                        '<i data-lucide="external-link"></i> Yelp' +
                     '</a>' +
                     '<a href="' + deliveryLinks.ubereats + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
-                        '<i class="fas fa-hamburger"></i> Uber Eats' +
+                        '<i data-lucide="truck"></i> Uber Eats' +
                     '</a>' +
                     '<a href="' + deliveryLinks.doordash + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
-                        '<i class="fas fa-motorcycle"></i> DoorDash' +
+                        '<i data-lucide="package"></i> DoorDash' +
                     '</a>' +
                     '<a href="' + deliveryLinks.grubhub + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
-                        '<i class="fas fa-utensils"></i> Grubhub' +
+                        '<i data-lucide="utensils"></i> Grubhub' +
                     '</a>' +
                     '<a href="' + reservationLinks.opentable + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
-                        '<i class="fas fa-calendar-check"></i> OpenTable' +
+                        '<i data-lucide="calendar-check"></i> OpenTable' +
                     '</a>' +
                     '<a href="' + reservationLinks.resy + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
-                        '<i class="fas fa-bookmark"></i> Resy' +
+                        '<i data-lucide="bookmark"></i> Resy' +
                     '</a>' +
                     '<a href="https://www.google.com/maps/search/' + encodeURIComponent(restaurant.name + ' ' + trip.city) + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
-                        '<i class="fas fa-map"></i> Google Maps' +
+                        '<i data-lucide="map"></i> Google Maps' +
                     '</a>' +
                 '</div>' +
                 '<div class="popup-social-links">' +
                     '<a href="' + socialLinks.instagram + '" target="_blank" rel="noopener noreferrer" class="social-link instagram" title="Instagram">' +
-                        '<i class="fab fa-instagram"></i>' +
+                        '<i data-lucide="camera"></i>' +
                     '</a>' +
                     '<a href="' + socialLinks.facebook + '" target="_blank" rel="noopener noreferrer" class="social-link facebook" title="Facebook">' +
-                        '<i class="fab fa-facebook-f"></i>' +
+                        '<i data-lucide="share-2"></i>' +
                     '</a>' +
                     '<a href="' + socialLinks.twitter + '" target="_blank" rel="noopener noreferrer" class="social-link twitter" title="Twitter">' +
-                        '<i class="fab fa-twitter"></i>' +
+                        '<i data-lucide="message-circle"></i>' +
                     '</a>' +
                 '</div>' +
                 '</div>';
@@ -261,6 +265,10 @@ const WorldMap = {
                 { icon: restaurantIcon }
             ).addTo(self._leafletMap)
              .bindPopup(popupContent, { maxWidth: 350, minWidth: 280 });
+
+            marker.on('popupopen', function() {
+                if (window.lucide) lucide.createIcons();
+            });
 
             self._restaurantMarkers.push(marker);
         });
@@ -432,6 +440,9 @@ const WorldMap = {
             var card = self.createTripCard(trip, true);
             tripHistoryContainer.appendChild(card);
         });
+
+        // Refresh Lucide icons
+        if (window.lucide) lucide.createIcons();
     },
 
     /**
@@ -453,6 +464,9 @@ const WorldMap = {
             var card = self.createTripCard(trip, false);
             upcomingTripsContainer.appendChild(card);
         });
+
+        // Refresh Lucide icons
+        if (window.lucide) lucide.createIcons();
     },
 
     /**
@@ -491,9 +505,9 @@ const WorldMap = {
                 '<div class="trip-city">' + trip.city + ', ' + trip.state + '</div>' +
                 countdownHtml +
             '</div>' +
-            '<div class="trip-dates"><i class="fas fa-calendar"></i> ' + dateRange + '</div>' +
-            '<div class="trip-hotel"><i class="fas fa-hotel"></i> ' + trip.hotel + '</div>' +
-            (restaurantCount > 0 ? '<div class="trip-restaurants"><i class="fas fa-utensils"></i> ' + restaurantCount + ' restaurant' + (restaurantCount > 1 ? 's' : '') + ' visited</div>' : '') +
+            '<div class="trip-dates"><i data-lucide="calendar"></i> ' + dateRange + '</div>' +
+            '<div class="trip-hotel"><i data-lucide="building"></i> ' + trip.hotel + '</div>' +
+            (restaurantCount > 0 ? '<div class="trip-restaurants"><i data-lucide="utensils"></i> ' + restaurantCount + ' restaurant' + (restaurantCount > 1 ? 's' : '') + ' visited</div>' : '') +
             '<span class="trip-purpose">' + trip.purpose + '</span>';
 
         var self = this;
