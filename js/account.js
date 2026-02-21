@@ -248,7 +248,7 @@ const Account = {
         const statusDiv = document.getElementById(`${accountType}Status`);
         
         connectBtn.disabled = true;
-        connectBtn.innerHTML = '<i data-lucide="loader" class="fa-spin"></i> Connecting...';
+        connectBtn.innerHTML = '<i data-lucide="loader" class="spin"></i> Connecting...';
         if (window.lucide) lucide.createIcons();
 
         setTimeout(() => {

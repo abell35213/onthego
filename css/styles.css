@@ -616,6 +616,11 @@ a:hover { color: var(--text); }
     to { transform: rotate(360deg); }
 }
 
+.spin,
+.spin svg {
+    animation: spin 1s linear infinite;
+}
+
 /* ===== Restaurant Card ===== */
 .restaurant-card {
     background: var(--bg-elevated);
@@ -674,6 +679,11 @@ a:hover { color: var(--text); }
 
 .stars { color: var(--gold); }
 .stars svg { color: var(--gold); width: 14px; height: 14px; }
+.star-icon { display: inline-block; width: 14px; height: 14px; vertical-align: middle; }
+.star-icon svg { width: 14px; height: 14px; }
+.star-filled svg { color: var(--gold); fill: var(--gold); }
+.star-half svg { color: var(--gold); fill: var(--gold); }
+.star-empty svg { color: var(--text-muted); opacity: 0.3; }
 .rating-number { font-weight: 700; color: var(--text); }
 .review-count { color: var(--text-muted); }
 
