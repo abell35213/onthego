@@ -148,10 +148,10 @@ const WorldMap = {
 
         var hotelPopup = '<div class="popup-content popup-content-full">' +
             '<div class="popup-name"><i data-lucide="building"></i> ' + trip.hotel + '</div>' +
-            '<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">' + trip.city + ', ' + trip.state + '</div>' +
+            '<div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">' + trip.city + ', ' + trip.state + '</div>' +
             '<div class="popup-info">' +
-                '<span><i data-lucide="star" class="star-icon star-filled" style="color:#F77F00"></i> 4.5 (Google)</span>' +
-                '<span><i data-lucide="phone" style="color:var(--primary-color)"></i> (800) 555-0199</span>' +
+                '<span><i data-lucide="star" class="star-icon star-filled"></i> 4.5 (Google)</span>' +
+                '<span><i data-lucide="phone"></i> (800) 555-0199</span>' +
             '</div>' +
             '<div class="popup-actions">' +
                 '<a href="https://www.google.com/maps/search/' + encodeURIComponent(trip.hotel + ' ' + trip.city) + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
@@ -214,18 +214,18 @@ const WorldMap = {
             var popupContent = '<div class="popup-content popup-content-full">' +
                 '<div class="popup-header"><div>' +
                     '<div class="popup-name">' + restaurant.name + '</div>' +
-                    '<div style="color: #666; font-size: 0.85rem;"><i data-lucide="' + typeIcon + '"></i> ' + typeLabel + ' &middot; ' + restaurant.cuisine + '</div>' +
+                    '<div style="color: var(--text-muted); font-size: 0.85rem;"><i data-lucide="' + typeIcon + '"></i> ' + typeLabel + ' &middot; ' + restaurant.cuisine + '</div>' +
                 '</div></div>' +
                 '<div class="popup-rating">' +
                     '<span class="stars">' + stars + '</span>' +
                     '<span class="rating-number">' + restaurant.rating + '</span>' +
                 '</div>' +
                 '<div class="popup-info">' +
-                    '<span><i data-lucide="dollar-sign" style="color:var(--primary-color)"></i> ' + restaurant.price + '</span>' +
-                    '<span><i data-lucide="footprints" style="color:var(--primary-color)"></i> ' + API.formatDistance(distanceMeters) + '</span>' +
+                    '<span><i data-lucide="dollar-sign"></i> ' + restaurant.price + '</span>' +
+                    '<span><i data-lucide="footprints"></i> ' + API.formatDistance(distanceMeters) + '</span>' +
                 '</div>' +
                 '<div class="popup-actions">' +
-                    '<a href="https://www.yelp.com/search?find_desc=' + encodeURIComponent(restaurant.name) + '&find_loc=' + encodeURIComponent(trip.city) + '" target="_blank" rel="noopener noreferrer" class="popup-btn" style="background-color:#D32323;">' +
+                    '<a href="https://www.yelp.com/search?find_desc=' + encodeURIComponent(restaurant.name) + '&find_loc=' + encodeURIComponent(trip.city) + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +
                         '<i data-lucide="external-link"></i> Yelp' +
                     '</a>' +
                     '<a href="' + deliveryLinks.ubereats + '" target="_blank" rel="noopener noreferrer" class="popup-btn">' +

@@ -423,7 +423,7 @@ const MapModule = {
                 <div class="popup-header">
                     <div>
                         <div class="popup-name">${restaurant.name}</div>
-                        <div style="color: #666; font-size: 0.85rem;">${categories}</div>
+                        <div style="color: var(--text-muted); font-size: 0.85rem;">${categories}</div>
                     </div>
                     ${restaurant.image_url ? `<img src="${restaurant.image_url}" alt="${restaurant.name}" class="popup-image">` : ''}
                 </div>
@@ -434,16 +434,16 @@ const MapModule = {
                     ${restaurant.visited ? '<span class="visited-indicator" style="font-size:0.7rem;padding:0.2rem 0.4rem;margin-left:0.3rem;"><i data-lucide="check"></i> Visited</span>' : ''}
                 </div>
                 <div class="popup-info">
-                    <span><i data-lucide="dollar-sign" style="color:var(--primary-color)"></i> ${restaurant.price || 'N/A'}</span>
-                    <span><i data-lucide="footprints" style="color:var(--primary-color)"></i> ${API.formatDistance(restaurant.distance)}</span>
-                    ${restaurant.display_phone ? `<span><i data-lucide="phone" style="color:var(--primary-color)"></i> ${restaurant.display_phone}</span>` : ''}
+                    <span><i data-lucide="dollar-sign"></i> ${restaurant.price || 'N/A'}</span>
+                    <span><i data-lucide="footprints"></i> ${API.formatDistance(restaurant.distance)}</span>
+                    ${restaurant.display_phone ? `<span><i data-lucide="phone"></i> ${restaurant.display_phone}</span>` : ''}
                 </div>
                 ${tagsHtml}
-                <div style="font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">
-                    <i data-lucide="map-pin" style="color:var(--primary-color)"></i> ${address}
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                    <i data-lucide="map-pin"></i> ${address}
                 </div>
                 <div class="popup-actions">
-                    <a href="${restaurant.url}" target="_blank" rel="noopener noreferrer" class="popup-btn" style="background-color:#D32323;">
+                    <a href="${restaurant.url}" target="_blank" rel="noopener noreferrer" class="popup-btn">
                         <i data-lucide="external-link"></i> Yelp
                     </a>
                     <a href="${deliveryLinks.ubereats}" target="_blank" rel="noopener noreferrer" class="popup-btn">
