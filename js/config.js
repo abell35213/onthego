@@ -7,6 +7,9 @@ const CONFIG = {
     
     // Yelp API settings (proxy endpoint, assumes same-origin hosting)
     YELP_API_URL: '/api/yelp-search',
+
+    // AI Concierge API endpoint
+    CONCIERGE_API_URL: '/api/concierge',
     
     // Search parameters
     SEARCH_RADIUS: 8047, // 5 miles in meters

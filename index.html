@@ -5,8 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>OnTheGo - Find Restaurants Nearby</title>
+    <title>OnTheGo — Elite Travel Dining Concierge</title>
     
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
@@ -26,9 +31,14 @@
     <header class="header">
         <div class="header-content">
             <h1><i class="fas fa-utensils"></i> OnTheGo</h1>
-            <p class="tagline">Your personal travel dining companion</p>
+            <p class="tagline">Your elite travel dining concierge</p>
         </div>
         <div class="header-actions">
+            <button id="conciergeOpenBtn" class="concierge-btn" title="AI Dining Concierge">
+                <i class="fas fa-concierge-bell"></i>
+                <span>AI Concierge</span>
+                <span class="concierge-badge">NEW</span>
+            </button>
             <button id="viewToggle" class="view-toggle-btn" title="Switch View">
                 <i class="fas fa-list"></i>
                 <span>Restaurant List</span>
@@ -42,6 +52,78 @@
             </button>
         </div>
     </header>
+
+    <!-- AI Concierge Overlay -->
+    <div id="conciergeOverlay" class="concierge-overlay"></div>
+
+    <!-- AI Concierge Panel -->
+    <aside id="conciergePanel" class="concierge-panel" aria-label="AI Dining Concierge">
+        <div class="concierge-panel-header">
+            <div class="concierge-header-left">
+                <div class="concierge-header-icon"><i class="fas fa-concierge-bell"></i></div>
+                <div>
+                    <div class="concierge-header-title">AI Dining Concierge</div>
+                    <div class="concierge-header-sub">Powered by OpenAI</div>
+                </div>
+            </div>
+            <button id="conciergeCloseBtn" class="concierge-close-btn" aria-label="Close concierge">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="concierge-panel-body">
+            <!-- Form Section -->
+            <div id="conciergeFormSection">
+                <div class="concierge-intro">
+                    <p>I'll find the perfect venues for your business meals. Tell me about your trip and I'll curate the top 3 dining experiences for you.</p>
+                </div>
+                <form id="conciergeForm" class="concierge-form">
+                    <div class="concierge-form-group">
+                        <label for="conciergeDestination"><i class="fas fa-map-marker-alt"></i> Destination</label>
+                        <input type="text" id="conciergeDestination" class="concierge-input" placeholder="e.g. Chicago, IL" required>
+                    </div>
+                    <div class="concierge-form-row">
+                        <div class="concierge-form-group">
+                            <label for="conciergeDate"><i class="fas fa-calendar-alt"></i> Date</label>
+                            <input type="date" id="conciergeDate" class="concierge-input">
+                        </div>
+                        <div class="concierge-form-group">
+                            <label for="conciergePartySize"><i class="fas fa-users"></i> Guests</label>
+                            <select id="conciergePartySize" class="concierge-input">
+                                <option value="1">1</option>
+                                <option value="2" selected>2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="8">8</option>
+                                <option value="10">10+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="concierge-form-group">
+                        <label for="conciergeMealType"><i class="fas fa-utensils"></i> Meal Type</label>
+                        <select id="conciergeMealType" class="concierge-input">
+                            <option value="business lunch">Business Lunch</option>
+                            <option value="business dinner" selected>Business Dinner</option>
+                            <option value="client entertainment dinner">Client Entertainment Dinner</option>
+                            <option value="team celebration dinner">Team Celebration Dinner</option>
+                        </select>
+                    </div>
+                    <div class="concierge-form-group">
+                        <label for="conciergePreferences"><i class="fas fa-sliders-h"></i> Preferences <small>(optional)</small></label>
+                        <input type="text" id="conciergePreferences" class="concierge-input" placeholder="e.g. steak, private dining, wine list">
+                    </div>
+                    <button type="submit" class="concierge-submit-btn">
+                        <i class="fas fa-magic"></i> Get My Top 3 Picks
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div id="conciergeResults" style="display: none;"></div>
+        </div>
+    </aside>
 
     <!-- Account Modal -->
     <div id="accountModal" class="modal" style="display: none;">
@@ -412,7 +494,9 @@
     <script src="js/worldmap.js"></script>
     <script src="js/account.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/concierge.js"></script>
     <script src="js/app.js"></script>
 </body>
+
 
 </html>
