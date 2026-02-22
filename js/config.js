@@ -10,6 +10,12 @@ const CONFIG = {
 
     // AI Concierge API endpoint
     CONCIERGE_API_URL: '/api/concierge',
+
+    // TripIt OAuth API endpoints
+    TRIPIT_CONNECT_URL: '/api/tripit/connect',
+    TRIPIT_CALLBACK_URL: '/api/tripit/callback',
+    TRIPIT_TRIPS_URL: '/api/tripit/trips',
+    TRIPIT_DISCONNECT_URL: '/api/tripit/disconnect',
     
     // Search parameters
     SEARCH_RADIUS: 8047, // 5 miles in meters
