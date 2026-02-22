@@ -28,9 +28,16 @@ const CONFIG = {
     MARKER_ICON_URL: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
     
     // World map settings
-    WORLD_MAP_ZOOM: 2,
-    WORLD_MAP_MIN_ZOOM: 1,
+    WORLD_MAP_ZOOM: 4,
+    WORLD_MAP_MIN_ZOOM: 2,
     WORLD_MAP_MAX_ZOOM: 18,
+
+    // Home/hub city for world map flight path visualization
+    HOME_CITY: {
+        name: 'Atlanta',
+        state: 'GA',
+        coordinates: { latitude: 33.7490, longitude: -84.3880 }
+    },
     
     // View modes
     VIEW_MODE_WORLD: 'world',
