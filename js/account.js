@@ -328,8 +328,10 @@ const Account = {
             );
 
             // Poll for the popup to close or for a token to be set
+            const maxPollTime = 5 * 60 * 1000; // 5 minute timeout
+            const pollStart = Date.now();
             const pollTimer = setInterval(() => {
-                if (!popup || popup.closed) {
+                if (!popup || popup.closed || Date.now() - pollStart > maxPollTime) {
                     clearInterval(pollTimer);
                     this.finalizeTripItConnection(connectBtn, statusDiv);
                 }

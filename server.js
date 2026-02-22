@@ -35,6 +35,17 @@ const tripitOAuth = TRIPIT_API_KEY && TRIPIT_API_SECRET ? OAuth({
 // In-memory stores for TripIt OAuth tokens (process-local, resets on restart)
 const tripitRequestTokens = new Map();
 const tripitAccessTokens = new Map();
+
+// Periodically clean up expired request tokens (10-minute TTL)
+const TRIPIT_REQUEST_TOKEN_TTL_MS = 10 * 60 * 1000;
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of tripitRequestTokens) {
+        if (now - value.createdAt > TRIPIT_REQUEST_TOKEN_TTL_MS) {
+            tripitRequestTokens.delete(key);
+        }
+    }
+}, TRIPIT_REQUEST_TOKEN_TTL_MS);
 const parsedCacheTtlSeconds = parseInt(process.env.YELP_CACHE_TTL_SECONDS, 10);
 const parsedCacheTtlMs = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
 const CACHE_TTL_MS = Number.isFinite(parsedCacheTtlSeconds) && parsedCacheTtlSeconds > 0
@@ -277,6 +288,17 @@ app.get('/api/tripit/connect', async (req, res) => {
     const callbackUrl = req.query.callback;
     if (!callbackUrl) {
         return res.status(400).json({ error: 'callback query parameter is required' });
+    }
+
+    // Validate the callback URL originates from this server to prevent open redirects
+    const requestOrigin = `${req.protocol}://${req.get('host')}`;
+    try {
+        const parsed = new URL(callbackUrl);
+        if (parsed.origin !== requestOrigin) {
+            return res.status(400).json({ error: 'callback URL must match the application origin' });
+        }
+    } catch {
+        return res.status(400).json({ error: 'callback must be a valid URL' });
     }
 
     const requestData = {
