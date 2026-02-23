@@ -271,6 +271,50 @@ You must respond ONLY with valid JSON in exactly this format — no extra text, 
     }
 });
 
+// Apple MapKit JS credentials
+const APPLE_MAPS_TEAM_ID = process.env.APPLE_MAPS_TEAM_ID || '';
+const APPLE_MAPS_KEY_ID = process.env.APPLE_MAPS_KEY_ID || '';
+// .p8 private key: env vars often have literal \n — convert them to real newlines
+const APPLE_MAPS_PRIVATE_KEY = (process.env.APPLE_MAPS_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+
+/**
+ * Apple MapKit JS token endpoint.
+ * Issues a short-lived ES256-signed JWT the browser passes to mapkit.init().
+ * Returns: { token: string }
+ */
+app.get('/api/mapkit-token', (req, res) => {
+    if (!APPLE_MAPS_TEAM_ID || !APPLE_MAPS_KEY_ID || !APPLE_MAPS_PRIVATE_KEY) {
+        return res.status(503).json({ error: 'Apple Maps credentials not configured.' });
+    }
+
+    try {
+        const header = Buffer.from(
+            JSON.stringify({ alg: 'ES256', kid: APPLE_MAPS_KEY_ID, typ: 'JWT' })
+        ).toString('base64url');
+
+        const now = Math.floor(Date.now() / 1000);
+        const ttl = parseInt(process.env.MAPKIT_TOKEN_TTL_SECONDS, 10) || 1800;
+        const payload = Buffer.from(
+            JSON.stringify({ iss: APPLE_MAPS_TEAM_ID, iat: now, exp: now + ttl })
+        ).toString('base64url');
+
+        const message = `${header}.${payload}`;
+
+        const sign = crypto.createSign('SHA256');
+        sign.update(message);
+        sign.end();
+        // ES256 (ECDSA P-256) requires IEEE P1363 encoding (raw r||s), not DER
+        const signature = sign
+            .sign({ key: APPLE_MAPS_PRIVATE_KEY, dsaEncoding: 'ieee-p1363' })
+            .toString('base64url');
+
+        return res.json({ token: `${message}.${signature}` });
+    } catch (err) {
+        console.error('Error generating MapKit token:', err.message);
+        return res.status(500).json({ error: 'Failed to generate MapKit token.' });
+    }
+});
+
 /**
  * TripIt OAuth — Step 1: Obtain a request token and return the authorization URL.
  * The frontend opens this URL so the user can authorize the app on TripIt.
