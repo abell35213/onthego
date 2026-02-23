@@ -186,7 +186,9 @@ const Account = {
     /**
      * Save settings to localStorage
      */
-    saveSettings() {
+    async saveSettings() {
+        const homeCityInput = document.getElementById('settingHomeCity')?.value.trim() || '';
+
         const settings = {
             textAlerts: document.getElementById('settingTextAlerts')?.checked || false,
             emailAlerts: document.getElementById('settingEmailAlerts')?.checked || false,
@@ -194,8 +196,29 @@ const Account = {
             searchRadius: document.getElementById('settingRadius')?.value || '5000',
             defaultCuisine: document.getElementById('settingCuisine')?.value || '',
             defaultPrice: document.getElementById('settingPrice')?.value || '',
-            accessibility: document.getElementById('settingAccessibility')?.checked || false
+            accessibility: document.getElementById('settingAccessibility')?.checked || false,
+            homeCity: homeCityInput
         };
+
+        // Geocode the home city and store coordinates so the world map can use them
+        if (homeCityInput) {
+            const coords = await this.geocodeCity(homeCityInput);
+            if (coords) {
+                settings.homeCityCoords = coords;
+            } else {
+                // Geocoding failed — preserve any previously saved coordinates so the
+                // map keeps working, but warn the user
+                const prevSaved = localStorage.getItem('onthego_settings');
+                if (prevSaved) {
+                    try {
+                        const prev = JSON.parse(prevSaved);
+                        if (prev.homeCityCoords) settings.homeCityCoords = prev.homeCityCoords;
+                    } catch (_) { /* ignore */ }
+                }
+                this.showNotification('Could not find coordinates for that city. Please check the spelling and try again.');
+                return;
+            }
+        }
 
         localStorage.setItem('onthego_settings', JSON.stringify(settings));
 
@@ -207,6 +230,39 @@ const Account = {
         }
 
         this.showNotification('Settings saved successfully!');
+
+        // Refresh world map flight paths if it has been initialized
+        if (typeof WorldMap !== 'undefined') {
+            WorldMap.refresh();
+        }
+    },
+
+    /**
+     * Geocode a city string to lat/lng coordinates using the Nominatim API.
+     * @param {string} cityString - City name, e.g. "Atlanta, GA"
+     * @returns {Promise<{latitude: number, longitude: number}|null>}
+     */
+    async geocodeCity(cityString) {
+        try {
+            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityString)}&format=json&limit=1`;
+            const response = await fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                    'User-Agent': 'OnTheGo-App'
+                }
+            });
+            if (!response.ok) throw new Error(`Geocode error: ${response.status}`);
+            const data = await response.json();
+            if (data && data.length > 0) {
+                return {
+                    latitude: parseFloat(data[0].lat),
+                    longitude: parseFloat(data[0].lon)
+                };
+            }
+        } catch (e) {
+            console.error('Geocoding failed:', e);
+        }
+        return null;
     },
 
     /**
@@ -224,6 +280,7 @@ const Account = {
                 const cuisine = document.getElementById('settingCuisine');
                 const price = document.getElementById('settingPrice');
                 const accessibility = document.getElementById('settingAccessibility');
+                const homeCity = document.getElementById('settingHomeCity');
 
                 if (textAlerts) textAlerts.checked = settings.textAlerts !== false;
                 if (emailAlerts) emailAlerts.checked = settings.emailAlerts !== false;
@@ -232,6 +289,7 @@ const Account = {
                 if (cuisine) cuisine.value = settings.defaultCuisine || '';
                 if (price) price.value = settings.defaultPrice || '';
                 if (accessibility) accessibility.checked = settings.accessibility || false;
+                if (homeCity) homeCity.value = settings.homeCity || '';
             } catch (e) {
                 console.error('Error loading settings:', e);
             }

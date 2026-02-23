@@ -47,12 +47,56 @@ const WorldMap = {
     },
 
     /**
+     * Get the home/hub city for flight paths.
+     * Returns user-saved city from settings if available, otherwise CONFIG.HOME_CITY.
+     * @returns {{name: string, state: string, coordinates: {latitude: number, longitude: number}}}
+     */
+    getHomeCity() {
+        try {
+            const saved = localStorage.getItem('onthego_settings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                if (settings.homeCity && settings.homeCityCoords) {
+                    // Split on the first comma only; treat remainder as state/region (may be empty)
+                    const commaIdx = settings.homeCity.indexOf(',');
+                    const name = commaIdx >= 0
+                        ? settings.homeCity.slice(0, commaIdx).trim()
+                        : settings.homeCity.trim();
+                    const state = commaIdx >= 0
+                        ? settings.homeCity.slice(commaIdx + 1).trim()
+                        : '';
+                    return { name, state, coordinates: settings.homeCityCoords };
+                }
+            }
+        } catch (e) {
+            console.error('Error reading home city setting:', e);
+        }
+        return CONFIG.HOME_CITY;
+    },
+
+    /**
+     * Clear all flight paths and trip markers then redraw with the current home city.
+     * Called when the user updates their home city in Settings.
+     */
+    refresh() {
+        if (!this._leafletMap) return;
+
+        this._tripMarkers.forEach(layer => this._leafletMap.removeLayer(layer));
+        this._tripMarkers = [];
+
+        this.addFlightPaths();
+        this.addHomeMarker();
+        this.addTravelHistoryMarkers();
+        this.addUpcomingTripMarkers();
+    },
+
+    /**
      * Draw flight path polylines from the home city hub to every trip destination
      */
     addFlightPaths() {
         if (!this._leafletMap) return;
 
-        const home = CONFIG.HOME_CITY.coordinates;
+        const home = this.getHomeCity().coordinates;
         const allTrips = [...MOCK_TRAVEL_HISTORY, ...MOCK_UPCOMING_TRIPS];
 
         allTrips.forEach(trip => {
@@ -79,7 +123,8 @@ const WorldMap = {
     addHomeMarker() {
         if (!this._leafletMap) return;
 
-        const { latitude, longitude } = CONFIG.HOME_CITY.coordinates;
+        const homeCity = this.getHomeCity();
+        const { latitude, longitude } = homeCity.coordinates;
         const homeIcon = L.divIcon({
             className: 'home-marker-icon',
             html: `<div style="
@@ -94,7 +139,7 @@ const WorldMap = {
 
         const marker = L.marker([latitude, longitude], { icon: homeIcon })
             .addTo(this._leafletMap)
-            .bindPopup(`<strong>${CONFIG.HOME_CITY.name}, ${CONFIG.HOME_CITY.state}</strong><br>Home Base`, { maxWidth: 180 });
+            .bindPopup(`<strong>${homeCity.name}, ${homeCity.state}</strong><br>Home Base`, { maxWidth: 180 });
         this._tripMarkers.push(marker);
     },
 
