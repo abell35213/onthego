@@ -276,13 +276,23 @@ const APPLE_MAPS_TEAM_ID = process.env.APPLE_MAPS_TEAM_ID || '';
 const APPLE_MAPS_KEY_ID = process.env.APPLE_MAPS_KEY_ID || '';
 // .p8 private key: env vars often have literal \n — convert them to real newlines
 const APPLE_MAPS_PRIVATE_KEY = (process.env.APPLE_MAPS_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+// Optional: a pre-signed MapKit JWT supplied directly (use when you don't have the .p8 key)
+const APPLE_MAPS_TOKEN = process.env.APPLE_MAPS_TOKEN || '';
 
 /**
  * Apple MapKit JS token endpoint.
- * Issues a short-lived ES256-signed JWT the browser passes to mapkit.init().
+ * Precedence:
+ *   1. APPLE_MAPS_TOKEN — return the pre-signed JWT directly (no private key needed).
+ *   2. APPLE_MAPS_TEAM_ID + APPLE_MAPS_KEY_ID + APPLE_MAPS_PRIVATE_KEY — sign a new JWT.
+ *   3. Neither configured → 503.
  * Returns: { token: string }
  */
 app.get('/api/mapkit-token', (req, res) => {
+    // Fast path: serve a pre-signed token directly from the environment
+    if (APPLE_MAPS_TOKEN) {
+        return res.json({ token: APPLE_MAPS_TOKEN });
+    }
+
     if (!APPLE_MAPS_TEAM_ID || !APPLE_MAPS_KEY_ID || !APPLE_MAPS_PRIVATE_KEY) {
         return res.status(503).json({ error: 'Apple Maps credentials not configured.' });
     }
