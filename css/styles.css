@@ -237,6 +237,7 @@ a:hover { color: #fff; }
 .world-map {
     flex: 1;
     height: 100%;
+    background: #000;
 }
 
 /* ===== Trip Sidebar ===== */
@@ -2099,6 +2100,14 @@ a:hover { color: #fff; }
     font-size: 0.85rem;
 }
 
+/* MapKit callout wrapper — constrain width for the custom callout delegate */
+.mapkit-callout-content {
+    max-width: 420px;
+    min-width: 280px;
+    overflow-y: auto;
+    max-height: 60vh;
+}
+
 .popup-header {
     display: flex;
     align-items: flex-start;
@@ -2188,6 +2197,14 @@ a:hover { color: #fff; }
 /* ===== Directions Control ===== */
 .map-directions-control {
     position: relative;
+}
+
+/* When MapKit JS is active, the directions control is a plain overlay div */
+.mapkit-overlay-control {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
 }
 
 .directions-toggle-btn {

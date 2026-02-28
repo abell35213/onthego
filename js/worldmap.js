@@ -14,18 +14,133 @@ const WorldMap = {
             return;
         }
 
-        this._leafletMap = L.map('worldMap').setView([30, -40], CONFIG.WORLD_MAP_ZOOM);
+        this._leafletMap = L.map('worldMap', {
+            minZoom: CONFIG.WORLD_MAP_MIN_ZOOM,
+            maxZoom: CONFIG.WORLD_MAP_MAX_ZOOM
+        }).setView([38, -96], CONFIG.WORLD_MAP_ZOOM);
+
+        // Satellite imagery base layer
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
             minZoom: CONFIG.WORLD_MAP_MIN_ZOOM,
             maxZoom: CONFIG.WORLD_MAP_MAX_ZOOM
         }).addTo(this._leafletMap);
 
+        // City/country labels overlay on top of satellite
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            minZoom: CONFIG.WORLD_MAP_MIN_ZOOM,
+            maxZoom: CONFIG.WORLD_MAP_MAX_ZOOM,
+            opacity: 0.9
+        }).addTo(this._leafletMap);
+
+        // Draw flight paths from home city to all trip destinations
+        this.addFlightPaths();
+
+        // Add home city hub marker
+        this.addHomeMarker();
+
         // Add travel history markers
         this.addTravelHistoryMarkers();
 
         // Add upcoming trip markers
         this.addUpcomingTripMarkers();
+    },
+
+    /**
+     * Get the home/hub city for flight paths.
+     * Returns user-saved city from settings if available, otherwise CONFIG.HOME_CITY.
+     * @returns {{name: string, state: string, coordinates: {latitude: number, longitude: number}}}
+     */
+    getHomeCity() {
+        try {
+            const saved = localStorage.getItem('onthego_settings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                if (settings.homeCity && settings.homeCityCoords) {
+                    // Split on the first comma only; treat remainder as state/region (may be empty)
+                    const commaIdx = settings.homeCity.indexOf(',');
+                    const name = commaIdx >= 0
+                        ? settings.homeCity.slice(0, commaIdx).trim()
+                        : settings.homeCity.trim();
+                    const state = commaIdx >= 0
+                        ? settings.homeCity.slice(commaIdx + 1).trim()
+                        : '';
+                    return { name, state, coordinates: settings.homeCityCoords };
+                }
+            }
+        } catch (e) {
+            console.error('Error reading home city setting:', e);
+        }
+        return CONFIG.HOME_CITY;
+    },
+
+    /**
+     * Clear all flight paths and trip markers then redraw with the current home city.
+     * Called when the user updates their home city in Settings.
+     */
+    refresh() {
+        if (!this._leafletMap) return;
+
+        this._tripMarkers.forEach(layer => this._leafletMap.removeLayer(layer));
+        this._tripMarkers = [];
+
+        this.addFlightPaths();
+        this.addHomeMarker();
+        this.addTravelHistoryMarkers();
+        this.addUpcomingTripMarkers();
+    },
+
+    /**
+     * Draw flight path polylines from the home city hub to every trip destination
+     */
+    addFlightPaths() {
+        if (!this._leafletMap) return;
+
+        const home = this.getHomeCity().coordinates;
+        const allTrips = [...MOCK_TRAVEL_HISTORY, ...MOCK_UPCOMING_TRIPS];
+
+        allTrips.forEach(trip => {
+            const dest = trip.coordinates;
+            const line = L.polyline(
+                [
+                    [home.latitude, home.longitude],
+                    [dest.latitude, dest.longitude]
+                ],
+                {
+                    color: 'rgba(255, 255, 255, 0.75)',
+                    weight: 1.5,
+                    opacity: 0.75,
+                    dashArray: null
+                }
+            ).addTo(this._leafletMap);
+            this._tripMarkers.push(line);
+        });
+    },
+
+    /**
+     * Add a pulsing home-city hub marker at the configured home coordinates
+     */
+    addHomeMarker() {
+        if (!this._leafletMap) return;
+
+        const homeCity = this.getHomeCity();
+        const { latitude, longitude } = homeCity.coordinates;
+        const homeIcon = L.divIcon({
+            className: 'home-marker-icon',
+            html: `<div style="
+                background-color:rgba(173,216,255,0.95);
+                width:18px;height:18px;border-radius:50%;
+                border:3px solid rgba(255,255,255,1);
+                box-shadow:0 0 12px rgba(100,180,255,1),0 0 4px rgba(0,0,0,0.6);
+            "></div>`,
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+        });
+
+        const marker = L.marker([latitude, longitude], { icon: homeIcon })
+            .addTo(this._leafletMap)
+            .bindPopup(`<strong>${homeCity.name}, ${homeCity.state}</strong><br>Home Base`, { maxWidth: 180 });
+        this._tripMarkers.push(marker);
     },
 
     /**
@@ -52,13 +167,11 @@ const WorldMap = {
     createTripMarker(trip, isPast) {
         if (!this._leafletMap) return;
 
-        var color = isPast ? '#FF6B35' : '#004E89';
         var icon = L.divIcon({
             className: 'trip-marker-icon',
-            html: '<div style="background-color:' + color + ';width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>' +
-                  '<div style="color:white;font-size:12px;font-weight:bold;text-shadow:1px 1px 2px black,-1px -1px 2px black,1px -1px 2px black,-1px 1px 2px black;white-space:nowrap;margin-top:2px;text-align:center;transform:translateX(-30%);">' + trip.city + '</div>',
-            iconSize: [22, 40],
-            iconAnchor: [11, 8]
+            html: '<div style="background-color:rgba(173,216,255,0.9);width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.95);box-shadow:0 0 8px rgba(100,180,255,0.8),0 2px 4px rgba(0,0,0,0.5);"></div>',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
         });
 
         var marker = L.marker(
