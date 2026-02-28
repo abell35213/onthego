@@ -57,6 +57,18 @@ const WorldMap = {
             // Polyfill invalidateSize for callers in app.js
             this._mapkitMap.invalidateSize = () => {};
 
+            // Single 'select' handler for all trip annotations
+            this._mapkitMap.addEventListener('select', (event) => {
+                const a = event.annotation;
+                if (a && a._tripId) {
+                    if (window.App && typeof App.openTripFromWorldMap === 'function') {
+                        App.openTripFromWorldMap(a._tripId, a._isPast);
+                        return;
+                    }
+                    this.highlightTrip(a._tripId, a._isPast);
+                }
+            });
+
             this._mapkitEnabled = true;
             console.log('World map: Apple MapKit JS initialized with satellite view');
             return true;
@@ -275,18 +287,6 @@ const WorldMap = {
 
             this._mapkitMap.addAnnotation(annotation);
             this._tripMarkers.push(annotation);
-
-            // Handle annotation selection (click) to open Local view
-            this._mapkitMap.addEventListener('select', (event) => {
-                const a = event.annotation;
-                if (a && a._tripId === trip.id) {
-                    if (window.App && typeof App.openTripFromWorldMap === 'function') {
-                        App.openTripFromWorldMap(trip.id, isPast);
-                        return;
-                    }
-                    this.highlightTrip(trip.id, isPast);
-                }
-            });
             return;
         }
 
@@ -345,9 +345,8 @@ const WorldMap = {
                     ),
                     true
                 );
-                var self = this;
-                setTimeout(function() {
-                    self.showNearbyRestaurants(trip);
+                setTimeout(() => {
+                    this.showNearbyRestaurants(trip);
                 }, 1600);
             } else if (this._leafletMap) {
                 // Fly to the trip location
@@ -405,8 +404,7 @@ const WorldMap = {
             this._restaurantMarkers.push(hotelAnnotation);
 
             // Restaurant annotations
-            var self = this;
-            nearbyRestaurants.forEach(function(restaurant) {
+            nearbyRestaurants.forEach((restaurant) => {
                 var colorMap = {
                     'restaurant': '#e74c3c',
                     'bar': '#f39c12',
@@ -432,8 +430,8 @@ const WorldMap = {
                         calloutEnabled: true
                     }
                 );
-                self._mapkitMap.addAnnotation(annotation);
-                self._restaurantMarkers.push(annotation);
+                this._mapkitMap.addAnnotation(annotation);
+                this._restaurantMarkers.push(annotation);
             });
             return;
         }
