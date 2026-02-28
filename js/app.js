@@ -90,7 +90,9 @@ const App = {
             viewToggleBtn.innerHTML = '<i class="fas fa-list"></i><span>Restaurant List</span>';
             
             // Refresh world map
-            if (WorldMap._leafletMap) {
+            if (WorldMap._mapkitEnabled && WorldMap._mapkitMap) {
+                // MapKit maps auto-resize; no action needed
+            } else if (WorldMap._leafletMap) {
                 setTimeout(() => {
                     WorldMap._leafletMap.invalidateSize();
                 }, 100);
@@ -101,7 +103,9 @@ const App = {
             this.currentView = CONFIG.VIEW_MODE_WORLD;
             viewToggleBtn.innerHTML = '<i class="fas fa-list"></i><span>Restaurant List</span>';
             
-            if (WorldMap._leafletMap) {
+            if (WorldMap._mapkitEnabled && WorldMap._mapkitMap) {
+                // MapKit maps auto-resize; no action needed
+            } else if (WorldMap._leafletMap) {
                 setTimeout(() => {
                     WorldMap._leafletMap.invalidateSize();
                 }, 100);
@@ -198,7 +202,9 @@ const App = {
             this.currentView = CONFIG.VIEW_MODE_WORLD;
             viewToggleBtn.innerHTML = '<i class="fas fa-list"></i><span>Restaurant List</span>';
 
-            if (WorldMap._leafletMap) {
+            if (WorldMap._mapkitEnabled && WorldMap._mapkitMap) {
+                // MapKit maps auto-resize; no action needed
+            } else if (WorldMap._leafletMap) {
                 setTimeout(() => {
                     WorldMap._leafletMap.invalidateSize();
                 }, 100);

@@ -1,19 +1,75 @@
-// World Map Module - Handles the 2D world map view with travel history using Leaflet
+// World Map Module - Handles the 2D world map view with travel history.
+// Uses Apple MapKit JS (satellite) when credentials are configured;
+// falls back to Leaflet + ESRI tiles when MapKit is unavailable.
 const WorldMap = {
     _leafletMap: null,
+    _mapkitMap: null,
+    _mapkitEnabled: false,
     _tripMarkers: [],
+    _tripOverlays: [],
     _restaurantMarkers: [],
     currentView: CONFIG.VIEW_MODE_WORLD,
 
     /**
-     * Initialize the world map using Leaflet 2D map
+     * Initialize the world map. Tries Apple MapKit JS first, then Leaflet.
      */
-    init() {
+    async init() {
+        if (typeof mapkit !== 'undefined') {
+            const success = await this._initMapKit();
+            if (success) {
+                this._addMapContent();
+                return;
+            }
+        }
+
         if (typeof L === 'undefined') {
-            console.warn('Leaflet library not loaded. World map disabled.');
+            console.warn('Neither MapKit JS nor Leaflet could be loaded. World map disabled.');
             return;
         }
 
+        this._initLeaflet();
+        this._addMapContent();
+    },
+
+    /**
+     * Initialize Apple MapKit JS for the world map (satellite imagery).
+     * @returns {Promise<boolean>} true if initialization succeeded
+     */
+    async _initMapKit() {
+        try {
+            const ready = await initMapKit();
+            if (!ready) return false;
+
+            const container = document.getElementById('worldMap');
+            if (!container) throw new Error('World map container #worldMap not found');
+
+            this._mapkitMap = new mapkit.Map(container, {
+                mapType: mapkit.Map.MapTypes.Satellite,
+                region: new mapkit.CoordinateRegion(
+                    new mapkit.Coordinate(38, -96),
+                    new mapkit.CoordinateSpan(50, 80)
+                ),
+                showsMapTypeControl: true,
+                showsZoomControl: true,
+                showsCompass: mapkit.FeatureVisibility.Visible
+            });
+
+            // Polyfill invalidateSize for callers in app.js
+            this._mapkitMap.invalidateSize = () => {};
+
+            this._mapkitEnabled = true;
+            console.log('World map: Apple MapKit JS initialized with satellite view');
+            return true;
+        } catch (error) {
+            console.warn('World map MapKit init failed, falling back to Leaflet:', error.message);
+            return false;
+        }
+    },
+
+    /**
+     * Initialize the Leaflet fallback world map (existing implementation).
+     */
+    _initLeaflet() {
         this._leafletMap = L.map('worldMap', {
             minZoom: CONFIG.WORLD_MAP_MIN_ZOOM,
             maxZoom: CONFIG.WORLD_MAP_MAX_ZOOM
@@ -33,16 +89,17 @@ const WorldMap = {
             opacity: 0.9
         }).addTo(this._leafletMap);
 
-        // Draw flight paths from home city to all trip destinations
+        this._mapkitEnabled = false;
+        console.log('World map: Leaflet initialized with ESRI satellite tiles');
+    },
+
+    /**
+     * Add all map content (flight paths, markers) after the map is ready.
+     */
+    _addMapContent() {
         this.addFlightPaths();
-
-        // Add home city hub marker
         this.addHomeMarker();
-
-        // Add travel history markers
         this.addTravelHistoryMarkers();
-
-        // Add upcoming trip markers
         this.addUpcomingTripMarkers();
     },
 
@@ -79,25 +136,45 @@ const WorldMap = {
      * Called when the user updates their home city in Settings.
      */
     refresh() {
-        if (!this._leafletMap) return;
-
-        this._tripMarkers.forEach(layer => this._leafletMap.removeLayer(layer));
+        if (this._mapkitEnabled && this._mapkitMap) {
+            // Remove MapKit annotations and overlays
+            if (this._tripMarkers.length) this._mapkitMap.removeAnnotations(this._tripMarkers);
+            if (this._tripOverlays.length) this._mapkitMap.removeOverlays(this._tripOverlays);
+        } else if (this._leafletMap) {
+            this._tripMarkers.forEach(layer => this._leafletMap.removeLayer(layer));
+        }
         this._tripMarkers = [];
+        this._tripOverlays = [];
 
-        this.addFlightPaths();
-        this.addHomeMarker();
-        this.addTravelHistoryMarkers();
-        this.addUpcomingTripMarkers();
+        this._addMapContent();
     },
 
     /**
      * Draw flight path polylines from the home city hub to every trip destination
      */
     addFlightPaths() {
-        if (!this._leafletMap) return;
-
         const home = this.getHomeCity().coordinates;
         const allTrips = [...MOCK_TRAVEL_HISTORY, ...MOCK_UPCOMING_TRIPS];
+
+        if (this._mapkitEnabled && this._mapkitMap) {
+            allTrips.forEach(trip => {
+                const dest = trip.coordinates;
+                const style = new mapkit.Style({
+                    lineWidth: 1.5,
+                    strokeColor: 'rgba(255, 255, 255, 0.75)',
+                    strokeOpacity: 0.75
+                });
+                const overlay = new mapkit.PolylineOverlay([
+                    new mapkit.Coordinate(home.latitude, home.longitude),
+                    new mapkit.Coordinate(dest.latitude, dest.longitude)
+                ], { style: style });
+                this._mapkitMap.addOverlay(overlay);
+                this._tripOverlays.push(overlay);
+            });
+            return;
+        }
+
+        if (!this._leafletMap) return;
 
         allTrips.forEach(trip => {
             const dest = trip.coordinates;
@@ -121,10 +198,27 @@ const WorldMap = {
      * Add a pulsing home-city hub marker at the configured home coordinates
      */
     addHomeMarker() {
-        if (!this._leafletMap) return;
-
         const homeCity = this.getHomeCity();
         const { latitude, longitude } = homeCity.coordinates;
+
+        if (this._mapkitEnabled && this._mapkitMap) {
+            const annotation = new mapkit.MarkerAnnotation(
+                new mapkit.Coordinate(latitude, longitude),
+                {
+                    color: '#64B4FF',
+                    glyphText: '🏠',
+                    title: `${homeCity.name}, ${homeCity.state}`,
+                    subtitle: 'Home Base',
+                    calloutEnabled: true
+                }
+            );
+            this._mapkitMap.addAnnotation(annotation);
+            this._tripMarkers.push(annotation);
+            return;
+        }
+
+        if (!this._leafletMap) return;
+
         const homeIcon = L.divIcon({
             className: 'home-marker-icon',
             html: `<div style="
@@ -162,9 +256,40 @@ const WorldMap = {
     },
 
     /**
-     * Create a Leaflet marker for a trip
+     * Create a marker for a trip (MapKit annotation or Leaflet marker)
      */
     createTripMarker(trip, isPast) {
+        if (this._mapkitEnabled && this._mapkitMap) {
+            const annotation = new mapkit.MarkerAnnotation(
+                new mapkit.Coordinate(trip.coordinates.latitude, trip.coordinates.longitude),
+                {
+                    color: '#64B4FF',
+                    glyphText: isPast ? '✓' : '✈',
+                    title: `${trip.city}, ${trip.state}`,
+                    subtitle: `${trip.hotel} — ${trip.purpose}`,
+                    calloutEnabled: true
+                }
+            );
+            annotation._tripId = trip.id;
+            annotation._isPast = isPast;
+
+            this._mapkitMap.addAnnotation(annotation);
+            this._tripMarkers.push(annotation);
+
+            // Handle annotation selection (click) to open Local view
+            this._mapkitMap.addEventListener('select', (event) => {
+                const a = event.annotation;
+                if (a && a._tripId === trip.id) {
+                    if (window.App && typeof App.openTripFromWorldMap === 'function') {
+                        App.openTripFromWorldMap(trip.id, isPast);
+                        return;
+                    }
+                    this.highlightTrip(trip.id, isPast);
+                }
+            });
+            return;
+        }
+
         if (!this._leafletMap) return;
 
         var icon = L.divIcon({
@@ -211,19 +336,33 @@ const WorldMap = {
         const trips = isPast ? MOCK_TRAVEL_HISTORY : MOCK_UPCOMING_TRIPS;
         const trip = trips.find(t => t.id === tripId);
 
-        if (trip && this._leafletMap) {
-            // Fly to the trip location
-            this._leafletMap.flyTo(
-                [trip.coordinates.latitude, trip.coordinates.longitude],
-                13,
-                { duration: 1.5 }
-            );
+        if (trip) {
+            if (this._mapkitEnabled && this._mapkitMap) {
+                this._mapkitMap.setRegionAnimated(
+                    new mapkit.CoordinateRegion(
+                        new mapkit.Coordinate(trip.coordinates.latitude, trip.coordinates.longitude),
+                        new mapkit.CoordinateSpan(0.1, 0.1)
+                    ),
+                    true
+                );
+                var self = this;
+                setTimeout(function() {
+                    self.showNearbyRestaurants(trip);
+                }, 1600);
+            } else if (this._leafletMap) {
+                // Fly to the trip location
+                this._leafletMap.flyTo(
+                    [trip.coordinates.latitude, trip.coordinates.longitude],
+                    13,
+                    { duration: 1.5 }
+                );
 
-            // Show nearby restaurants around the hotel after fly animation
-            var self = this;
-            setTimeout(function() {
-                self.showNearbyRestaurants(trip);
-            }, 1600);
+                // Show nearby restaurants around the hotel after fly animation
+                var self = this;
+                setTimeout(function() {
+                    self.showNearbyRestaurants(trip);
+                }, 1600);
+            }
         }
 
         // Highlight corresponding card in sidebar
@@ -244,12 +383,64 @@ const WorldMap = {
      * @param {Object} trip - Trip data with coordinates
      */
     showNearbyRestaurants(trip) {
-        if (!this._leafletMap) return;
-
         // Clear existing restaurant markers
         this.clearRestaurantMarkers();
 
-        // Add hotel marker
+        // Generate nearby restaurants for this trip
+        var nearbyRestaurants = this.generateNearbyRestaurants(trip);
+
+        if (this._mapkitEnabled && this._mapkitMap) {
+            // Hotel annotation
+            var hotelAnnotation = new mapkit.MarkerAnnotation(
+                new mapkit.Coordinate(trip.coordinates.latitude, trip.coordinates.longitude),
+                {
+                    color: '#007aff',
+                    glyphText: '🏨',
+                    title: trip.hotel,
+                    subtitle: trip.city + ', ' + trip.state,
+                    calloutEnabled: true
+                }
+            );
+            this._mapkitMap.addAnnotation(hotelAnnotation);
+            this._restaurantMarkers.push(hotelAnnotation);
+
+            // Restaurant annotations
+            var self = this;
+            nearbyRestaurants.forEach(function(restaurant) {
+                var colorMap = {
+                    'restaurant': '#e74c3c',
+                    'bar': '#f39c12',
+                    'brewery': '#f1c40f',
+                    'club': '#9b59b6'
+                };
+                var color = colorMap[restaurant.type] || '#e74c3c';
+                var glyphMap = {
+                    'restaurant': '🍽',
+                    'bar': '🍸',
+                    'brewery': '🍺',
+                    'club': '🎵'
+                };
+                var glyph = glyphMap[restaurant.type] || '🍽';
+
+                var annotation = new mapkit.MarkerAnnotation(
+                    new mapkit.Coordinate(restaurant.lat, restaurant.lng),
+                    {
+                        color: color,
+                        glyphText: glyph,
+                        title: restaurant.name,
+                        subtitle: restaurant.cuisine + ' · ' + restaurant.price,
+                        calloutEnabled: true
+                    }
+                );
+                self._mapkitMap.addAnnotation(annotation);
+                self._restaurantMarkers.push(annotation);
+            });
+            return;
+        }
+
+        if (!this._leafletMap) return;
+
+        // Add hotel marker (Leaflet fallback)
         var hotelIcon = L.icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
@@ -281,8 +472,7 @@ const WorldMap = {
 
         this._restaurantMarkers.push(hotelMarker);
 
-        // Generate and add nearby restaurant pins
-        var nearbyRestaurants = this.generateNearbyRestaurants(trip);
+        // Add nearby restaurant pins (Leaflet)
         var self = this;
         nearbyRestaurants.forEach(function(restaurant) {
             var markerColors = {
@@ -383,10 +573,15 @@ const WorldMap = {
      * Clear all restaurant markers from the map
      */
     clearRestaurantMarkers() {
-        if (!this._leafletMap) return;
-        this._restaurantMarkers.forEach(function(marker) {
-            this._leafletMap.removeLayer(marker);
-        }.bind(this));
+        if (this._mapkitEnabled && this._mapkitMap) {
+            if (this._restaurantMarkers.length) {
+                this._mapkitMap.removeAnnotations(this._restaurantMarkers);
+            }
+        } else if (this._leafletMap) {
+            this._restaurantMarkers.forEach(function(marker) {
+                this._leafletMap.removeLayer(marker);
+            }.bind(this));
+        }
         this._restaurantMarkers = [];
     },
 
@@ -395,7 +590,15 @@ const WorldMap = {
      * @param {Object} coordinates - {latitude, longitude}
      */
     zoomToLocation(coordinates) {
-        if (this._leafletMap) {
+        if (this._mapkitEnabled && this._mapkitMap) {
+            this._mapkitMap.setRegionAnimated(
+                new mapkit.CoordinateRegion(
+                    new mapkit.Coordinate(coordinates.latitude, coordinates.longitude),
+                    new mapkit.CoordinateSpan(0.5, 0.5)
+                ),
+                true
+            );
+        } else if (this._leafletMap) {
             this._leafletMap.flyTo(
                 [coordinates.latitude, coordinates.longitude],
                 10,

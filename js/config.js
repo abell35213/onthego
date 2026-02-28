@@ -727,3 +727,45 @@ const USER_ACCOUNT = {
     hiltonConnected: false,
     lastSync: null
 };
+
+// ===== Shared Apple MapKit JS Initialization =====
+// Both MapModule (local view) and WorldMap (world view) share a single
+// mapkit.init() call.  The helper returns a Promise<boolean> so callers
+// can await it and fall back to Leaflet on failure.
+
+/** @type {Promise<boolean>|null} */
+let _mapkitInitPromise = null;
+
+/**
+ * Initialize Apple MapKit JS (idempotent).
+ * Fetches a JWT from the server token endpoint and calls mapkit.init() once.
+ * Subsequent calls return the same promise.
+ * @returns {Promise<boolean>} true when MapKit JS is ready to use
+ */
+async function initMapKit() {
+    if (_mapkitInitPromise) return _mapkitInitPromise;
+
+    _mapkitInitPromise = (async () => {
+        try {
+            if (typeof mapkit === 'undefined') return false;
+
+            const response = await fetch(CONFIG.MAPKIT_TOKEN_URL);
+            if (!response.ok) throw new Error(`Token endpoint returned ${response.status}`);
+            const { token } = await response.json();
+            if (!token) throw new Error('No token in server response');
+
+            mapkit.init({
+                authorizationCallback: (done) => done(token),
+                language: 'en'
+            });
+
+            return true;
+        } catch (error) {
+            console.warn('MapKit JS initialization failed:', error.message);
+            _mapkitInitPromise = null; // allow retry on next call
+            return false;
+        }
+    })();
+
+    return _mapkitInitPromise;
+}
