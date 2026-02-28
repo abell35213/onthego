@@ -44,20 +44,14 @@ const MapModule = {
 
     /**
      * Initialize Apple MapKit JS map with satellite imagery.
-     * Fetches a JWT token from the server, then creates a mapkit.Map.
+     * Uses the shared initMapKit() helper (config.js) for token / init,
+     * then creates a mapkit.Map on the #map container.
      * @returns {Promise<boolean>} true if MapKit initialized successfully
      */
     async _initMapKit() {
         try {
-            const response = await fetch(CONFIG.MAPKIT_TOKEN_URL);
-            if (!response.ok) throw new Error(`Token endpoint returned ${response.status}`);
-            const { token } = await response.json();
-            if (!token) throw new Error('No token in server response');
-
-            mapkit.init({
-                authorizationCallback: (done) => done(token),
-                language: 'en'
-            });
+            const ready = await initMapKit();
+            if (!ready) return false;
 
             const mapContainer = document.getElementById('map');
             if (!mapContainer) throw new Error('Map container #map not found');
