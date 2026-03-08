@@ -8,7 +8,7 @@
 ## ✨ Features
 
 ### 🗺️ Interactive Map
-- **Leaflet.js** powered map with **OpenStreetMap** tiles
+- **Apple MapKit JS** satellite map with automatic **Leaflet + OpenStreetMap** fallback
 - Automatic geolocation to center map on your current location
 - Restaurant markers with interactive popups
 - Click markers to view restaurant details
@@ -68,7 +68,7 @@
 
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
 - **Backend**: Node.js + Express (Yelp proxy)
-- **Mapping**: [Leaflet.js](https://leafletjs.com/) with OpenStreetMap tiles
+- **Mapping**: [Apple MapKit JS](https://developer.apple.com/maps/mapkitjs/) with [Leaflet.js](https://leafletjs.com/) + OpenStreetMap fallback
 - **API**: [Yelp Fusion API](https://www.yelp.com/developers) for restaurant data
 - **Icons**: [Font Awesome 6](https://fontawesome.com/)
 - **Styling**: Custom CSS with CSS Variables for theming
