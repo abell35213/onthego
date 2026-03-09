@@ -42,7 +42,7 @@ const CONFIG = {
     // View modes
     VIEW_MODE_WORLD: 'world',
     VIEW_MODE_LOCAL: 'local',
-    VIEW_MODE_TRAVEL_LOG: 'travellog',
+    VIEW_MODE_TRAVEL_LOG: 'travel-log',
 
     // Apple MapKit JS token endpoint (server signs a JWT for map authorization)
     MAPKIT_TOKEN_URL: '/api/mapkit-token',
