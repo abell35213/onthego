@@ -37,7 +37,7 @@ const WorldMap = {
      */
     async _initMapKit() {
         try {
-            const ready = await initMapKit();
+            const ready = await MapKitLoader.init();
             if (!ready) return false;
 
             const container = document.getElementById('worldMap');
