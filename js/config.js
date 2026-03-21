@@ -746,8 +746,25 @@ const MOCK_UPCOMING_TRIPS = [
     }
 ];
 
+const ONTHEGO_USER_REF_STORAGE_KEY = 'onthego_user_ref';
+
+const getOrCreateUserRef = () => {
+    const existing = localStorage.getItem(ONTHEGO_USER_REF_STORAGE_KEY);
+    if (existing) {
+        return existing;
+    }
+
+    const generatedUserRef = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `onthego_${Math.random().toString(16).slice(2)}${Date.now().toString(16)}`;
+
+    localStorage.setItem(ONTHEGO_USER_REF_STORAGE_KEY, generatedUserRef);
+    return generatedUserRef;
+};
+
 // User account state
 const USER_ACCOUNT = {
+    userRef: getOrCreateUserRef(),
     name: '',
     email: '',
     phone: '',
