@@ -935,21 +935,30 @@ app.get('/api/tripit/callback', async (req, res) => {
 /**
  * TripIt — Lightweight cookie-backed session status endpoint.
  *
- * Returns: { connected: boolean }
+ * Returns: { connected: boolean, lastSync: string|null, accountLabel: string|null }
  */
 app.get('/api/tripit/status', async (req, res) => {
     const sessionId = getTripItCookieSessionId(req);
+    const userId = getAuthenticatedAppUserId(req);
+
     if (!sessionId) {
-        return res.json({ connected: false });
+        return res.json({ connected: false, lastSync: null, accountLabel: null });
     }
 
-    const accessToken = await tripitTokenStore.getActiveAccessTokenBySession(sessionId);
+    const accessToken = userId
+        ? await tripitTokenStore.getActiveAccessToken(sessionId, userId)
+        : await tripitTokenStore.getActiveAccessTokenBySession(sessionId);
+
     if (!accessToken) {
         clearTripItSession(res);
-        return res.json({ connected: false });
+        return res.json({ connected: false, lastSync: null, accountLabel: null });
     }
 
-    return res.json({ connected: true });
+    return res.json({
+        connected: true,
+        lastSync: accessToken.last_trip_sync_at || null,
+        accountLabel: accessToken.tripit_user_ref || accessToken.user_id || null
+    });
 });
 
 /**
@@ -1123,9 +1132,13 @@ app.post('/api/tripit/disconnect', async (req, res) => {
 
     let revoked = false;
     if (sessionId) {
-        revoked = userId
-            ? await tripitTokenStore.revokeAccessToken(sessionId, userId)
-            : await tripitTokenStore.revokeAccessTokenBySession(sessionId);
+        if (userId) {
+            revoked = await tripitTokenStore.revokeAccessToken(sessionId, userId);
+        }
+
+        if (!revoked) {
+            revoked = await tripitTokenStore.revokeAccessTokenBySession(sessionId);
+        }
     }
 
     if (cookieSessionId) {
