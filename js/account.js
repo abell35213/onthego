@@ -474,26 +474,11 @@ const Account = {
         }
 
         try {
-            const response = await fetch(CONFIG.TRIPIT_STATUS_URL, {
-                credentials: 'same-origin'
-            });
+            const status = await this.fetchTripItStatus();
 
-            if (!response.ok) {
-                throw new Error(`TripIt status check failed: ${response.status}`);
-            }
-
-            const { connected } = await response.json();
-
-            if (connected) {
+            if (status.connected) {
                 this.tripitAuthHandled = true;
-                USER_ACCOUNT.tripitConnected = true;
-
-                if (connectBtn) {
-                    connectBtn.style.display = 'none';
-                }
-                if (statusDiv) {
-                    statusDiv.style.display = 'flex';
-                }
+                this.applyTripItServerStatus(status);
 
                 const syncResult = await this.syncTripItTrips({ showSuccessMessage: true });
                 if (!syncResult) {
@@ -505,17 +490,8 @@ const Account = {
             console.error('TripIt status check error:', error);
         }
 
-        USER_ACCOUNT.tripitConnected = false;
         this.tripitAuthHandled = true;
-        if (connectBtn) {
-            connectBtn.disabled = false;
-            connectBtn.innerHTML = '<i class="fas fa-plug"></i> <span class="connect-text">Connect TripIt</span>';
-            connectBtn.style.display = 'flex';
-        }
-        if (statusDiv) {
-            statusDiv.style.display = 'none';
-        }
-        this.setTripItSyncMessage('');
+        this.applyTripItServerStatus({ connected: false, lastSync: null, accountLabel: null });
 
         if (authError === 'validation_failed') {
             this.showNotification('TripIt authorization failed, please retry.');
@@ -550,14 +526,76 @@ const Account = {
         }
     },
 
+    formatTimestamp(timestamp) {
+        if (!timestamp) {
+            return 'Never';
+        }
+
+        const parsed = new Date(timestamp);
+        if (Number.isNaN(parsed.getTime())) {
+            return 'Never';
+        }
+
+        return parsed.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        });
+    },
+
+    escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
+    renderTripItStatusDetails({ connected, lastSync = null, accountLabel = null }) {
+        const statusDiv = document.getElementById('tripitStatus');
+        if (!statusDiv) {
+            return;
+        }
+
+        if (!connected) {
+            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Connected <button class="disconnect-btn">Disconnect</button>';
+            return;
+        }
+
+        const safeAccountLabel = accountLabel ? this.escapeHtml(accountLabel) : 'TripIt account';
+        const syncText = lastSync ? ` · Last sync ${this.escapeHtml(this.formatTimestamp(lastSync))}` : ' · Last sync Never';
+        statusDiv.innerHTML = `<i class="fas fa-check-circle"></i> Connected as ${safeAccountLabel}${syncText} <button class="disconnect-btn">Disconnect</button>`;
+    },
+
+    applyTripItServerStatus({ connected = false, lastSync = null, accountLabel = null } = {}) {
+        USER_ACCOUNT.tripitConnected = Boolean(connected);
+        this.setConnectionDisplay('tripit', USER_ACCOUNT.tripitConnected);
+        this.renderTripItStatusDetails({ connected: USER_ACCOUNT.tripitConnected, lastSync, accountLabel });
+
+        if (USER_ACCOUNT.tripitConnected) {
+            USER_ACCOUNT.lastSync = lastSync || USER_ACCOUNT.lastSync || null;
+        } else {
+            this.setTripItSyncMessage('');
+            if (!USER_ACCOUNT.concurConnected && !USER_ACCOUNT.marriottConnected && !USER_ACCOUNT.hiltonConnected) {
+                USER_ACCOUNT.lastSync = null;
+            }
+        }
+    },
+
     /**
      * Fetch current TripIt cookie-backed status from the server.
-     * @returns {Promise<boolean>}
+     * @returns {Promise<{connected: boolean, lastSync: string|null, accountLabel: string|null}>}
      */
     async fetchTripItStatus() {
         try {
             const response = await fetch(CONFIG.TRIPIT_STATUS_URL, {
-                credentials: 'same-origin'
+                credentials: 'same-origin',
+                headers: {
+                    'x-onthego-user-ref': USER_ACCOUNT.userRef
+                }
             });
 
             if (!response.ok) {
@@ -565,10 +603,18 @@ const Account = {
             }
 
             const data = await response.json();
-            return Boolean(data.connected);
+            return {
+                connected: Boolean(data.connected),
+                lastSync: data.lastSync || null,
+                accountLabel: data.accountLabel || null
+            };
         } catch (error) {
             console.error('Error fetching TripIt status:', error);
-            return false;
+            return {
+                connected: false,
+                lastSync: null,
+                accountLabel: null
+            };
         }
     },
 
@@ -577,8 +623,8 @@ const Account = {
      * @returns {Promise<void>}
      */
     async syncTripItConnectionStatus() {
-        USER_ACCOUNT.tripitConnected = await this.fetchTripItStatus();
-        this.setConnectionDisplay('tripit', USER_ACCOUNT.tripitConnected);
+        const status = await this.fetchTripItStatus();
+        this.applyTripItServerStatus(status);
     },
 
     /**
@@ -634,8 +680,7 @@ const Account = {
             const friendlyMessage = this.getTripItFriendlyMessage(error.code, error.message);
             this.setTripItSyncMessage(`TripIt sync failed: ${friendlyMessage}`, 'error');
             if (error.code === 'tripit_authorization_expired') {
-                USER_ACCOUNT.tripitConnected = false;
-                this.setConnectionDisplay('tripit', false);
+                this.applyTripItServerStatus({ connected: false, lastSync: null, accountLabel: null });
             }
             if (initiatedByUser || showSuccessMessage) {
                 this.showNotification(friendlyMessage);
@@ -715,7 +760,7 @@ const Account = {
      * Disconnect from an account
      * @param {string} accountType - 'concur', 'tripit', 'marriott', or 'hilton'
      */
-    disconnectAccount(accountType) {
+    async disconnectAccount(accountType) {
         const connectBtn = document.getElementById(`${accountType}Connect`);
         const statusDiv = document.getElementById(`${accountType}Status`);
 
@@ -723,8 +768,8 @@ const Account = {
         if (accountType === 'concur') {
             USER_ACCOUNT.concurConnected = false;
         } else if (accountType === 'tripit') {
-            USER_ACCOUNT.tripitConnected = false;
-            this.disconnectTripIt();
+            this.applyTripItServerStatus({ connected: false, lastSync: null, accountLabel: null });
+            await this.disconnectTripIt();
         } else if (accountType === 'marriott') {
             USER_ACCOUNT.marriottConnected = false;
         } else if (accountType === 'hilton') {
@@ -738,12 +783,14 @@ const Account = {
             hilton: 'Hilton Honors'
         };
 
-        // Update UI
-        connectBtn.style.display = 'flex';
-        statusDiv.style.display = 'none';
-        connectBtn.disabled = false;
-        connectBtn.innerHTML = '<i class="fas fa-plug"></i> <span class="connect-text">Connect ' + 
-                               (displayNames[accountType] || accountType) + '</span>';
+        if (accountType !== 'tripit') {
+            // Update UI
+            connectBtn.style.display = 'flex';
+            statusDiv.style.display = 'none';
+            connectBtn.disabled = false;
+            connectBtn.innerHTML = '<i class="fas fa-plug"></i> <span class="connect-text">Connect ' + 
+                                   (displayNames[accountType] || accountType) + '</span>';
+        }
 
         this.updateSyncInfo();
 
@@ -801,7 +848,7 @@ const Account = {
      */
     async disconnectTripIt() {
         try {
-            await fetch(CONFIG.TRIPIT_DISCONNECT_URL, {
+            const response = await fetch(CONFIG.TRIPIT_DISCONNECT_URL, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -809,6 +856,10 @@ const Account = {
                     'x-onthego-user-ref': USER_ACCOUNT.userRef
                 }
             });
+
+            if (!response.ok) {
+                throw new Error(`TripIt disconnect failed: ${response.status}`);
+            }
         } catch (error) {
             console.error('Error disconnecting TripIt:', error);
         }

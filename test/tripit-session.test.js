@@ -77,7 +77,7 @@ test('GET /api/tripit/status reports disconnected without a session cookie', asy
     const response = await fetch(`${baseUrl}/api/tripit/status`);
 
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), { connected: false });
+    assert.deepEqual(await response.json(), { connected: false, lastSync: null, accountLabel: null });
     assert.equal(getCookieHeader(response), '');
   });
 });
@@ -91,7 +91,7 @@ test('GET /api/tripit/status clears invalid TripIt session cookies', async () =>
     });
 
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), { connected: false });
+    assert.deepEqual(await response.json(), { connected: false, lastSync: null, accountLabel: null });
     assert.match(getCookieHeader(response), new RegExp(`^${TRIPIT_SESSION_COOKIE_NAME}=;`));
     assert.match(getCookieHeader(response), /HttpOnly/i);
     assert.match(getCookieHeader(response), /Secure/i);
@@ -111,10 +111,39 @@ test('GET /api/tripit/status reports connected for an active cookie-backed sessi
     });
 
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), { connected: true });
+    assert.deepEqual(await response.json(), { connected: true, lastSync: null, accountLabel: 'tripit-user-1' });
     assert.equal(getCookieHeader(response), '');
   });
 });
+
+test('GET /api/tripit/status includes the last sync timestamp for the authenticated session owner', async () => {
+  const sessionId = 'active-session-with-sync';
+  const userId = 'user-with-sync';
+  await seedActiveSession({ sessionId, userId, tripitUserRef: 'tripit-sync-user' });
+  await tokenStore.updateLastTripSyncAt({
+    sessionRef: sessionId,
+    userId,
+    syncedAt: '2026-03-20T08:30:00.000Z'
+  });
+
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/tripit/status`, {
+      headers: {
+        Cookie: `${TRIPIT_SESSION_COOKIE_NAME}=${sessionId}`,
+        'x-onthego-user-ref': userId
+      }
+    });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      connected: true,
+      lastSync: '2026-03-20T08:30:00.000Z',
+      accountLabel: 'tripit-sync-user'
+    });
+    assert.equal(getCookieHeader(response), '');
+  });
+});
+
 
 test('POST /api/tripit/disconnect revokes the cookie-backed session and expires the cookie', async () => {
   const sessionId = 'session-to-remove';
@@ -135,6 +164,27 @@ test('POST /api/tripit/disconnect revokes the cookie-backed session and expires 
     assert.match(getCookieHeader(response), new RegExp(`^${TRIPIT_SESSION_COOKIE_NAME}=;`));
   });
 });
+
+test('POST /api/tripit/disconnect falls back to revoking the session when the client user header is stale', async () => {
+  const sessionId = 'session-fallback-revoke';
+  await seedActiveSession({ sessionId, userId: 'actual-user', tripitUserRef: 'tripit-fallback-user' });
+
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/tripit/disconnect`, {
+      method: 'POST',
+      headers: {
+        Cookie: `${TRIPIT_SESSION_COOKIE_NAME}=${sessionId}`,
+        'x-onthego-user-ref': 'stale-user'
+      }
+    });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { success: true, connected: false, revoked: true });
+    assert.equal(await tokenStore.getActiveAccessTokenBySession(sessionId), null);
+    assert.match(getCookieHeader(response), new RegExp(`^${TRIPIT_SESSION_COOKIE_NAME}=;`));
+  });
+});
+
 
 test('GET /api/tripit/trips rejects unknown sessions before contacting TripIt', async () => {
   await withServer(async (baseUrl) => {
