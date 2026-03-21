@@ -53,6 +53,13 @@ const Account = {
             this.connectAccount('tripit');
         });
 
+        const tripitSyncBtn = document.getElementById('tripitSyncNow');
+        if (tripitSyncBtn) {
+            tripitSyncBtn.addEventListener('click', () => {
+                void this.syncTripItTrips({ showSuccessMessage: true, initiatedByUser: true });
+            });
+        }
+
         // Marriott Bonvoy connection
         const marriottConnectBtn = document.getElementById('marriottConnect');
         if (marriottConnectBtn) {
@@ -455,12 +462,18 @@ const Account = {
             if (connected) {
                 this.tripitAuthHandled = true;
                 USER_ACCOUNT.tripitConnected = true;
-                USER_ACCOUNT.lastSync = new Date().toISOString();
 
-                connectBtn.style.display = 'none';
-                statusDiv.style.display = 'flex';
-                this.updateSyncInfo();
-                this.showNotification('TripIt connected successfully!');
+                if (connectBtn) {
+                    connectBtn.style.display = 'none';
+                }
+                if (statusDiv) {
+                    statusDiv.style.display = 'flex';
+                }
+
+                const syncResult = await this.syncTripItTrips({ showSuccessMessage: true });
+                if (!syncResult) {
+                    this.updateSyncInfo();
+                }
                 return;
             }
         } catch (error) {
@@ -477,6 +490,7 @@ const Account = {
         if (statusDiv) {
             statusDiv.style.display = 'none';
         }
+        this.setTripItSyncMessage('');
 
         if (authError === 'validation_failed') {
             this.showNotification('TripIt authorization failed, please retry.');
@@ -538,10 +552,131 @@ const Account = {
     async syncTripItConnectionStatus() {
         USER_ACCOUNT.tripitConnected = await this.fetchTripItStatus();
         this.setConnectionDisplay('tripit', USER_ACCOUNT.tripitConnected);
+    },
 
-        if (USER_ACCOUNT.tripitConnected) {
-            USER_ACCOUNT.lastSync = new Date().toISOString();
+    /**
+     * Sync TripIt trips into the shared app collections.
+     * @param {{showSuccessMessage?: boolean, initiatedByUser?: boolean}} options
+     * @returns {Promise<boolean>}
+     */
+    async syncTripItTrips({ showSuccessMessage = false, initiatedByUser = false } = {}) {
+        const syncButton = document.getElementById('tripitSyncNow');
+
+        if (!USER_ACCOUNT.tripitConnected) {
+            this.setTripItSyncMessage('Connect TripIt before syncing trips.', 'warning');
+            if (initiatedByUser) {
+                this.showNotification('Connect TripIt before syncing trips.');
+            }
+            return false;
         }
+
+        if (syncButton) {
+            syncButton.disabled = true;
+            syncButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+        }
+
+        try {
+            const { trips, isEmpty } = await TripItService.fetchTrips();
+            const mappedTrips = await Promise.all(trips.map((trip, index) => this.mapTripItTripToAppTrip(trip, index)));
+
+            MOCK_UPCOMING_TRIPS.splice(0, MOCK_UPCOMING_TRIPS.length, ...mappedTrips);
+            USER_ACCOUNT.lastSync = new Date().toISOString();
+
+            if (typeof App !== 'undefined' && typeof App.refreshTripDataViews === 'function') {
+                App.refreshTripDataViews();
+            }
+
+            this.updateSyncInfo();
+
+            if (isEmpty) {
+                this.setTripItSyncMessage('Connected, no upcoming trips found.', 'info');
+                if (initiatedByUser || showSuccessMessage) {
+                    this.showNotification('Connected, no upcoming trips found.');
+                }
+            } else {
+                const tripLabel = mappedTrips.length === 1 ? 'trip' : 'trips';
+                this.setTripItSyncMessage(`Imported ${mappedTrips.length} upcoming ${tripLabel} from TripIt.`, 'success');
+                if (showSuccessMessage || initiatedByUser) {
+                    this.showNotification(`TripIt synced ${mappedTrips.length} upcoming ${tripLabel}.`);
+                }
+            }
+
+            return true;
+        } catch (error) {
+            console.error('TripIt sync error:', error);
+            this.setTripItSyncMessage(`TripIt sync failed: ${error.message}`, 'error');
+            if (initiatedByUser || showSuccessMessage) {
+                this.showNotification(`TripIt sync failed: ${error.message}`);
+            }
+            return false;
+        } finally {
+            if (syncButton) {
+                syncButton.disabled = !USER_ACCOUNT.tripitConnected;
+                syncButton.innerHTML = '<i class="fas fa-rotate"></i> Sync now';
+            }
+        }
+    },
+
+    /**
+     * Map a normalized TripIt trip into the app's shared trip model.
+     * @param {Object} trip
+     * @param {number} index
+     * @returns {Promise<Object>}
+     */
+    async mapTripItTripToAppTrip(trip, index) {
+        const primaryLocation = trip.primaryLocation || {};
+        const lodging = trip.lodging || null;
+        const geocodeQuery = primaryLocation.label
+            || primaryLocation.address?.full
+            || [primaryLocation.city, primaryLocation.state, primaryLocation.country].filter(Boolean).join(', ')
+            || lodging?.address?.full
+            || [lodging?.city, lodging?.state, lodging?.country].filter(Boolean).join(', ');
+
+        const coordinates = geocodeQuery
+            ? await this.geocodeCity(geocodeQuery)
+            : { latitude: CONFIG.DEFAULT_LAT, longitude: CONFIG.DEFAULT_LNG };
+
+        const city = primaryLocation.city || lodging?.city || 'Unknown City';
+        const state = primaryLocation.state || lodging?.state || '';
+        const country = primaryLocation.country || lodging?.country || '';
+
+        return {
+            id: `tripit_${trip.id || index}`,
+            name: trip.name,
+            city,
+            state,
+            country: country || 'Unknown',
+            coordinates: coordinates || { latitude: CONFIG.DEFAULT_LAT, longitude: CONFIG.DEFAULT_LNG },
+            startDate: trip.startDate,
+            endDate: trip.endDate || trip.startDate,
+            purpose: 'TripIt Import',
+            hotel: lodging?.name || primaryLocation.label || trip.name,
+            lodging,
+            primaryLocation,
+            source: 'tripit',
+            confirmedReservations: []
+        };
+    },
+
+    /**
+     * Update TripIt sync status messaging in the Connections tab.
+     * @param {string} message
+     * @param {'info'|'success'|'warning'|'error'} type
+     */
+    setTripItSyncMessage(message, type = 'info') {
+        const messageEl = document.getElementById('tripitSyncMessage');
+        if (!messageEl) return;
+
+        if (!message) {
+            messageEl.textContent = '';
+            messageEl.style.display = 'none';
+            messageEl.dataset.state = '';
+            return;
+        }
+
+        messageEl.textContent = message;
+        messageEl.dataset.state = type;
+        messageEl.style.display = 'block';
     },
 
     /**
@@ -602,10 +737,11 @@ const Account = {
     updateSyncInfo() {
         const syncInfo = document.getElementById('syncInfo');
         const lastSyncTime = document.getElementById('lastSyncTime');
+        const tripitSyncBtn = document.getElementById('tripitSyncNow');
 
         if (USER_ACCOUNT.concurConnected || USER_ACCOUNT.tripitConnected || USER_ACCOUNT.marriottConnected || USER_ACCOUNT.hiltonConnected) {
-            syncInfo.style.display = 'block';
-            
+            syncInfo.style.display = 'flex';
+
             if (USER_ACCOUNT.lastSync) {
                 const syncDate = new Date(USER_ACCOUNT.lastSync);
                 const formattedDate = syncDate.toLocaleString('en-US', {
@@ -621,6 +757,10 @@ const Account = {
             }
         } else {
             syncInfo.style.display = 'none';
+        }
+
+        if (tripitSyncBtn) {
+            tripitSyncBtn.disabled = !USER_ACCOUNT.tripitConnected;
         }
     },
 
@@ -640,6 +780,8 @@ const Account = {
         } catch (error) {
             console.error('Error disconnecting TripIt:', error);
         }
+
+        this.setTripItSyncMessage('');
     },
 
     /**

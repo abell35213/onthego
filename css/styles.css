@@ -1415,10 +1415,77 @@ a:hover { color: #fff; }
     color: var(--text-muted);
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.5rem;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
     background: var(--bg-glass);
     border-radius: var(--radius-sm);
+    flex-wrap: wrap;
+}
+
+.sync-now-btn {
+    background: var(--primary-dim);
+    color: var(--primary);
+    border: 1px solid var(--border-accent);
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.sync-now-btn:hover:not(:disabled) {
+    background: var(--primary);
+    color: #000;
+}
+
+.sync-now-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.tripit-sync-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tripit-sync-message {
+    font-size: 0.72rem;
+    line-height: 1.45;
+    padding: 0.55rem 0.7rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+}
+
+.tripit-sync-message[data-state="success"] {
+    color: var(--success);
+    background: var(--success-dim);
+    border-color: rgba(16, 185, 129, 0.25);
+}
+
+.tripit-sync-message[data-state="info"] {
+    color: var(--text);
+    background: rgba(100, 180, 255, 0.12);
+    border-color: rgba(100, 180, 255, 0.28);
+}
+
+.tripit-sync-message[data-state="warning"] {
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.12);
+    border-color: rgba(251, 191, 36, 0.28);
+}
+
+.tripit-sync-message[data-state="error"] {
+    color: var(--error);
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.28);
 }
 
 /* ===== Settings ===== */
