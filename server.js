@@ -223,6 +223,145 @@ const mergeTripPages = (pages) => {
 
 const isTripItRetryableStatus = (status) => [408, 429, 500, 502, 503, 504].includes(status);
 
+const TRIPIT_ERROR_CODE_MAP = {
+    consumer_key_unknown: {
+        code: 'tripit_invalid_consumer_key',
+        message: 'TripIt connection is temporarily unavailable. Please contact support.',
+        logCode: 'consumer_key_unknown'
+    },
+    timestamp_refused: {
+        code: 'tripit_timestamp_out_of_range',
+        message: 'TripIt connection is temporarily unavailable. Please try again in a moment.',
+        logCode: 'timestamp_refused'
+    },
+    token_rejected: {
+        code: 'tripit_authorization_expired',
+        message: 'Authorization expired, please reconnect your TripIt account.',
+        logCode: 'token_rejected'
+    },
+    token_expired: {
+        code: 'tripit_authorization_expired',
+        message: 'Authorization expired, please reconnect your TripIt account.',
+        logCode: 'token_expired'
+    },
+    permission_unknown: {
+        code: 'tripit_authorization_expired',
+        message: 'Authorization expired, please reconnect your TripIt account.',
+        logCode: 'permission_unknown'
+    },
+    signature_invalid: {
+        code: 'tripit_invalid_signature',
+        message: 'TripIt connection is temporarily unavailable. Please try again later.',
+        logCode: 'signature_invalid'
+    },
+    signature_method_rejected: {
+        code: 'tripit_invalid_signature',
+        message: 'TripIt connection is temporarily unavailable. Please try again later.',
+        logCode: 'signature_method_rejected'
+    }
+};
+
+const normalizeTripItErrorKey = (value) => String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+const safeParseJson = (value) => {
+    if (!value || typeof value !== 'string') {
+        return null;
+    }
+
+    try {
+        return JSON.parse(value);
+    } catch {
+        return null;
+    }
+};
+
+const extractTripItCodeFromObject = (value) => {
+    if (!value || typeof value !== 'object') {
+        return null;
+    }
+
+    const directCode = value.code || value.errorCode || value.error_code || value.oauth_problem;
+    if (typeof directCode === 'string' && directCode.trim()) {
+        return directCode.trim();
+    }
+
+    for (const nestedValue of Object.values(value)) {
+        if (!nestedValue || typeof nestedValue !== 'object') {
+            continue;
+        }
+
+        const nestedCode = extractTripItCodeFromObject(nestedValue);
+        if (nestedCode) {
+            return nestedCode;
+        }
+    }
+
+    return null;
+};
+
+const parseTripItErrorBody = async (response) => {
+    const bodyText = await response.text().catch(() => '');
+    const trimmedBody = bodyText.trim();
+    const parsedJson = safeParseJson(trimmedBody);
+    const queryParams = new URLSearchParams(trimmedBody);
+    const oauthProblem = queryParams.get('oauth_problem') || queryParams.get('error') || null;
+    const oauthAdvice = queryParams.get('oauth_problem_advice') || queryParams.get('error_description') || null;
+    const objectCode = extractTripItCodeFromObject(parsedJson);
+    const normalizedCode = normalizeTripItErrorKey(oauthProblem || objectCode);
+
+    return {
+        rawBody: trimmedBody,
+        details: parsedJson || null,
+        tripitCode: normalizedCode || null,
+        oauthAdvice: oauthAdvice || null
+    };
+};
+
+const getTripItErrorMeta = (tripitCode) => {
+    if (!tripitCode) {
+        return null;
+    }
+
+    return TRIPIT_ERROR_CODE_MAP[tripitCode] || null;
+};
+
+const buildTripItErrorPayload = ({ status, defaultCode, defaultMessage, parsedError, retryAfter }) => {
+    const errorMeta = getTripItErrorMeta(parsedError?.tripitCode);
+    const payload = {
+        error: errorMeta?.message || defaultMessage,
+        code: errorMeta?.code || defaultCode
+    };
+
+    if (status) {
+        payload.status = status;
+    }
+
+    if (parsedError?.tripitCode) {
+        payload.tripit_code = parsedError.tripitCode;
+    }
+
+    if (retryAfter) {
+        payload.retry_after = retryAfter;
+    }
+
+    return payload;
+};
+
+const logTripItError = ({ event, endpoint, httpStatus, tripitCode, message, extra = {} }) => {
+    console.error(JSON.stringify({
+        event,
+        endpoint,
+        http_status: httpStatus || null,
+        tripit_code: tripitCode || null,
+        message,
+        ...extra
+    }));
+};
+
 const fetchTripItJson = async ({ url, token }) => {
     const requestData = {
         url,
@@ -467,7 +606,7 @@ You must respond ONLY with valid JSON in exactly this format — no extra text, 
         try {
             const jsonStr = content.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
             parsed = JSON.parse(jsonStr);
-        } catch (parseError) {
+        } catch {
             console.error('Failed to parse OpenAI response as JSON:', content);
             return res.status(500).json({ error: 'Failed to parse AI response', raw: content });
         }
@@ -543,7 +682,9 @@ app.get('/api/mapkit-token', (req, res) => {
 app.get('/api/tripit/connect', async (req, res) => {
     if (!tripitOAuth) {
         return res.status(500).json({
-            error: 'TripIt API credentials not configured. Please set TRIPIT_API_KEY and TRIPIT_API_SECRET in your .env file.'
+            error: 'TripIt API credentials not configured. Please set TRIPIT_API_KEY and TRIPIT_API_SECRET in your .env file.',
+            code: 'tripit_not_configured',
+            status: 500
         });
     }
 
@@ -587,11 +728,24 @@ app.get('/api/tripit/connect', async (req, res) => {
         });
 
         if (!response.ok) {
-            console.error('TripIt request token error:', response.status);
-            return res.status(response.status).json({
-                error: 'Failed to obtain TripIt request token',
-                status: response.status
+            const parsedError = await parseTripItErrorBody(response);
+            const payload = buildTripItErrorPayload({
+                status: response.status,
+                defaultCode: 'tripit_request_token_failed',
+                defaultMessage: 'Failed to start TripIt authorization. Please try again.',
+                parsedError
             });
+
+            logTripItError({
+                event: 'tripit_request_token_error',
+                endpoint: '/api/tripit/connect',
+                httpStatus: response.status,
+                tripitCode: parsedError.tripitCode,
+                message: 'TripIt request token error',
+                extra: { oauth_advice: parsedError.oauthAdvice }
+            });
+
+            return res.status(response.status).json(payload);
         }
 
         const body = await response.text();
@@ -600,7 +754,11 @@ app.get('/api/tripit/connect', async (req, res) => {
         const oauthTokenSecret = params.get('oauth_token_secret');
 
         if (!oauthToken || !oauthTokenSecret) {
-            return res.status(500).json({ error: 'Invalid response from TripIt request token endpoint' });
+            return res.status(500).json({
+                error: 'Invalid response from TripIt request token endpoint',
+                code: 'tripit_request_token_invalid_response',
+                status: 500
+            });
         }
 
         // Persist the request token secret so we can use it in the callback step
@@ -616,8 +774,17 @@ app.get('/api/tripit/connect', async (req, res) => {
 
         return res.json({ authorizeUrl });
     } catch (error) {
-        console.error('Error obtaining TripIt request token:', error?.message || error);
-        return res.status(500).json({ error: 'Failed to contact TripIt API' });
+        logTripItError({
+            event: 'tripit_request_token_exception',
+            endpoint: '/api/tripit/connect',
+            httpStatus: 500,
+            message: error?.message || 'Failed to contact TripIt API'
+        });
+        return res.status(500).json({
+            error: 'Failed to contact TripIt API',
+            code: 'tripit_connect_failed',
+            status: 500
+        });
     }
 });
 
@@ -713,8 +880,24 @@ app.get('/api/tripit/callback', async (req, res) => {
         });
 
         if (!response.ok) {
-            console.error('TripIt access token error:', response.status);
-            return sendCallbackPage(false, 'Failed to obtain TripIt access token.', null, 'access_token_error');
+            const parsedError = await parseTripItErrorBody(response);
+            const payload = buildTripItErrorPayload({
+                status: response.status,
+                defaultCode: 'tripit_access_token_failed',
+                defaultMessage: 'TripIt authorization could not be completed. Please try again.',
+                parsedError
+            });
+
+            logTripItError({
+                event: 'tripit_access_token_error',
+                endpoint: '/api/tripit/callback',
+                httpStatus: response.status,
+                tripitCode: parsedError.tripitCode,
+                message: 'TripIt access token error',
+                extra: { oauth_advice: parsedError.oauthAdvice }
+            });
+
+            return sendCallbackPage(false, payload.error, null, payload.code);
         }
 
         const body = await response.text();
@@ -724,7 +907,7 @@ app.get('/api/tripit/callback', async (req, res) => {
         const tripitUserRef = params.get('tripit_user_ref');
 
         if (!accessToken || !accessTokenSecret) {
-            return sendCallbackPage(false, 'Invalid response from TripIt.', null, 'access_token_error');
+            return sendCallbackPage(false, 'TripIt authorization could not be completed. Please try again.', null, 'tripit_access_token_failed');
         }
 
         // Generate an opaque session id so the frontend never sees raw OAuth tokens
@@ -739,8 +922,13 @@ app.get('/api/tripit/callback', async (req, res) => {
 
         return sendCallbackPage(true, 'TripIt connected! This window will close.', sessionId, null);
     } catch (error) {
-        console.error('Error obtaining TripIt access token:', error?.message || error);
-        return sendCallbackPage(false, 'Failed to contact TripIt API.', null, 'access_token_error');
+        logTripItError({
+            event: 'tripit_access_token_exception',
+            endpoint: '/api/tripit/callback',
+            httpStatus: 500,
+            message: error?.message || 'Failed to contact TripIt API'
+        });
+        return sendCallbackPage(false, 'Failed to contact TripIt API.', null, 'tripit_access_token_failed');
     }
 });
 
@@ -774,7 +962,9 @@ app.get('/api/tripit/status', async (req, res) => {
 app.get('/api/tripit/trips', async (req, res) => {
     if (!tripitOAuth) {
         return res.status(500).json({
-            error: 'TripIt API credentials not configured.'
+            error: 'TripIt API credentials not configured.',
+            code: 'tripit_not_configured',
+            status: 500
         });
     }
 
@@ -785,15 +975,21 @@ app.get('/api/tripit/trips', async (req, res) => {
 
     const sessionId = getTripItSessionId(req);
     if (!sessionId) {
-        return res.status(401).json({ error: 'TripIt session is required' });
+        return res.status(401).json({
+            error: 'TripIt session is required',
+            code: 'tripit_session_required',
+            status: 401
+        });
     }
 
     const accessToken = await tripitTokenStore.getActiveAccessToken(sessionId, userId);
     if (!accessToken) {
-        return res.status(401).json({ error: 'Invalid or expired TripIt session' });
+        return res.status(401).json({
+            error: 'Authorization expired, please reconnect your TripIt account.',
+            code: 'tripit_authorization_expired',
+            status: 401
+        });
     }
-
-    const tripListUrl = `${TRIPIT_API_BASE_URL}/list/trip`;
 
     const token = {
         key: accessToken.oauth_token,
@@ -827,18 +1023,28 @@ app.get('/api/tripit/trips', async (req, res) => {
             if (!response.ok) {
                 const status = response.status;
                 const retryAfter = response.headers.get('retry-after');
-                const tripItError = {
-                    error: isTripItRetryableStatus(status)
+                const parsedError = await parseTripItErrorBody(response);
+                const tripItError = buildTripItErrorPayload({
+                    status,
+                    defaultCode: isTripItRetryableStatus(status)
+                        ? 'tripit_api_temporarily_unavailable'
+                        : 'tripit_api_error',
+                    defaultMessage: isTripItRetryableStatus(status)
                         ? 'TripIt API temporarily unavailable'
                         : 'TripIt API error',
-                    status
-                };
+                    parsedError,
+                    retryAfter
+                });
 
-                if (retryAfter) {
-                    tripItError.retry_after = retryAfter;
-                }
+                logTripItError({
+                    event: 'tripit_trips_error',
+                    endpoint: '/api/tripit/trips',
+                    httpStatus: status,
+                    tripitCode: parsedError.tripitCode,
+                    message: 'TripIt list trips error',
+                    extra: { page: pageNum, retry_after: retryAfter }
+                });
 
-                console.error('TripIt list trips error:', status, `page=${pageNum}`);
                 return res.status(status).json(tripItError);
             }
 
@@ -875,15 +1081,31 @@ app.get('/api/tripit/trips', async (req, res) => {
         });
     } catch (error) {
         if (error?.name === 'AbortError') {
-            console.error('TripIt trips request timed out');
+            logTripItError({
+                event: 'tripit_trips_timeout',
+                endpoint: '/api/tripit/trips',
+                httpStatus: 504,
+                message: 'TripIt trips request timed out'
+            });
             return res.status(504).json({
                 error: 'TripIt API request timed out',
+                code: 'tripit_request_timed_out',
+                status: 504,
                 timeout_ms: TRIPIT_FETCH_TIMEOUT_MS
             });
         }
 
-        console.error('Error fetching TripIt trips:', error?.message || error);
-        return res.status(500).json({ error: 'Failed to contact TripIt API' });
+        logTripItError({
+            event: 'tripit_trips_exception',
+            endpoint: '/api/tripit/trips',
+            httpStatus: 500,
+            message: error?.message || 'Failed to contact TripIt API'
+        });
+        return res.status(500).json({
+            error: 'Failed to contact TripIt API',
+            code: 'tripit_trips_failed',
+            status: 500
+        });
     }
 });
 
