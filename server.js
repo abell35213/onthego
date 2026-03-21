@@ -21,6 +21,13 @@ const TRIPIT_ACCESS_TOKEN_URL = 'https://api.tripit.com/oauth/access_token';
 const TRIPIT_API_BASE_URL = 'https://api.tripit.com/v1';
 const TRIPIT_SESSION_COOKIE_NAME = 'onthego_tripit_session';
 const TRIPIT_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const TRIPIT_SESSION_COOKIE_OPTIONS = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: TRIPIT_SESSION_TTL_MS
+};
 
 // TripIt OAuth 1.0 consumer
 const tripitOAuth = TRIPIT_API_KEY && TRIPIT_API_SECRET ? OAuth({
@@ -59,28 +66,15 @@ const getTripItSessionId = (req) => {
     return cookies[TRIPIT_SESSION_COOKIE_NAME] || '';
 };
 
-const buildTripItSessionCookie = (sessionId, maxAgeMs = TRIPIT_SESSION_TTL_MS) => {
-    const cookieParts = [
-        `${TRIPIT_SESSION_COOKIE_NAME}=${encodeURIComponent(sessionId)}`,
-        'Path=/',
-        'HttpOnly',
-        'Secure',
-        'SameSite=Lax'
-    ];
-
-    if (typeof maxAgeMs === 'number') {
-        cookieParts.push(`Max-Age=${Math.floor(maxAgeMs / 1000)}`);
-    }
-
-    return cookieParts.join('; ');
-};
-
 const clearTripItSession = (res, sessionId = '') => {
     if (sessionId) {
         tripitAccessTokens.delete(sessionId);
     }
 
-    res.setHeader('Set-Cookie', buildTripItSessionCookie('', 0));
+    res.clearCookie(TRIPIT_SESSION_COOKIE_NAME, {
+        ...TRIPIT_SESSION_COOKIE_OPTIONS,
+        maxAge: undefined
+    });
 };
 
 const getTripItAccessToken = (req) => {
@@ -491,7 +485,7 @@ app.get('/api/tripit/connect', async (req, res) => {
 app.get('/api/tripit/callback', async (req, res) => {
     const sendCallbackPage = (success, message, sessionId, errorCode) => {
         if (success && sessionId) {
-            res.setHeader('Set-Cookie', buildTripItSessionCookie(sessionId));
+            res.cookie(TRIPIT_SESSION_COOKIE_NAME, sessionId, TRIPIT_SESSION_COOKIE_OPTIONS);
         }
 
         const html = `<!DOCTYPE html><html><head><title>TripIt Authorization</title></head><body>
@@ -685,10 +679,18 @@ if (require.main === module) {
 
 module.exports = {
     app,
-    buildTripItSessionCookie,
     clearTripItSession,
     getTripItAccessToken,
     getTripItSessionId,
     parseCookies,
-    tripitAccessTokens
+    tripitAccessTokens,
+    tripitTestHooks: {
+        parseCookies,
+        getTripItSessionId,
+        getTripItAccessToken,
+        clearTripItSession,
+        tripitAccessTokens,
+        TRIPIT_SESSION_COOKIE_NAME,
+        TRIPIT_SESSION_COOKIE_OPTIONS
+    }
 };
