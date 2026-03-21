@@ -357,14 +357,65 @@ const App = {
      * Default selection: next upcoming trip.
      */
     setupLocationControls() {
-        if (this.locationControlsInitialized) return;
-
         const select = document.getElementById('tripLocationSelect');
         const gpsBtn = document.getElementById('useGpsBtn');
 
         if (!select) return;
 
-        // Build dropdown options
+        this.populateLocationControls();
+
+        if (!this.locationControlsInitialized) {
+            select.addEventListener('change', () => {
+                const value = select.value || '';
+                const [type, id] = value.split(':');
+                if (!type || !id) return;
+
+                const list = type === 'upcoming' ? MOCK_UPCOMING_TRIPS : MOCK_TRAVEL_HISTORY;
+                const trip = list.find(t => t.id === id);
+                if (trip) {
+                    this.applyTripSelection(trip, type);
+                }
+            });
+
+            if (gpsBtn) {
+                gpsBtn.addEventListener('click', () => {
+                    if (window.MapModule && MapModule.requestUserLocation) {
+                        MapModule.requestUserLocation();
+                    } else if (window.MapModule && MapModule.getUserLocation) {
+                        MapModule.getUserLocation();
+                    }
+                });
+            }
+
+            this.locationControlsInitialized = true;
+        }
+    },
+
+    /**
+     * Rebuild trip dropdown options and refresh dependent trip-driven UI.
+     */
+    refreshTripDataViews() {
+        this.populateLocationControls();
+
+        if (typeof WorldMap !== 'undefined') {
+            WorldMap.refresh();
+            WorldMap.renderTripHistory();
+            WorldMap.renderUpcomingTrips();
+        }
+
+        if (this.currentView === CONFIG.VIEW_MODE_TRAVEL_LOG) {
+            this.renderTravelLog();
+        }
+    },
+
+    /**
+     * Populate trip dropdown options and pick a valid default selection.
+     */
+    populateLocationControls() {
+        const select = document.getElementById('tripLocationSelect');
+        if (!select) return;
+
+        const previousValue = select.value;
         select.innerHTML = '<option value="" disabled>Select a trip…</option>';
 
         const upcomingGroup = document.createElement('optgroup');
@@ -382,43 +433,38 @@ const App = {
         select.appendChild(upcomingGroup);
         select.appendChild(pastGroup);
 
-        // Default to the next upcoming trip (earliest startDate that is today or later)
+        const optionValues = new Set(Array.from(select.options).map(option => option.value).filter(Boolean));
+        if (previousValue && optionValues.has(previousValue)) {
+            select.value = previousValue;
+            const [type, id] = previousValue.split(':');
+            const list = type === 'upcoming' ? MOCK_UPCOMING_TRIPS : MOCK_TRAVEL_HISTORY;
+            const trip = list.find(item => item.id === id);
+            if (trip) {
+                this.applyTripSelection(trip, type);
+                return;
+            }
+        }
+
         const defaultTrip = this.getNextUpcomingTrip();
         if (defaultTrip) {
             select.value = `upcoming:${defaultTrip.id}`;
             this.applyTripSelection(defaultTrip, 'upcoming');
-        } else {
-            // No upcoming trips: fall back to user's current GPS location
-            if (window.MapModule && window.MapModule.requestUserLocation) {
-                window.MapModule.requestUserLocation();
-            } else if (window.App && window.App.onLocationReady) {
-                window.App.onLocationReady(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG);
-            }
+            return;
         }
 
-        select.addEventListener('change', () => {
-            const value = select.value || '';
-            const [type, id] = value.split(':');
-            if (!type || !id) return;
-
-            const list = type === 'upcoming' ? MOCK_UPCOMING_TRIPS : MOCK_TRAVEL_HISTORY;
-            const trip = list.find(t => t.id === id);
-            if (trip) {
-                this.applyTripSelection(trip, type);
-            }
-        });
-
-        if (gpsBtn) {
-            gpsBtn.addEventListener('click', () => {
-                if (window.MapModule && MapModule.requestUserLocation) {
-                    MapModule.requestUserLocation();
-                } else if (window.MapModule && MapModule.getUserLocation) {
-                    MapModule.getUserLocation();
-                }
-            });
+        if (MOCK_TRAVEL_HISTORY.length > 0) {
+            const fallbackTrip = [...MOCK_TRAVEL_HISTORY]
+                .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
+            select.value = `past:${fallbackTrip.id}`;
+            this.applyTripSelection(fallbackTrip, 'past');
+            return;
         }
 
-        this.locationControlsInitialized = true;
+        if (window.MapModule && window.MapModule.requestUserLocation) {
+            window.MapModule.requestUserLocation();
+        } else if (window.App && window.App.onLocationReady) {
+            window.App.onLocationReady(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LNG);
+        }
     },
 
     /**

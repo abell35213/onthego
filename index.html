@@ -210,6 +210,12 @@
                             <i class="fas fa-check-circle"></i> Connected
                             <button class="disconnect-btn">Disconnect</button>
                         </div>
+                        <div class="tripit-sync-actions">
+                            <button id="tripitSyncNow" class="sync-now-btn" disabled>
+                                <i class="fas fa-rotate"></i> Sync now
+                            </button>
+                            <div id="tripitSyncMessage" class="tripit-sync-message" style="display: none;"></div>
+                        </div>
                     </div>
 
                     <div class="account-card" data-account-type="marriott">
@@ -496,6 +502,7 @@
     
     <!-- Application Scripts -->
     <script src="js/config.js"></script>
+    <script src="js/tripit.js"></script>
     <script src="js/api.js"></script>
     <script src="js/map.js"></script>
     <script src="js/worldmap.js"></script>
