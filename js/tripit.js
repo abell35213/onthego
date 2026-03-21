@@ -220,8 +220,20 @@
             };
         },
 
-        async fetchTrips() {
-            const response = await fetch(CONFIG.TRIPIT_TRIPS_URL, {
+        async fetchTrips(options = {}) {
+            const query = new URLSearchParams();
+            ['past', 'modified_since', 'include_objects'].forEach((key) => {
+                const value = options[key];
+                if (value !== undefined && value !== null && value !== '') {
+                    query.set(key, String(value));
+                }
+            });
+
+            const requestUrl = query.toString()
+                ? `${CONFIG.TRIPIT_TRIPS_URL}?${query.toString()}`
+                : CONFIG.TRIPIT_TRIPS_URL;
+
+            const response = await fetch(requestUrl, {
                 credentials: 'same-origin',
                 headers: {
                     'x-onthego-user-ref': USER_ACCOUNT.userRef
