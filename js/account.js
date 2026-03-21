@@ -360,7 +360,12 @@ const Account = {
 
         try {
             const response = await fetch(
-                `${CONFIG.TRIPIT_CONNECT_URL}?callback=${encodeURIComponent(callbackUrl)}`
+                `${CONFIG.TRIPIT_CONNECT_URL}?callback=${encodeURIComponent(callbackUrl)}`,
+                {
+                    headers: {
+                        'x-onthego-user-ref': USER_ACCOUNT.userRef
+                    }
+                }
             );
 
             if (!response.ok) {
@@ -549,7 +554,8 @@ const Account = {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'x-onthego-user-ref': USER_ACCOUNT.userRef
                     }
                 });
             } catch (error) {
