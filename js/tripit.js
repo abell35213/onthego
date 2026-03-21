@@ -207,6 +207,12 @@
         return [];
     };
 
+    const createTripItError = (message, code) => {
+        const error = new Error(message);
+        error.code = code || 'tripit_unknown_error';
+        return error;
+    };
+
     const TripItService = {
         normalizeResponse(payload) {
             const trips = extractTrips(payload)
@@ -242,7 +248,10 @@
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `TripIt trips request failed: ${response.status}`);
+                throw createTripItError(
+                    errorData.error || `TripIt trips request failed: ${response.status}`,
+                    errorData.code || 'tripit_trips_request_failed'
+                );
             }
 
             const payload = await response.json();

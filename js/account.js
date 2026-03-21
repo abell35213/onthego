@@ -2,6 +2,21 @@
 const Account = {
     tripitAuthHandled: false,
 
+    tripitErrorMessages: {
+        tripit_authorization_expired: 'Authorization expired, please reconnect your TripIt account.',
+        tripit_invalid_consumer_key: 'TripIt connection is temporarily unavailable. Please contact support.',
+        tripit_timestamp_out_of_range: 'TripIt connection is temporarily unavailable. Please try again in a moment.',
+        tripit_invalid_signature: 'TripIt connection is temporarily unavailable. Please try again later.',
+        tripit_session_required: 'Please connect TripIt before syncing trips.',
+        tripit_api_temporarily_unavailable: 'TripIt is temporarily unavailable. Please try again shortly.',
+        tripit_request_timed_out: 'TripIt took too long to respond. Please try again.',
+        tripit_request_token_failed: 'Unable to start TripIt authorization. Please try again.',
+        tripit_access_token_failed: 'TripIt authorization could not be completed. Please try again.',
+        tripit_connect_failed: 'Unable to contact TripIt. Please try again.',
+        tripit_trips_failed: 'Unable to load trips from TripIt. Please try again.',
+        tripit_not_configured: 'TripIt is not configured for this environment. Please contact support.'
+    },
+
     /**
      * Initialize account modal and event listeners
      */
@@ -14,6 +29,14 @@ const Account = {
         void this.updateConnectionStatus();
         this.loadProfile();
         this.loadSettings();
+    },
+
+    getTripItFriendlyMessage(code, fallbackMessage = '') {
+        if (code && this.tripitErrorMessages[code]) {
+            return this.tripitErrorMessages[code];
+        }
+
+        return fallbackMessage || 'TripIt request failed. Please try again.';
     },
 
     /**
@@ -242,7 +265,7 @@ const Account = {
                     try {
                         const prev = JSON.parse(prevSaved);
                         if (prev.homeCityCoords) settings.homeCityCoords = prev.homeCityCoords;
-                    } catch (_) { /* ignore */ }
+                    } catch { /* ignore */ }
                 }
                 this.showNotification('Could not find coordinates for that city. Please check the spelling and try again.');
                 return;
@@ -400,7 +423,9 @@ const Account = {
 
             if (!response.ok) {
                 const err = await response.json().catch(() => ({}));
-                throw new Error(err.error || `Server error: ${response.status}`);
+                const connectError = new Error(err.error || `Server error: ${response.status}`);
+                connectError.code = err.code || 'tripit_connect_failed';
+                throw connectError;
             }
 
             const data = await response.json();
@@ -433,7 +458,7 @@ const Account = {
             console.error('TripIt connect error:', error);
             connectBtn.disabled = false;
             connectBtn.innerHTML = '<i class="fas fa-plug"></i> <span class="connect-text">Connect TripIt</span>';
-            this.showNotification(`Failed to connect TripIt: ${error.message}`);
+            this.showNotification(this.getTripItFriendlyMessage(error.code, `Failed to connect TripIt: ${error.message}`));
         }
     },
 
@@ -494,8 +519,10 @@ const Account = {
 
         if (authError === 'validation_failed') {
             this.showNotification('TripIt authorization failed, please retry.');
-        } else if (authError === 'config_error' || authError === 'access_token_error') {
-            this.showNotification('TripIt authorization failed. Please try again.');
+        } else if (authError === 'config_error') {
+            this.showNotification('TripIt authorization is not configured. Please contact support.');
+        } else if (authError) {
+            this.showNotification(this.getTripItFriendlyMessage(authError, 'TripIt authorization failed. Please try again.'));
         } else {
             this.showNotification('TripIt authorization was cancelled or failed.');
         }
@@ -604,9 +631,14 @@ const Account = {
             return true;
         } catch (error) {
             console.error('TripIt sync error:', error);
-            this.setTripItSyncMessage(`TripIt sync failed: ${error.message}`, 'error');
+            const friendlyMessage = this.getTripItFriendlyMessage(error.code, error.message);
+            this.setTripItSyncMessage(`TripIt sync failed: ${friendlyMessage}`, 'error');
+            if (error.code === 'tripit_authorization_expired') {
+                USER_ACCOUNT.tripitConnected = false;
+                this.setConnectionDisplay('tripit', false);
+            }
             if (initiatedByUser || showSuccessMessage) {
-                this.showNotification(`TripIt sync failed: ${error.message}`);
+                this.showNotification(friendlyMessage);
             }
             return false;
         } finally {
@@ -806,3 +838,5 @@ const Account = {
         }, 3000);
     }
 };
+
+window.Account = Account;

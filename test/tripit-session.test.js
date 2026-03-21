@@ -157,7 +157,11 @@ test('GET /api/tripit/trips rejects unknown sessions before contacting TripIt', 
       });
 
       assert.equal(response.status, 401);
-      assert.deepEqual(await response.json(), { error: 'Invalid or expired TripIt session' });
+      assert.deepEqual(await response.json(), {
+        error: 'Authorization expired, please reconnect your TripIt account.',
+        code: 'tripit_authorization_expired',
+        status: 401
+      });
       assert.equal(fetchCalled, false);
     } finally {
       global.fetch = originalFetch;
@@ -323,6 +327,7 @@ test('GET /api/tripit/trips returns retry-friendly errors for TripIt rate limits
       assert.equal(response.status, 429);
       assert.deepEqual(await response.json(), {
         error: 'TripIt API temporarily unavailable',
+        code: 'tripit_api_temporarily_unavailable',
         status: 429,
         retry_after: '60'
       });
@@ -380,6 +385,86 @@ test('GET /api/tripit/trips caps TripIt pagination to protect server resources',
         'trip-cap-4',
         'trip-cap-5'
       ]);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+});
+
+
+test('GET /api/tripit/connect parses TripIt OAuth error codes into safe payloads', async () => {
+  await withServer(async (baseUrl) => {
+    const originalFetch = global.fetch;
+
+    global.fetch = async (url, options = {}) => {
+      if (typeof url === 'string' && url === 'https://api.tripit.com/oauth/request_token') {
+        return new Response('oauth_problem=consumer_key_unknown&oauth_problem_advice=check%20key', {
+          status: 401,
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded'
+          }
+        });
+      }
+
+      return originalFetch(url, options);
+    };
+
+    try {
+      const response = await fetch(`${baseUrl}/api/tripit/connect?callback=${encodeURIComponent(`${baseUrl}/api/tripit/callback`)}`, {
+        headers: {
+          'x-onthego-user-ref': 'user-connect'
+        }
+      });
+
+      assert.equal(response.status, 401);
+      assert.deepEqual(await response.json(), {
+        error: 'TripIt connection is temporarily unavailable. Please contact support.',
+        code: 'tripit_invalid_consumer_key',
+        status: 401,
+        tripit_code: 'consumer_key_unknown'
+      });
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+});
+
+test('GET /api/tripit/trips maps expired TripIt authorization errors for reconnect flows', async () => {
+  const sessionId = 'session-expired-auth';
+  const userId = 'user-expired-auth';
+  await seedActiveSession({ sessionId, userId });
+
+  await withServer(async (baseUrl) => {
+    const originalFetch = global.fetch;
+
+    global.fetch = async (url, options = {}) => {
+      if (typeof url === 'string' && url.startsWith('https://api.tripit.com/')) {
+        return new Response('oauth_problem=token_rejected', {
+          status: 401,
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded'
+          }
+        });
+      }
+
+      return originalFetch(url, options);
+    };
+
+    try {
+      const response = await fetch(`${baseUrl}/api/tripit/trips`, {
+        headers: {
+          Cookie: `${TRIPIT_SESSION_COOKIE_NAME}=${sessionId}`,
+          'x-onthego-user-ref': userId
+        }
+      });
+
+      assert.equal(response.status, 401);
+      assert.deepEqual(await response.json(), {
+        error: 'Authorization expired, please reconnect your TripIt account.',
+        code: 'tripit_authorization_expired',
+        status: 401,
+        tripit_code: 'token_rejected'
+      });
     } finally {
       global.fetch = originalFetch;
     }

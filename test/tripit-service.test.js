@@ -82,3 +82,30 @@ test('TripItService.normalizeResponse returns empty metadata when no trips exist
         isEmpty: true
     });
 });
+
+
+test('TripItService.fetchTrips preserves stable error codes from the server', async () => {
+    const originalFetch = global.fetch;
+    global.fetch = async () => new Response(JSON.stringify({
+        error: 'Authorization expired, please reconnect your TripIt account.',
+        code: 'tripit_authorization_expired'
+    }), {
+        status: 401,
+        headers: { 'content-type': 'application/json' }
+    });
+
+    global.CONFIG = { TRIPIT_TRIPS_URL: '/api/tripit/trips' };
+    global.USER_ACCOUNT = { userRef: 'user-1' };
+
+    try {
+        await assert.rejects(
+            () => TripItService.fetchTrips(),
+            (error) => error.code === 'tripit_authorization_expired'
+                && error.message === 'Authorization expired, please reconnect your TripIt account.'
+        );
+    } finally {
+        global.fetch = originalFetch;
+        delete global.CONFIG;
+        delete global.USER_ACCOUNT;
+    }
+});
