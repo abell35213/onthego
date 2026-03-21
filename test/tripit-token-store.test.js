@@ -4,7 +4,7 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 
-const { TripItTokenStore, REQUEST_TOKEN_TTL_MS } = require('../lib/tripit-token-store');
+const { TripItTokenStore, REQUEST_TOKEN_TTL_MS, DEFAULT_STORE_PATH } = require('../lib/tripit-token-store');
 
 const createStore = async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'tripit-token-store-'));
@@ -13,6 +13,13 @@ const createStore = async () => {
     await store.initialize();
     return { dir, store, storePath };
 };
+
+test('default token store path lives outside the static web root', () => {
+    const repoRoot = path.resolve(__dirname, '..');
+    const relativePath = path.relative(repoRoot, DEFAULT_STORE_PATH);
+
+    assert.equal(relativePath.startsWith('..'), true);
+});
 
 test('persists request tokens and removes expired entries', async () => {
     const { dir, store } = await createStore();

@@ -24,5 +24,3 @@ tmp/
 *.tmp
 *.log
 
-# Local token store
-data/*.json
