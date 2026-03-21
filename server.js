@@ -22,6 +22,11 @@ const TRIPIT_ACCESS_TOKEN_URL = 'https://api.tripit.com/oauth/access_token';
 const TRIPIT_API_BASE_URL = 'https://api.tripit.com/v1';
 const TRIPIT_SESSION_COOKIE_NAME = 'onthego_tripit_session';
 const TRIPIT_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const TRIPIT_FETCH_TIMEOUT_MS = Number.parseInt(process.env.TRIPIT_FETCH_TIMEOUT_MS, 10) || 10000;
+const TRIPIT_MAX_TRIP_PAGES = Math.min(
+    Math.max(Number.parseInt(process.env.TRIPIT_MAX_TRIP_PAGES, 10) || 5, 1),
+    25
+);
 const TRIPIT_SESSION_COOKIE_OPTIONS = {
     httpOnly: true,
     secure: true,
@@ -95,6 +100,151 @@ const clearTripItSession = (res) => {
         ...TRIPIT_SESSION_COOKIE_OPTIONS,
         maxAge: undefined
     });
+};
+
+const TRIPIT_PASSTHROUGH_QUERY_PARAMS = ['past', 'modified_since', 'include_objects'];
+
+const parsePositiveInteger = (value) => {
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
+
+    const parsed = Number.parseInt(String(value), 10);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+const toArray = (value) => {
+    if (Array.isArray(value)) {
+        return value;
+    }
+
+    if (value === null || value === undefined) {
+        return [];
+    }
+
+    return [value];
+};
+
+const extractTripListPayload = (payload) => {
+    if (!payload || typeof payload !== 'object') {
+        return null;
+    }
+
+    if (payload.Trip || payload.trip || payload.ListResults || payload.list_results) {
+        return payload;
+    }
+
+    for (const value of Object.values(payload)) {
+        if (!value || typeof value !== 'object') {
+            continue;
+        }
+
+        if (value.Trip || value.trip || value.ListResults || value.list_results) {
+            return value;
+        }
+    }
+
+    return payload;
+};
+
+const extractTripPagination = (payload) => {
+    const tripPayload = extractTripListPayload(payload);
+    const listResults = tripPayload?.ListResults || tripPayload?.list_results || null;
+
+    return {
+        pageNum: parsePositiveInteger(listResults?.page_num ?? tripPayload?.page_num) || 1,
+        maxPage: parsePositiveInteger(listResults?.max_page ?? tripPayload?.max_page) || 1,
+        pageSize: parsePositiveInteger(listResults?.page_size ?? tripPayload?.page_size) || 0
+    };
+};
+
+const extractTripRecords = (payload) => {
+    const tripPayload = extractTripListPayload(payload);
+    return toArray(
+        tripPayload?.Trip
+        ?? tripPayload?.trip
+        ?? tripPayload?.trips
+        ?? tripPayload?.ListResults?.Trip
+        ?? tripPayload?.list_results?.Trip
+    ).filter(Boolean);
+};
+
+const dedupeTrips = (trips) => {
+    const uniqueTrips = [];
+    const seen = new Set();
+
+    for (const trip of trips) {
+        const dedupeKey = String(
+            trip?.id
+            ?? trip?.trip_id
+            ?? trip?.Trip?.id
+            ?? JSON.stringify(trip)
+        );
+
+        if (seen.has(dedupeKey)) {
+            continue;
+        }
+
+        seen.add(dedupeKey);
+        uniqueTrips.push(trip);
+    }
+
+    return uniqueTrips;
+};
+
+const mergeTripPages = (pages) => {
+    const firstPage = pages[0] || {};
+    const mergedTrips = dedupeTrips(pages.flatMap((page) => extractTripRecords(page)));
+    const pagination = extractTripPagination(pages[pages.length - 1] || firstPage);
+    const tripPayload = extractTripListPayload(firstPage);
+    const listResults = tripPayload?.ListResults || tripPayload?.list_results;
+
+    if (listResults && typeof listResults === 'object') {
+        return {
+            ...firstPage,
+            ListResults: {
+                ...listResults,
+                page_num: pagination.pageNum,
+                max_page: pagination.maxPage,
+                page_size: pagination.pageSize,
+                Trip: mergedTrips
+            }
+        };
+    }
+
+    return {
+        ...firstPage,
+        page_num: pagination.pageNum,
+        max_page: pagination.maxPage,
+        page_size: pagination.pageSize,
+        Trip: mergedTrips
+    };
+};
+
+const isTripItRetryableStatus = (status) => [408, 429, 500, 502, 503, 504].includes(status);
+
+const fetchTripItJson = async ({ url, token }) => {
+    const requestData = {
+        url,
+        method: 'GET'
+    };
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), TRIPIT_FETCH_TIMEOUT_MS);
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                ...tripitOAuth.toHeader(tripitOAuth.authorize(requestData, token)),
+                Accept: 'application/json'
+            },
+            signal: controller.signal
+        });
+
+        return response;
+    } finally {
+        clearTimeout(timeout);
+    }
 };
 
 // Periodically clean up expired request tokens (10-minute TTL)
@@ -643,11 +793,7 @@ app.get('/api/tripit/trips', async (req, res) => {
         return res.status(401).json({ error: 'Invalid or expired TripIt session' });
     }
 
-    const tripListUrl = `${TRIPIT_API_BASE_URL}/list/trip/format/json`;
-    const requestData = {
-        url: tripListUrl,
-        method: 'GET'
-    };
+    const tripListUrl = `${TRIPIT_API_BASE_URL}/list/trip`;
 
     const token = {
         key: accessToken.oauth_token,
@@ -655,22 +801,87 @@ app.get('/api/tripit/trips', async (req, res) => {
     };
 
     try {
-        const response = await fetch(tripListUrl, {
-            method: 'GET',
-            headers: tripitOAuth.toHeader(tripitOAuth.authorize(requestData, token))
+        const baseParams = new URLSearchParams({ format: 'json' });
+        for (const key of TRIPIT_PASSTHROUGH_QUERY_PARAMS) {
+            const rawValue = req.query?.[key];
+            if (typeof rawValue === 'string' && rawValue.trim()) {
+                baseParams.set(key, rawValue.trim());
+            }
+        }
+
+        if (!baseParams.has('modified_since') && accessToken.last_trip_sync_at) {
+            baseParams.set('modified_since', accessToken.last_trip_sync_at);
+        }
+
+        const pages = [];
+        const requestedPages = [];
+
+        for (let pageNum = 1; pageNum <= TRIPIT_MAX_TRIP_PAGES; pageNum += 1) {
+            const pageParams = new URLSearchParams(baseParams);
+            pageParams.set('page_num', String(pageNum));
+            const pageUrl = `${TRIPIT_API_BASE_URL}/list/trip?${pageParams.toString()}`;
+            requestedPages.push(pageNum);
+
+            const response = await fetchTripItJson({ url: pageUrl, token });
+
+            if (!response.ok) {
+                const status = response.status;
+                const retryAfter = response.headers.get('retry-after');
+                const tripItError = {
+                    error: isTripItRetryableStatus(status)
+                        ? 'TripIt API temporarily unavailable'
+                        : 'TripIt API error',
+                    status
+                };
+
+                if (retryAfter) {
+                    tripItError.retry_after = retryAfter;
+                }
+
+                console.error('TripIt list trips error:', status, `page=${pageNum}`);
+                return res.status(status).json(tripItError);
+            }
+
+            const pageData = await response.json();
+            pages.push(pageData);
+
+            const { maxPage } = extractTripPagination(pageData);
+            if (pageNum >= maxPage) {
+                break;
+            }
+        }
+
+        const finalPagination = extractTripPagination(pages[pages.length - 1]);
+        const truncated = finalPagination.maxPage > TRIPIT_MAX_TRIP_PAGES;
+        const mergedData = mergeTripPages(pages);
+
+        await tripitTokenStore.updateLastTripSyncAt({
+            sessionRef: sessionId,
+            userId
         });
 
-        if (!response.ok) {
-            console.error('TripIt list trips error:', response.status);
-            return res.status(response.status).json({
-                error: 'TripIt API error',
-                status: response.status
+        if (truncated) {
+            res.set('x-onthego-tripit-pages-truncated', 'true');
+        }
+
+        return res.json({
+            ...mergedData,
+            sync_metadata: {
+                requested_pages: requestedPages.length,
+                max_page: finalPagination.maxPage,
+                page_size: finalPagination.pageSize,
+                truncated
+            }
+        });
+    } catch (error) {
+        if (error?.name === 'AbortError') {
+            console.error('TripIt trips request timed out');
+            return res.status(504).json({
+                error: 'TripIt API request timed out',
+                timeout_ms: TRIPIT_FETCH_TIMEOUT_MS
             });
         }
 
-        const data = await response.json();
-        return res.json(data);
-    } catch (error) {
         console.error('Error fetching TripIt trips:', error?.message || error);
         return res.status(500).json({ error: 'Failed to contact TripIt API' });
     }

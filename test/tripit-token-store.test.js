@@ -61,6 +61,7 @@ test('scopes access token lookups and revocation to the authenticated app user',
         const allowed = await store.getActiveAccessToken('session-1', 'user-1');
         assert.equal(allowed.oauth_token, 'access-token');
         assert.equal(allowed.tripit_user_ref, 'tripit-user-1');
+        assert.equal(allowed.last_trip_sync_at, null);
         assert.equal((await store.getActiveAccessTokenBySession('session-1')).user_id, 'user-1');
 
         const blocked = await store.getActiveAccessToken('session-1', 'user-2');
@@ -74,6 +75,35 @@ test('scopes access token lookups and revocation to the authenticated app user',
         assert.equal(revoked, true);
         assert.equal(await store.getActiveAccessToken('session-1', 'user-1'), null);
         assert.equal(await store.getActiveAccessTokenBySession('session-1'), null);
+    } finally {
+        await fs.rm(dir, { recursive: true, force: true });
+    }
+});
+
+test('records the last successful TripIt sync timestamp for an active token', async () => {
+    const { dir, store } = await createStore();
+
+    try {
+        await store.saveAccessToken({
+            sessionRef: 'session-sync',
+            userId: 'user-sync',
+            oauthToken: 'access-sync',
+            oauthTokenSecret: 'access-secret-sync',
+            tripitUserRef: 'tripit-user-sync'
+        });
+
+        const syncedAt = '2026-03-20T08:30:00.000Z';
+        assert.equal(
+            await store.updateLastTripSyncAt({
+                sessionRef: 'session-sync',
+                userId: 'user-sync',
+                syncedAt
+            }),
+            true
+        );
+
+        const updated = await store.getActiveAccessToken('session-sync', 'user-sync');
+        assert.equal(updated.last_trip_sync_at, syncedAt);
     } finally {
         await fs.rm(dir, { recursive: true, force: true });
     }

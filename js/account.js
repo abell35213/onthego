@@ -556,10 +556,10 @@ const Account = {
 
     /**
      * Sync TripIt trips into the shared app collections.
-     * @param {{showSuccessMessage?: boolean, initiatedByUser?: boolean}} options
+     * @param {{showSuccessMessage?: boolean, initiatedByUser?: boolean, fetchOptions?: object}} options
      * @returns {Promise<boolean>}
      */
-    async syncTripItTrips({ showSuccessMessage = false, initiatedByUser = false } = {}) {
+    async syncTripItTrips({ showSuccessMessage = false, initiatedByUser = false, fetchOptions = {} } = {}) {
         const syncButton = document.getElementById('tripitSyncNow');
 
         if (!USER_ACCOUNT.tripitConnected) {
@@ -576,7 +576,7 @@ const Account = {
         }
 
         try {
-            const { trips, isEmpty } = await TripItService.fetchTrips();
+            const { trips, isEmpty } = await TripItService.fetchTrips(fetchOptions);
             const mappedTrips = await Promise.all(trips.map((trip, index) => this.mapTripItTripToAppTrip(trip, index)));
 
             MOCK_UPCOMING_TRIPS.splice(0, MOCK_UPCOMING_TRIPS.length, ...mappedTrips);
