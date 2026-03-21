@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
 const OAuth = require('oauth-1.0a');
+const { TripItTokenStore, REQUEST_TOKEN_TTL_MS } = require('./lib/tripit-token-store');
 
 dotenv.config();
 
@@ -32,20 +33,33 @@ const tripitOAuth = TRIPIT_API_KEY && TRIPIT_API_SECRET ? OAuth({
     }
 }) : null;
 
-// In-memory stores for TripIt OAuth tokens (process-local, resets on restart)
-const tripitRequestTokens = new Map();
-const tripitAccessTokens = new Map();
+const tripitTokenStore = new TripItTokenStore();
+
+const getAuthenticatedAppUserId = (req) => {
+    const userId = req.get('x-onthego-user-ref') || '';
+    return userId.trim();
+};
+
+const requireAuthenticatedAppUserId = (req, res) => {
+    const userId = getAuthenticatedAppUserId(req);
+    if (!userId) {
+        res.status(401).json({ error: 'x-onthego-user-ref header is required' });
+        return null;
+    }
+
+    return userId;
+};
+
+tripitTokenStore.initialize().catch((error) => {
+    console.error('Failed to initialize TripIt token store:', error?.message || error);
+});
 
 // Periodically clean up expired request tokens (10-minute TTL)
-const TRIPIT_REQUEST_TOKEN_TTL_MS = 10 * 60 * 1000;
 setInterval(() => {
-    const now = Date.now();
-    for (const [key, value] of tripitRequestTokens) {
-        if (now - value.createdAt > TRIPIT_REQUEST_TOKEN_TTL_MS) {
-            tripitRequestTokens.delete(key);
-        }
-    }
-}, TRIPIT_REQUEST_TOKEN_TTL_MS);
+    tripitTokenStore.cleanupExpiredRequestTokens().catch((error) => {
+        console.error('Failed to clean up expired TripIt request tokens:', error?.message || error);
+    });
+}, REQUEST_TOKEN_TTL_MS);
 const parsedCacheTtlSeconds = parseInt(process.env.YELP_CACHE_TTL_SECONDS, 10);
 const parsedCacheTtlMs = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
 const CACHE_TTL_MS = Number.isFinite(parsedCacheTtlSeconds) && parsedCacheTtlSeconds > 0
@@ -339,6 +353,11 @@ app.get('/api/tripit/connect', async (req, res) => {
         });
     }
 
+    const userId = requireAuthenticatedAppUserId(req, res);
+    if (!userId) {
+        return;
+    }
+
     const callbackUrl = req.query.callback;
     if (!callbackUrl) {
         return res.status(400).json({ error: 'callback query parameter is required' });
@@ -390,11 +409,13 @@ app.get('/api/tripit/connect', async (req, res) => {
             return res.status(500).json({ error: 'Invalid response from TripIt request token endpoint' });
         }
 
-        // Store the request token secret so we can use it in the callback step
-        tripitRequestTokens.set(oauthToken, {
-            secret: oauthTokenSecret,
+        // Persist the request token secret so we can use it in the callback step
+        await tripitTokenStore.saveRequestToken({
+            oauthToken,
+            oauthTokenSecret,
             state,
-            createdAt: Date.now()
+            userId,
+            callbackUrl: parsedCallbackUrl.toString()
         });
 
         const authorizeUrl = `${TRIPIT_AUTHORIZE_URL}?oauth_token=${encodeURIComponent(oauthToken)}&oauth_callback=${encodeURIComponent(parsedCallbackUrl.toString())}`;
@@ -450,7 +471,7 @@ app.get('/api/tripit/callback', async (req, res) => {
         return sendCallbackPage(false, 'Authorization failed, please retry.', null, 'validation_failed');
     }
 
-    const stored = tripitRequestTokens.get(oauthToken);
+    const stored = await tripitTokenStore.getRequestToken(oauthToken);
     if (!stored) {
         logValidationFailure('unknown_or_expired_request_token', {
             oauthTokenPresent: true
@@ -459,7 +480,7 @@ app.get('/api/tripit/callback', async (req, res) => {
     }
 
     if (stored.state !== state) {
-        tripitRequestTokens.delete(oauthToken);
+        await tripitTokenStore.deleteRequestToken(oauthToken);
         logValidationFailure('state_mismatch', {
             oauthTokenPresent: true
         });
@@ -467,7 +488,7 @@ app.get('/api/tripit/callback', async (req, res) => {
     }
 
     // Clean up used request token
-    tripitRequestTokens.delete(oauthToken);
+    await tripitTokenStore.deleteRequestToken(oauthToken);
 
     const requestData = {
         url: TRIPIT_ACCESS_TOKEN_URL,
@@ -476,7 +497,7 @@ app.get('/api/tripit/callback', async (req, res) => {
 
     const token = {
         key: oauthToken,
-        secret: stored.secret
+        secret: stored.oauth_token_secret
     };
 
     try {
@@ -497,6 +518,7 @@ app.get('/api/tripit/callback', async (req, res) => {
         const params = new URLSearchParams(body);
         const accessToken = params.get('oauth_token');
         const accessTokenSecret = params.get('oauth_token_secret');
+        const tripitUserRef = params.get('tripit_user_ref');
 
         if (!accessToken || !accessTokenSecret) {
             return sendCallbackPage(false, 'Invalid response from TripIt.', null, 'access_token_error');
@@ -504,10 +526,12 @@ app.get('/api/tripit/callback', async (req, res) => {
 
         // Generate an opaque session id so the frontend never sees raw OAuth tokens
         const sessionId = crypto.randomBytes(32).toString('hex');
-        tripitAccessTokens.set(sessionId, {
-            key: accessToken,
-            secret: accessTokenSecret,
-            createdAt: Date.now()
+        await tripitTokenStore.saveAccessToken({
+            sessionRef: sessionId,
+            userId: stored.user_id,
+            oauthToken: accessToken,
+            oauthTokenSecret: accessTokenSecret,
+            tripitUserRef
         });
 
         return sendCallbackPage(true, 'TripIt connected! This window will close.', sessionId, null);
@@ -520,7 +544,7 @@ app.get('/api/tripit/callback', async (req, res) => {
 /**
  * TripIt — Fetch the authenticated user's trips.
  *
- * Headers: Authorization: Bearer <sessionId>
+ * Headers: Authorization: Bearer <sessionId>, x-onthego-user-ref: <appUserRef>
  * Returns: TripIt API response (list of trips)
  */
 app.get('/api/tripit/trips', async (req, res) => {
@@ -530,13 +554,18 @@ app.get('/api/tripit/trips', async (req, res) => {
         });
     }
 
+    const userId = requireAuthenticatedAppUserId(req, res);
+    if (!userId) {
+        return;
+    }
+
     const authHeader = req.headers.authorization || '';
     const sessionId = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
     if (!sessionId) {
         return res.status(401).json({ error: 'Authorization header with Bearer token is required' });
     }
 
-    const accessToken = tripitAccessTokens.get(sessionId);
+    const accessToken = await tripitTokenStore.getActiveAccessToken(sessionId, userId);
     if (!accessToken) {
         return res.status(401).json({ error: 'Invalid or expired session token' });
     }
@@ -548,8 +577,8 @@ app.get('/api/tripit/trips', async (req, res) => {
     };
 
     const token = {
-        key: accessToken.key,
-        secret: accessToken.secret
+        key: accessToken.oauth_token,
+        secret: accessToken.oauth_token_secret
     };
 
     try {
@@ -577,20 +606,29 @@ app.get('/api/tripit/trips', async (req, res) => {
 /**
  * TripIt — Disconnect (revoke stored access token).
  *
- * Headers: Authorization: Bearer <sessionId>
+ * Headers: Authorization: Bearer <sessionId>, x-onthego-user-ref: <appUserRef>
  * Returns: { success: true }
  */
-app.post('/api/tripit/disconnect', (req, res) => {
+app.post('/api/tripit/disconnect', async (req, res) => {
+    const userId = requireAuthenticatedAppUserId(req, res);
+    if (!userId) {
+        return;
+    }
+
     const authHeader = req.headers.authorization || '';
     const sessionId = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
 
     if (sessionId) {
-        tripitAccessTokens.delete(sessionId);
+        await tripitTokenStore.revokeAccessToken(sessionId, userId);
     }
 
     return res.json({ success: true });
 });
 
-app.listen(PORT, () => {
-    console.log(`OnTheGo proxy server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`OnTheGo proxy server running on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;
