@@ -145,6 +145,46 @@ The app works with sample data out of the box, but for real restaurant data:
    MAPKIT_TOKEN_TTL_SECONDS=1800
    ```
 
+## ✈️ TripIt Integration
+
+### Required configuration
+- `TRIPIT_API_KEY` and `TRIPIT_API_SECRET` are required for the TripIt OAuth 1.0 flow. If either value is missing, `/api/tripit/connect` and `/api/tripit/trips` return a `tripit_not_configured` error.
+- Keep these values server-side only. Do not expose them in frontend bundles, client-side config, or public deployment settings.
+
+### Callback URL requirements
+- The OAuth callback route for this app is exactly `/api/tripit/callback`.
+- The frontend must start the connect flow by passing a fully-qualified callback URL on the same origin as the current app request, for example `http://localhost:3000/api/tripit/callback` in local development or `https://your-app.example.com/api/tripit/callback` in production.
+- The server validates that the callback URL origin exactly matches the application origin for the current request. Mixed-origin callbacks are rejected with `400 callback URL must match the application origin`.
+- TripIt redirects back to that callback route with `oauth_token` and `state`; the server exchanges the authorized request token for an access token and then stores only the opaque OnTheGo session identifier in the browser cookie.
+
+### Local vs. production origins
+- **Local development:** use the same localhost origin for both the app and callback URL, such as `http://localhost:3000` with `http://localhost:3000/api/tripit/callback`. Do not start the flow from one localhost port and send the callback to another.
+- **Production:** use the exact deployed HTTPS origin for both the app and callback URL, such as `https://app.example.com` with `https://app.example.com/api/tripit/callback`. Do not proxy the callback through a different subdomain or non-production host.
+- If you terminate TLS at a proxy/load balancer, make sure Express still sees the public origin correctly so callback-origin validation stays aligned with the browser-visible URL.
+
+### Security guidance
+- Use **OAuth 1.0 only** for production TripIt integrations.
+- Do **not** use TripIt web/basic authentication in production. TripIt documents Basic Auth as a testing/development-only option, while this app is implemented around the OAuth 1.0 request-token → authorize → access-token flow.
+- Treat TripIt request/access tokens and the local token store as secrets. Store them only on the server and revoke them through `/api/tripit/disconnect` when a user disconnects.
+
+### Runbook: common 401/403 TripIt failures
+TripIt's official API docs call out several common authorization failures to check first:
+
+- **401 Unauthorized — inactive consumer:** verify the API consumer behind `TRIPIT_API_KEY` is still active in TripIt. A deactivated consumer key will cause authorization to fail before the user can connect successfully.
+- **401 Unauthorized — timestamp skew:** TripIt rejects OAuth requests when the client timestamp is more than ±3 hours from TripIt's current time. Confirm your server clock is synchronized with NTP and that containers/VMs are not drifting.
+- **403 Forbidden — unconfirmed TripIt account:** TripIt returns 403 when the TripIt account authorizing the consumer has not been confirmed yet. Have the user finish TripIt account confirmation before retrying.
+- **401 Unauthorized — authorization revoked or stale tokens:** if the user removed the app from TripIt's authorized applications, reconnect the account to mint a new access token.
+
+### Manual QA checklist
+Use this checklist whenever you change the TripIt account flow:
+
+- [ ] **Connect:** starting from a disconnected state, click Connect TripIt, approve the OAuth prompt, and verify the app reports `connected: true` with the expected account label.
+- [ ] **Cancel auth:** start Connect TripIt, cancel or close the TripIt authorization step, and verify the UI returns to a safe disconnected/error state without leaving a broken spinner or stale session.
+- [ ] **Reconnect:** connect once, then run the connect flow again and verify the account can be re-authorized cleanly without duplicate/broken UI state.
+- [ ] **Disconnect:** while connected, disconnect the TripIt account and verify the cookie-backed session is revoked and subsequent trip fetches require reconnecting.
+- [ ] **Sync pagination:** connect an account with enough trips to span multiple TripIt pages, trigger sync, and verify all available pages are merged without duplicates while `sync_metadata` reflects the requested page count and truncation behavior.
+
+
 ### 4. Run the Application
 
 #### Option A: Node + Express (Recommended for Yelp data)
