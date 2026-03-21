@@ -32,6 +32,66 @@ const WorldMap = {
     },
 
     /**
+     * Build MapKit constructor options from CONFIG.WORLD_MAPKIT_OPTIONS.
+     * Allows section-by-section tuning without changing map initialization logic.
+     * @returns {Object} mapkit.Map constructor options
+     */
+    _buildMapKitOptions() {
+        const options = CONFIG.WORLD_MAPKIT_OPTIONS || {};
+
+        const center = options.center || { latitude: 38, longitude: -96 };
+        const span = options.span || { latitudeDelta: 50, longitudeDelta: 80 };
+        const padding = options.padding || { top: 0, right: 0, bottom: 0, left: 0 };
+
+        const mapTypeMap = {
+            hybrid: mapkit.Map.MapTypes.Hybrid,
+            mutedstandard: mapkit.Map.MapTypes.MutedStandard,
+            satellite: mapkit.Map.MapTypes.Satellite,
+            standard: mapkit.Map.MapTypes.Standard
+        };
+
+        const colorSchemeMap = {
+            dark: mapkit.ColorSchemes.Dark,
+            light: mapkit.ColorSchemes.Light
+        };
+
+        const featureVisibilityMap = {
+            adaptive: mapkit.FeatureVisibility.Adaptive,
+            hidden: mapkit.FeatureVisibility.Hidden,
+            visible: mapkit.FeatureVisibility.Visible
+        };
+
+        const mapType = mapTypeMap[String(options.mapType || 'satellite').toLowerCase()] || mapkit.Map.MapTypes.Satellite;
+        const colorScheme = colorSchemeMap[String(options.colorScheme || 'dark').toLowerCase()] || mapkit.ColorSchemes.Dark;
+        const showsCompass = featureVisibilityMap[String(options.showsCompass || 'visible').toLowerCase()] || mapkit.FeatureVisibility.Visible;
+        const showsScale = featureVisibilityMap[String(options.showsScale || 'hidden').toLowerCase()] || mapkit.FeatureVisibility.Hidden;
+
+        return {
+            mapType,
+            colorScheme,
+            region: new mapkit.CoordinateRegion(
+                new mapkit.Coordinate(center.latitude, center.longitude),
+                new mapkit.CoordinateSpan(span.latitudeDelta, span.longitudeDelta)
+            ),
+            rotation: options.rotation ?? 0,
+            tintColor: options.tintColor || '#FFFFFF',
+            padding: new mapkit.Padding(
+                padding.top ?? 0,
+                padding.right ?? 0,
+                padding.bottom ?? 0,
+                padding.left ?? 0
+            ),
+            showsMapTypeControl: options.showsMapTypeControl ?? true,
+            showsZoomControl: options.showsZoomControl ?? true,
+            showsCompass,
+            isRotationEnabled: options.isRotationEnabled ?? true,
+            isZoomEnabled: options.isZoomEnabled ?? true,
+            isScrollEnabled: options.isScrollEnabled ?? true,
+            showsScale
+        };
+    },
+
+    /**
      * Initialize Apple MapKit JS for the world map (satellite imagery).
      * @returns {Promise<boolean>} true if initialization succeeded
      */
@@ -43,16 +103,8 @@ const WorldMap = {
             const container = document.getElementById('worldMap');
             if (!container) throw new Error('World map container #worldMap not found');
 
-            this._mapkitMap = new mapkit.Map(container, {
-                mapType: mapkit.Map.MapTypes.Satellite,
-                region: new mapkit.CoordinateRegion(
-                    new mapkit.Coordinate(38, -96),
-                    new mapkit.CoordinateSpan(50, 80)
-                ),
-                showsMapTypeControl: true,
-                showsZoomControl: true,
-                showsCompass: mapkit.FeatureVisibility.Visible
-            });
+            const mapOptions = this._buildMapKitOptions();
+            this._mapkitMap = new mapkit.Map(container, mapOptions);
 
             // Polyfill invalidateSize for callers in app.js
             this._mapkitMap.invalidateSize = () => {};

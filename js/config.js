@@ -32,6 +32,35 @@ const CONFIG = {
     WORLD_MAP_MIN_ZOOM: 2,
     WORLD_MAP_MAX_ZOOM: 18,
 
+    // World MapKit JS constructor options (North America framing + clean controls)
+    WORLD_MAPKIT_OPTIONS: {
+        center: {
+            latitude: 38,
+            longitude: -96
+        },
+        span: {
+            latitudeDelta: 50,
+            longitudeDelta: 80
+        },
+        rotation: 0,
+        tintColor: '#FFFFFF',
+        padding: {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0
+        },
+        mapType: 'satellite',
+        colorScheme: 'dark',
+        showsMapTypeControl: true,
+        showsZoomControl: true,
+        showsCompass: 'visible',
+        isRotationEnabled: true,
+        isZoomEnabled: true,
+        isScrollEnabled: true,
+        showsScale: 'hidden'
+    },
+
     // Home/hub city for world map flight path visualization
     HOME_CITY: {
         name: 'Atlanta',
