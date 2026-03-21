@@ -44,13 +44,13 @@ const MapModule = {
 
     /**
      * Initialize Apple MapKit JS map with satellite imagery.
-     * Uses the shared initMapKit() helper (config.js) for token / init,
+     * Uses the shared MapKitLoader for token / init,
      * then creates a mapkit.Map on the #map container.
      * @returns {Promise<boolean>} true if MapKit initialized successfully
      */
     async _initMapKit() {
         try {
-            const ready = await initMapKit();
+            const ready = await MapKitLoader.init();
             if (!ready) return false;
 
             const mapContainer = document.getElementById('map');
