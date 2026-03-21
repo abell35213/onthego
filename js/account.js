@@ -1,5 +1,7 @@
 // Account Module - Handles user profile, Concur/TripIt account connections, and settings
 const Account = {
+    tripitAuthHandled: false,
+
     /**
      * Initialize account modal and event listeners
      */
@@ -8,7 +10,8 @@ const Account = {
         this.setupTabs();
         this.setupProfileForm();
         this.setupSettings();
-        this.updateConnectionStatus();
+        this.setupTripItMessageListener();
+        void this.updateConnectionStatus();
         this.loadProfile();
         this.loadSettings();
     },
@@ -73,6 +76,25 @@ const Account = {
                 const accountType = accountCard.getAttribute('data-account-type');
                 this.disconnectAccount(accountType);
             }
+        });
+    },
+
+    /**
+     * Listen for OAuth completion messages from the TripIt popup callback page.
+     */
+    setupTripItMessageListener() {
+        window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) {
+                return;
+            }
+
+            if (event.data?.type !== 'tripit_oauth_complete') {
+                return;
+            }
+
+            const connectBtn = document.getElementById('tripitConnect');
+            const statusDiv = document.getElementById('tripitStatus');
+            void this.finalizeTripItConnection(connectBtn, statusDiv, event.data.errorCode || null);
         });
     },
 
@@ -351,6 +373,7 @@ const Account = {
     async connectTripIt() {
         const connectBtn = document.getElementById('tripitConnect');
         const statusDiv = document.getElementById('tripitStatus');
+        this.tripitAuthHandled = false;
 
         connectBtn.disabled = true;
         connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
@@ -385,13 +408,13 @@ const Account = {
                 `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
             );
 
-            // Poll for the popup to close or for a token to be set
+            // Poll for the popup to close or for the callback page to notify us
             const maxPollTime = 5 * 60 * 1000; // 5 minute timeout
             const pollStart = Date.now();
             const pollTimer = setInterval(() => {
                 if (!popup || popup.closed || Date.now() - pollStart > maxPollTime) {
                     clearInterval(pollTimer);
-                    this.finalizeTripItConnection(connectBtn, statusDiv);
+                    void this.finalizeTripItConnection(connectBtn, statusDiv);
                 }
             }, 500);
         } catch (error) {
@@ -404,33 +427,115 @@ const Account = {
 
     /**
      * Finalize TripIt connection after the OAuth popup closes.
-     * Checks whether a session token was stored by the callback page.
      * @param {HTMLElement} connectBtn - The connect button element
      * @param {HTMLElement} statusDiv - The status display element
+     * @param {string|null} authError - Optional callback error code
      */
-    finalizeTripItConnection(connectBtn, statusDiv) {
-        const token = localStorage.getItem('onthego_tripit_token');
-        const authError = localStorage.getItem('onthego_tripit_auth_error');
+    async finalizeTripItConnection(connectBtn, statusDiv, authError = null) {
+        if (this.tripitAuthHandled && USER_ACCOUNT.tripitConnected) {
+            return;
+        }
 
-        if (token) {
-            USER_ACCOUNT.tripitConnected = true;
-            USER_ACCOUNT.lastSync = new Date().toISOString();
-            localStorage.removeItem('onthego_tripit_auth_error');
+        try {
+            const response = await fetch(CONFIG.TRIPIT_STATUS_URL, {
+                credentials: 'same-origin'
+            });
 
-            connectBtn.style.display = 'none';
-            statusDiv.style.display = 'flex';
-            this.updateSyncInfo();
-            this.showNotification('TripIt connected successfully!');
-        } else {
+            if (!response.ok) {
+                throw new Error(`TripIt status check failed: ${response.status}`);
+            }
+
+            const { connected } = await response.json();
+
+            if (connected) {
+                this.tripitAuthHandled = true;
+                USER_ACCOUNT.tripitConnected = true;
+                USER_ACCOUNT.lastSync = new Date().toISOString();
+
+                connectBtn.style.display = 'none';
+                statusDiv.style.display = 'flex';
+                this.updateSyncInfo();
+                this.showNotification('TripIt connected successfully!');
+                return;
+            }
+        } catch (error) {
+            console.error('TripIt status check error:', error);
+        }
+
+        USER_ACCOUNT.tripitConnected = false;
+        this.tripitAuthHandled = true;
+        if (connectBtn) {
             connectBtn.disabled = false;
             connectBtn.innerHTML = '<i class="fas fa-plug"></i> <span class="connect-text">Connect TripIt</span>';
-            localStorage.removeItem('onthego_tripit_auth_error');
+            connectBtn.style.display = 'flex';
+        }
+        if (statusDiv) {
+            statusDiv.style.display = 'none';
+        }
 
-            if (authError === 'validation_failed') {
-                this.showNotification('TripIt authorization failed, please retry.');
-            } else {
-                this.showNotification('TripIt authorization was cancelled or failed.');
+        if (authError === 'validation_failed') {
+            this.showNotification('TripIt authorization failed, please retry.');
+        } else if (authError === 'config_error' || authError === 'access_token_error') {
+            this.showNotification('TripIt authorization failed. Please try again.');
+        } else {
+            this.showNotification('TripIt authorization was cancelled or failed.');
+        }
+    },
+
+    /**
+     * Update a single account connection indicator in the UI.
+     * @param {string} accountType - Account key
+     * @param {boolean} isConnected - Whether the account is connected
+     */
+    setConnectionDisplay(accountType, isConnected) {
+        const connectBtn = document.getElementById(`${accountType}Connect`);
+        const statusDiv = document.getElementById(`${accountType}Status`);
+
+        if (connectBtn) {
+            connectBtn.style.display = isConnected ? 'none' : 'flex';
+            if (!isConnected && accountType === 'tripit') {
+                connectBtn.disabled = false;
+                connectBtn.innerHTML = '<i class="fas fa-plug"></i> <span class="connect-text">Connect TripIt</span>';
             }
+        }
+
+        if (statusDiv) {
+            statusDiv.style.display = isConnected ? 'flex' : 'none';
+        }
+    },
+
+    /**
+     * Fetch current TripIt cookie-backed status from the server.
+     * @returns {Promise<boolean>}
+     */
+    async fetchTripItStatus() {
+        try {
+            const response = await fetch(CONFIG.TRIPIT_STATUS_URL, {
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                throw new Error(`TripIt status check failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return Boolean(data.connected);
+        } catch (error) {
+            console.error('Error fetching TripIt status:', error);
+            return false;
+        }
+    },
+
+    /**
+     * Sync TripIt connection state from the server session.
+     * @returns {Promise<void>}
+     */
+    async syncTripItConnectionStatus() {
+        USER_ACCOUNT.tripitConnected = await this.fetchTripItStatus();
+        this.setConnectionDisplay('tripit', USER_ACCOUNT.tripitConnected);
+
+        if (USER_ACCOUNT.tripitConnected) {
+            USER_ACCOUNT.lastSync = new Date().toISOString();
         }
     },
 
@@ -477,35 +582,11 @@ const Account = {
     /**
      * Update connection status on page load
      */
-    updateConnectionStatus() {
-        // Restore TripIt connection from localStorage token
-        if (localStorage.getItem('onthego_tripit_token')) {
-            USER_ACCOUNT.tripitConnected = true;
-        }
-
-        if (USER_ACCOUNT.concurConnected) {
-            document.getElementById('concurConnect').style.display = 'none';
-            document.getElementById('concurStatus').style.display = 'flex';
-        }
-
-        if (USER_ACCOUNT.tripitConnected) {
-            document.getElementById('tripitConnect').style.display = 'none';
-            document.getElementById('tripitStatus').style.display = 'flex';
-        }
-
-        if (USER_ACCOUNT.marriottConnected) {
-            const btn = document.getElementById('marriottConnect');
-            const status = document.getElementById('marriottStatus');
-            if (btn) btn.style.display = 'none';
-            if (status) status.style.display = 'flex';
-        }
-
-        if (USER_ACCOUNT.hiltonConnected) {
-            const btn = document.getElementById('hiltonConnect');
-            const status = document.getElementById('hiltonStatus');
-            if (btn) btn.style.display = 'none';
-            if (status) status.style.display = 'flex';
-        }
+    async updateConnectionStatus() {
+        this.setConnectionDisplay('concur', USER_ACCOUNT.concurConnected);
+        this.setConnectionDisplay('marriott', USER_ACCOUNT.marriottConnected);
+        this.setConnectionDisplay('hilton', USER_ACCOUNT.hiltonConnected);
+        await this.syncTripItConnectionStatus();
 
         this.updateSyncInfo();
     },
@@ -542,20 +623,13 @@ const Account = {
      * Revoke the stored TripIt access token on the server and clear local state.
      */
     async disconnectTripIt() {
-        const token = localStorage.getItem('onthego_tripit_token');
-        if (token) {
-            try {
-                await fetch(CONFIG.TRIPIT_DISCONNECT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-            } catch (error) {
-                console.error('Error disconnecting TripIt:', error);
-            }
-            localStorage.removeItem('onthego_tripit_token');
+        try {
+            await fetch(CONFIG.TRIPIT_DISCONNECT_URL, {
+                method: 'POST',
+                credentials: 'same-origin'
+            });
+        } catch (error) {
+            console.error('Error disconnecting TripIt:', error);
         }
     },
 
