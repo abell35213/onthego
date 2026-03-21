@@ -628,21 +628,17 @@ const Account = {
      * Revoke the stored TripIt access token on the server and clear local state.
      */
     async disconnectTripIt() {
-        const token = localStorage.getItem('onthego_tripit_token');
-        if (token) {
-            try {
-                await fetch(CONFIG.TRIPIT_DISCONNECT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                        'x-onthego-user-ref': USER_ACCOUNT.userRef
-                    }
-                });
-            } catch (error) {
-                console.error('Error disconnecting TripIt:', error);
-            }
-            localStorage.removeItem('onthego_tripit_token');
+        try {
+            await fetch(CONFIG.TRIPIT_DISCONNECT_URL, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-onthego-user-ref': USER_ACCOUNT.userRef
+                }
+            });
+        } catch (error) {
+            console.error('Error disconnecting TripIt:', error);
         }
     },
 

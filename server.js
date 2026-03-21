@@ -79,55 +79,31 @@ const parseCookies = (cookieHeader = '') => cookieHeader
         return cookies;
     }, {});
 
-const getTripItSessionId = (req) => {
+const getTripItCookieSessionId = (req) => {
     const cookies = parseCookies(req.headers.cookie || '');
     return cookies[TRIPIT_SESSION_COOKIE_NAME] || '';
 };
 
-const clearTripItSession = (res, sessionId = '') => {
-    if (sessionId) {
-        tripitAccessTokens.delete(sessionId);
-    }
+const getTripItSessionId = (req) => {
+    const authHeader = req.headers.authorization || '';
+    const bearerSessionId = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    return bearerSessionId || getTripItCookieSessionId(req);
+};
 
+const clearTripItSession = (res) => {
     res.clearCookie(TRIPIT_SESSION_COOKIE_NAME, {
         ...TRIPIT_SESSION_COOKIE_OPTIONS,
         maxAge: undefined
     });
 };
 
-const getTripItAccessToken = (req) => {
-    const sessionId = getTripItSessionId(req);
-
-    if (!sessionId) {
-        return {
-            sessionId: '',
-            accessToken: null,
-            error: 'TripIt session cookie is required'
-        };
-    }
-
-    const accessToken = tripitAccessTokens.get(sessionId);
-    if (!accessToken) {
-        return {
-            sessionId,
-            accessToken: null,
-            error: 'Invalid or expired TripIt session'
-        };
-    }
-
-    return {
-        sessionId,
-        accessToken,
-        error: null
-    };
-};
-
 // Periodically clean up expired request tokens (10-minute TTL)
-setInterval(() => {
+const tripitRequestTokenCleanupTimer = setInterval(() => {
     tripitTokenStore.cleanupExpiredRequestTokens().catch((error) => {
         console.error('Failed to clean up expired TripIt request tokens:', error?.message || error);
     });
 }, REQUEST_TOKEN_TTL_MS);
+tripitRequestTokenCleanupTimer.unref();
 const parsedCacheTtlSeconds = parseInt(process.env.YELP_CACHE_TTL_SECONDS, 10);
 const parsedCacheTtlMs = parseInt(process.env.YELP_CACHE_TTL_MS, 10);
 const CACHE_TTL_MS = Number.isFinite(parsedCacheTtlSeconds) && parsedCacheTtlSeconds > 0
@@ -619,9 +595,30 @@ app.get('/api/tripit/callback', async (req, res) => {
 });
 
 /**
+ * TripIt — Lightweight cookie-backed session status endpoint.
+ *
+ * Returns: { connected: boolean }
+ */
+app.get('/api/tripit/status', async (req, res) => {
+    const sessionId = getTripItCookieSessionId(req);
+    if (!sessionId) {
+        return res.json({ connected: false });
+    }
+
+    const accessToken = await tripitTokenStore.getActiveAccessTokenBySession(sessionId);
+    if (!accessToken) {
+        clearTripItSession(res);
+        return res.json({ connected: false });
+    }
+
+    return res.json({ connected: true });
+});
+
+/**
  * TripIt — Fetch the authenticated user's trips.
  *
- * Headers: Authorization: Bearer <sessionId>, x-onthego-user-ref: <appUserRef>
+ * Headers: x-onthego-user-ref: <appUserRef>
+ * Auth: Authorization: Bearer <sessionId> or TripIt session cookie
  * Returns: TripIt API response (list of trips)
  */
 app.get('/api/tripit/trips', async (req, res) => {
@@ -636,15 +633,14 @@ app.get('/api/tripit/trips', async (req, res) => {
         return;
     }
 
-    const authHeader = req.headers.authorization || '';
-    const sessionId = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    const sessionId = getTripItSessionId(req);
     if (!sessionId) {
-        return res.status(401).json({ error: 'Authorization header with Bearer token is required' });
+        return res.status(401).json({ error: 'TripIt session is required' });
     }
 
     const accessToken = await tripitTokenStore.getActiveAccessToken(sessionId, userId);
     if (!accessToken) {
-        return res.status(401).json({ error });
+        return res.status(401).json({ error: 'Invalid or expired TripIt session' });
     }
 
     const tripListUrl = `${TRIPIT_API_BASE_URL}/list/trip/format/json`;
@@ -681,25 +677,29 @@ app.get('/api/tripit/trips', async (req, res) => {
 });
 
 /**
- * TripIt — Lightweight session status endpoint.
+ * TripIt — Revoke the current TripIt session.
  *
- * Headers: Authorization: Bearer <sessionId>, x-onthego-user-ref: <appUserRef>
- * Returns: { success: true }
+ * Auth: Authorization: Bearer <sessionId> or TripIt session cookie
+ * Optional header: x-onthego-user-ref: <appUserRef>
+ * Returns: { success: true, connected: false, revoked: boolean }
  */
 app.post('/api/tripit/disconnect', async (req, res) => {
-    const userId = requireAuthenticatedAppUserId(req, res);
-    if (!userId) {
-        return;
-    }
+    const userId = getAuthenticatedAppUserId(req);
+    const sessionId = getTripItSessionId(req);
+    const cookieSessionId = getTripItCookieSessionId(req);
 
-    const authHeader = req.headers.authorization || '';
-    const sessionId = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-
+    let revoked = false;
     if (sessionId) {
-        await tripitTokenStore.revokeAccessToken(sessionId, userId);
+        revoked = userId
+            ? await tripitTokenStore.revokeAccessToken(sessionId, userId)
+            : await tripitTokenStore.revokeAccessTokenBySession(sessionId);
     }
 
-    return res.json({ connected: Boolean(accessToken) });
+    if (cookieSessionId) {
+        clearTripItSession(res);
+    }
+
+    return res.json({ success: true, connected: false, revoked });
 });
 
 if (require.main === module) {
@@ -708,4 +708,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = app;
+module.exports = { app };

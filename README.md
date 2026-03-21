@@ -3,12 +3,11 @@
 **OnTheGo** is a full-featured web application designed for traveling salespeople and anyone on the go who needs to quickly find the best restaurants nearby. The app provides an interactive map, detailed restaurant information, and convenient links to reviews, social media, delivery services, and reservation platforms — all in one place.
 
 ![OnTheGo Preview](color.gif)
-*Note: Replace with actual screenshot after deployment*
 
 ## ✨ Features
 
 ### 🗺️ Interactive Map
-- **Apple MapKit JS** satellite map with automatic **Leaflet + OpenStreetMap** fallback
+- **Apple MapKit JS** satellite map with automatic **Leaflet** fallback layers (Esri satellite, Google roads/hybrid, and OpenStreetMap street tiles)
 - Automatic geolocation to center map on your current location
 - Restaurant markers with interactive popups
 - Click markers to view restaurant details
@@ -68,7 +67,7 @@
 
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
 - **Backend**: Node.js + Express (Yelp proxy)
-- **Mapping**: [Apple MapKit JS](https://developer.apple.com/maps/mapkitjs/) with [Leaflet.js](https://leafletjs.com/) + OpenStreetMap fallback
+- **Mapping**: [Apple MapKit JS](https://developer.apple.com/maps/mapkitjs/) with [Leaflet.js](https://leafletjs.com/) fallback layers
 - **API**: [Yelp Fusion API](https://www.yelp.com/developers) for restaurant data
 - **Icons**: [Font Awesome 6](https://fontawesome.com/)
 - **Styling**: Custom CSS with CSS Variables for theming
@@ -80,22 +79,25 @@
 onthego/
 ├── index.html              # Main HTML page
 ├── api/
-│   └── yelp-search.js       # Vercel serverless Yelp proxy
+│   └── yelp-search.js      # Vercel serverless Yelp proxy
 ├── css/
 │   └── styles.css          # All application styles
 ├── js/
 │   ├── app.js              # Main application logic
-│   ├── map.js              # Leaflet map initialization and management
+│   ├── map.js              # Primary map initialization and fallback layers
 │   ├── api.js              # API calls and data utilities
 │   ├── ui.js               # UI rendering and interactions
-│   └── config.js           # Configuration and sample data
-├── server.js               # Express proxy for Yelp API
+│   ├── config.js           # Configuration and sample data
+│   ├── account.js          # Account modal + TripIt connection flows
+│   └── worldmap.js         # Travel history world map
+├── lib/
+│   └── tripit-token-store.js # Persistent TripIt OAuth token store
+├── test/                   # Node.js test suite
+├── server.js               # Express proxy + TripIt + MapKit endpoints
 ├── package.json            # Node.js dependencies and scripts
 ├── package-lock.json       # Dependency lockfile
-├── assets/
-│   └── icons/              # Custom icons (if any)
 ├── .env.example            # Environment variable template
-├── .gitignore              # Git ignore file
+├── homepage.html           # Marketing / landing page
 └── README.md               # This file
 ```
 
@@ -129,11 +131,19 @@ The app works with sample data out of the box, but for real restaurant data:
    cp .env.example .env
    ```
 
-2. Open `.env` and add your Yelp API key:
+2. Open `.env` and add the keys you need:
    ```
    YELP_API_KEY=your_actual_yelp_api_key_here
+   OPENAI_API_KEY=your_openai_api_key_here      # optional
+   TRIPIT_API_KEY=your_tripit_api_key_here      # optional
+   TRIPIT_API_SECRET=your_tripit_api_secret_here # optional
    ```
-3. (Optional) Adjust the cache TTL in `.env` if you want a different caching window.
+3. (Optional) Adjust the cache / token settings in `.env` if you want different defaults:
+   ```
+   YELP_CACHE_TTL_SECONDS=300
+   YELP_CACHE_STALE_SECONDS=600
+   MAPKIT_TOKEN_TTL_SECONDS=1800
+   ```
 
 ### 4. Run the Application
 
@@ -265,7 +275,7 @@ The Yelp API has CORS restrictions. For production use:
 - Or rely on the built-in mock data for demos
 
 ### Map Not Loading
-- **Check internet**: Leaflet requires internet for tiles
+- **Check internet**: MapKit and the Leaflet fallback layers require internet for tiles
 - **CDN access**: Ensure CDN resources aren't blocked
 - **Console errors**: Check for JavaScript errors
 
@@ -324,7 +334,7 @@ Contributions, issues, and feature requests are welcome!
 ## 🙏 Acknowledgments
 
 - [Leaflet.js](https://leafletjs.com/) for the amazing mapping library
-- [OpenStreetMap](https://www.openstreetmap.org/) for map tiles
+- [Esri World Imagery](https://www.esri.com/) and [OpenStreetMap](https://www.openstreetmap.org/) for Leaflet fallback tiles
 - [Yelp Fusion API](https://www.yelp.com/developers) for restaurant data
 - [Font Awesome](https://fontawesome.com/) for beautiful icons
 - [Unsplash](https://unsplash.com/) for sample restaurant images
