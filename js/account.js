@@ -410,10 +410,12 @@ const Account = {
      */
     finalizeTripItConnection(connectBtn, statusDiv) {
         const token = localStorage.getItem('onthego_tripit_token');
+        const authError = localStorage.getItem('onthego_tripit_auth_error');
 
         if (token) {
             USER_ACCOUNT.tripitConnected = true;
             USER_ACCOUNT.lastSync = new Date().toISOString();
+            localStorage.removeItem('onthego_tripit_auth_error');
 
             connectBtn.style.display = 'none';
             statusDiv.style.display = 'flex';
@@ -422,7 +424,13 @@ const Account = {
         } else {
             connectBtn.disabled = false;
             connectBtn.innerHTML = '<i class="fas fa-plug"></i> <span class="connect-text">Connect TripIt</span>';
-            this.showNotification('TripIt authorization was cancelled or failed.');
+            localStorage.removeItem('onthego_tripit_auth_error');
+
+            if (authError === 'validation_failed') {
+                this.showNotification('TripIt authorization failed, please retry.');
+            } else {
+                this.showNotification('TripIt authorization was cancelled or failed.');
+            }
         }
     },
 
