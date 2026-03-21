@@ -14,6 +14,7 @@ const CONFIG = {
     // TripIt OAuth API endpoints
     TRIPIT_CONNECT_URL: '/api/tripit/connect',
     TRIPIT_CALLBACK_URL: '/api/tripit/callback',
+    TRIPIT_STATUS_URL: '/api/tripit/status',
     TRIPIT_TRIPS_URL: '/api/tripit/trips',
     TRIPIT_DISCONNECT_URL: '/api/tripit/disconnect',
     

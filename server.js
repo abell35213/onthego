@@ -20,6 +20,15 @@ const TRIPIT_REQUEST_TOKEN_URL = 'https://api.tripit.com/oauth/request_token';
 const TRIPIT_AUTHORIZE_URL = 'https://www.tripit.com/oauth/authorize';
 const TRIPIT_ACCESS_TOKEN_URL = 'https://api.tripit.com/oauth/access_token';
 const TRIPIT_API_BASE_URL = 'https://api.tripit.com/v1';
+const TRIPIT_SESSION_COOKIE_NAME = 'onthego_tripit_session';
+const TRIPIT_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const TRIPIT_SESSION_COOKIE_OPTIONS = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: TRIPIT_SESSION_TTL_MS
+};
 
 // TripIt OAuth 1.0 consumer
 const tripitOAuth = TRIPIT_API_KEY && TRIPIT_API_SECRET ? OAuth({
@@ -53,6 +62,65 @@ const requireAuthenticatedAppUserId = (req, res) => {
 tripitTokenStore.initialize().catch((error) => {
     console.error('Failed to initialize TripIt token store:', error?.message || error);
 });
+
+const parseCookies = (cookieHeader = '') => cookieHeader
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce((cookies, part) => {
+        const separatorIndex = part.indexOf('=');
+        if (separatorIndex === -1) {
+            return cookies;
+        }
+
+        const key = part.slice(0, separatorIndex).trim();
+        const value = part.slice(separatorIndex + 1).trim();
+        cookies[key] = decodeURIComponent(value);
+        return cookies;
+    }, {});
+
+const getTripItSessionId = (req) => {
+    const cookies = parseCookies(req.headers.cookie || '');
+    return cookies[TRIPIT_SESSION_COOKIE_NAME] || '';
+};
+
+const clearTripItSession = (res, sessionId = '') => {
+    if (sessionId) {
+        tripitAccessTokens.delete(sessionId);
+    }
+
+    res.clearCookie(TRIPIT_SESSION_COOKIE_NAME, {
+        ...TRIPIT_SESSION_COOKIE_OPTIONS,
+        maxAge: undefined
+    });
+};
+
+const getTripItAccessToken = (req) => {
+    const sessionId = getTripItSessionId(req);
+
+    if (!sessionId) {
+        return {
+            sessionId: '',
+            accessToken: null,
+            error: 'TripIt session cookie is required'
+        };
+    }
+
+    const accessToken = tripitAccessTokens.get(sessionId);
+    if (!accessToken) {
+        return {
+            sessionId,
+            accessToken: null,
+            error: 'Invalid or expired TripIt session'
+        };
+    }
+
+    return {
+        sessionId,
+        accessToken,
+        error: null
+    };
+};
 
 // Periodically clean up expired request tokens (10-minute TTL)
 setInterval(() => {
@@ -430,18 +498,27 @@ app.get('/api/tripit/connect', async (req, res) => {
 /**
  * TripIt OAuth — Step 2: Exchange the authorized request token for an access token.
  * Called after TripIt redirects the user back to the application.
- * Serves an HTML page that stores the session token in localStorage and closes the popup.
+ * Sets a secure HttpOnly session cookie and notifies the popup opener of completion.
  *
  * Query: ?oauth_token=<token>
  */
 app.get('/api/tripit/callback', async (req, res) => {
-    const sendCallbackPage = (success, message, token, errorCode) => {
+    const sendCallbackPage = (success, message, sessionId, errorCode) => {
+        if (success && sessionId) {
+            res.cookie(TRIPIT_SESSION_COOKIE_NAME, sessionId, TRIPIT_SESSION_COOKIE_OPTIONS);
+        }
+
         const html = `<!DOCTYPE html><html><head><title>TripIt Authorization</title></head><body>
 <p>${message}</p>
 <script>
 (function() {
-    ${success && token ? `localStorage.setItem('onthego_tripit_token', ${JSON.stringify(token)});` : ''}
-    ${!success && errorCode ? `localStorage.setItem('onthego_tripit_auth_error', ${JSON.stringify(errorCode)});` : ''}
+    if (window.opener && !window.opener.closed) {
+        window.opener.postMessage(${JSON.stringify({
+            type: 'tripit_oauth_complete',
+            success,
+            errorCode: errorCode || null
+        })}, window.location.origin);
+    }
     window.close();
 })();
 </script>
@@ -567,7 +644,7 @@ app.get('/api/tripit/trips', async (req, res) => {
 
     const accessToken = await tripitTokenStore.getActiveAccessToken(sessionId, userId);
     if (!accessToken) {
-        return res.status(401).json({ error: 'Invalid or expired session token' });
+        return res.status(401).json({ error });
     }
 
     const tripListUrl = `${TRIPIT_API_BASE_URL}/list/trip/format/json`;
@@ -604,7 +681,7 @@ app.get('/api/tripit/trips', async (req, res) => {
 });
 
 /**
- * TripIt — Disconnect (revoke stored access token).
+ * TripIt — Lightweight session status endpoint.
  *
  * Headers: Authorization: Bearer <sessionId>, x-onthego-user-ref: <appUserRef>
  * Returns: { success: true }
@@ -622,7 +699,7 @@ app.post('/api/tripit/disconnect', async (req, res) => {
         await tripitTokenStore.revokeAccessToken(sessionId, userId);
     }
 
-    return res.json({ success: true });
+    return res.json({ connected: Boolean(accessToken) });
 });
 
 if (require.main === module) {
