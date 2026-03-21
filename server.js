@@ -346,14 +346,18 @@ app.get('/api/tripit/connect', async (req, res) => {
 
     // Validate the callback URL originates from this server to prevent open redirects
     const requestOrigin = `${req.protocol}://${req.get('host')}`;
+    let parsedCallbackUrl;
     try {
-        const parsed = new URL(callbackUrl);
-        if (parsed.origin !== requestOrigin) {
+        parsedCallbackUrl = new URL(callbackUrl);
+        if (parsedCallbackUrl.origin !== requestOrigin) {
             return res.status(400).json({ error: 'callback URL must match the application origin' });
         }
     } catch {
         return res.status(400).json({ error: 'callback must be a valid URL' });
     }
+
+    const state = crypto.randomBytes(16).toString('hex');
+    parsedCallbackUrl.searchParams.set('state', state);
 
     const requestData = {
         url: TRIPIT_REQUEST_TOKEN_URL,
@@ -389,10 +393,11 @@ app.get('/api/tripit/connect', async (req, res) => {
         // Store the request token secret so we can use it in the callback step
         tripitRequestTokens.set(oauthToken, {
             secret: oauthTokenSecret,
+            state,
             createdAt: Date.now()
         });
 
-        const authorizeUrl = `${TRIPIT_AUTHORIZE_URL}?oauth_token=${encodeURIComponent(oauthToken)}&oauth_callback=${encodeURIComponent(callbackUrl)}`;
+        const authorizeUrl = `${TRIPIT_AUTHORIZE_URL}?oauth_token=${encodeURIComponent(oauthToken)}&oauth_callback=${encodeURIComponent(parsedCallbackUrl.toString())}`;
 
         return res.json({ authorizeUrl });
     } catch (error) {
@@ -409,12 +414,13 @@ app.get('/api/tripit/connect', async (req, res) => {
  * Query: ?oauth_token=<token>
  */
 app.get('/api/tripit/callback', async (req, res) => {
-    const sendCallbackPage = (success, message, token) => {
+    const sendCallbackPage = (success, message, token, errorCode) => {
         const html = `<!DOCTYPE html><html><head><title>TripIt Authorization</title></head><body>
 <p>${message}</p>
 <script>
 (function() {
     ${success && token ? `localStorage.setItem('onthego_tripit_token', ${JSON.stringify(token)});` : ''}
+    ${!success && errorCode ? `localStorage.setItem('onthego_tripit_auth_error', ${JSON.stringify(errorCode)});` : ''}
     window.close();
 })();
 </script>
@@ -422,18 +428,42 @@ app.get('/api/tripit/callback', async (req, res) => {
         return res.type('html').send(html);
     };
 
+    const logValidationFailure = (reason, details) => {
+        console.error(JSON.stringify({
+            event: 'tripit_callback_validation_failed',
+            reason,
+            ...details
+        }));
+    };
+
     if (!tripitOAuth) {
-        return sendCallbackPage(false, 'TripIt API credentials not configured.', null);
+        return sendCallbackPage(false, 'TripIt API credentials not configured.', null, 'config_error');
     }
 
     const oauthToken = req.query.oauth_token;
-    if (!oauthToken) {
-        return sendCallbackPage(false, 'Missing authorization token.', null);
+    const state = req.query.state;
+    if (!oauthToken || !state) {
+        logValidationFailure('missing_callback_parameters', {
+            hasOauthToken: Boolean(oauthToken),
+            hasState: Boolean(state)
+        });
+        return sendCallbackPage(false, 'Authorization failed, please retry.', null, 'validation_failed');
     }
 
     const stored = tripitRequestTokens.get(oauthToken);
     if (!stored) {
-        return sendCallbackPage(false, 'Unknown or expired request token.', null);
+        logValidationFailure('unknown_or_expired_request_token', {
+            oauthTokenPresent: true
+        });
+        return sendCallbackPage(false, 'Authorization failed, please retry.', null, 'validation_failed');
+    }
+
+    if (stored.state !== state) {
+        tripitRequestTokens.delete(oauthToken);
+        logValidationFailure('state_mismatch', {
+            oauthTokenPresent: true
+        });
+        return sendCallbackPage(false, 'Authorization failed, please retry.', null, 'validation_failed');
     }
 
     // Clean up used request token
@@ -460,7 +490,7 @@ app.get('/api/tripit/callback', async (req, res) => {
 
         if (!response.ok) {
             console.error('TripIt access token error:', response.status);
-            return sendCallbackPage(false, 'Failed to obtain TripIt access token.', null);
+            return sendCallbackPage(false, 'Failed to obtain TripIt access token.', null, 'access_token_error');
         }
 
         const body = await response.text();
@@ -469,7 +499,7 @@ app.get('/api/tripit/callback', async (req, res) => {
         const accessTokenSecret = params.get('oauth_token_secret');
 
         if (!accessToken || !accessTokenSecret) {
-            return sendCallbackPage(false, 'Invalid response from TripIt.', null);
+            return sendCallbackPage(false, 'Invalid response from TripIt.', null, 'access_token_error');
         }
 
         // Generate an opaque session id so the frontend never sees raw OAuth tokens
@@ -480,10 +510,10 @@ app.get('/api/tripit/callback', async (req, res) => {
             createdAt: Date.now()
         });
 
-        return sendCallbackPage(true, 'TripIt connected! This window will close.', sessionId);
+        return sendCallbackPage(true, 'TripIt connected! This window will close.', sessionId, null);
     } catch (error) {
         console.error('Error obtaining TripIt access token:', error?.message || error);
-        return sendCallbackPage(false, 'Failed to contact TripIt API.', null);
+        return sendCallbackPage(false, 'Failed to contact TripIt API.', null, 'access_token_error');
     }
 });
 
