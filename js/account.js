@@ -680,6 +680,7 @@ const Account = {
             const friendlyMessage = this.getTripItFriendlyMessage(error.code, error.message);
             this.setTripItSyncMessage(`TripIt sync failed: ${friendlyMessage}`, 'error');
             if (error.code === 'tripit_authorization_expired') {
+                await this.disconnectTripIt({ clearSyncMessage: false });
                 this.applyTripItServerStatus({ connected: false, lastSync: null, accountLabel: null });
             }
             if (initiatedByUser || showSuccessMessage) {
@@ -845,8 +846,9 @@ const Account = {
 
     /**
      * Revoke the stored TripIt access token on the server and clear local state.
+     * @param {{clearSyncMessage?: boolean}} options
      */
-    async disconnectTripIt() {
+    async disconnectTripIt({ clearSyncMessage = true } = {}) {
         try {
             const response = await fetch(CONFIG.TRIPIT_DISCONNECT_URL, {
                 method: 'POST',
@@ -864,7 +866,9 @@ const Account = {
             console.error('Error disconnecting TripIt:', error);
         }
 
-        this.setTripItSyncMessage('');
+        if (clearSyncMessage) {
+            this.setTripItSyncMessage('');
+        }
     },
 
     /**
