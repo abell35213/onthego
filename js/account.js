@@ -651,8 +651,7 @@ const Account = {
         try {
             const { trips, isEmpty } = await TripItService.fetchTrips(fetchOptions);
             const mappedTrips = await Promise.all(trips.map((trip, index) => this.mapTripItTripToAppTrip(trip, index)));
-
-            MOCK_UPCOMING_TRIPS.splice(0, MOCK_UPCOMING_TRIPS.length, ...mappedTrips);
+            this.mergeUpcomingTripsById(mappedTrips);
             USER_ACCOUNT.lastSync = new Date().toISOString();
 
             if (typeof App !== 'undefined' && typeof App.refreshTripDataViews === 'function') {
@@ -693,6 +692,41 @@ const Account = {
                 syncButton.innerHTML = '<i class="fas fa-rotate"></i> Sync now';
             }
         }
+    },
+
+    /**
+     * Merge mapped TripIt trips into upcoming trips by id, preserving unchanged trips.
+     * @param {Array<Object>} mappedTrips
+     */
+    mergeUpcomingTripsById(mappedTrips) {
+        if (!Array.isArray(MOCK_UPCOMING_TRIPS)) {
+            return;
+        }
+
+        const mergedById = new Map();
+        mappedTrips.forEach((trip) => {
+            if (trip && trip.id) {
+                mergedById.set(trip.id, trip);
+            }
+        });
+
+        const existingIds = new Set();
+        const mergedTrips = MOCK_UPCOMING_TRIPS.map((existingTrip) => {
+            if (!existingTrip || !existingTrip.id || !mergedById.has(existingTrip.id)) {
+                return existingTrip;
+            }
+
+            existingIds.add(existingTrip.id);
+            return mergedById.get(existingTrip.id);
+        });
+
+        for (const [tripId, remainingTrip] of mergedById.entries()) {
+            if (!existingIds.has(tripId)) {
+                mergedTrips.push(remainingTrip);
+            }
+        }
+
+        MOCK_UPCOMING_TRIPS.splice(0, MOCK_UPCOMING_TRIPS.length, ...mergedTrips);
     },
 
     /**

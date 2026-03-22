@@ -1074,10 +1074,12 @@ app.get('/api/tripit/trips', async (req, res) => {
         const truncated = finalPagination.maxPage > TRIPIT_MAX_TRIP_PAGES;
         const mergedData = mergeTripPages(pages);
 
-        await tripitTokenStore.updateLastTripSyncAt({
-            sessionRef: sessionId,
-            userId
-        });
+        if (!truncated) {
+            await tripitTokenStore.updateLastTripSyncAt({
+                sessionRef: sessionId,
+                userId
+            });
+        }
 
         if (truncated) {
             res.set('x-onthego-tripit-pages-truncated', 'true');

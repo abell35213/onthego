@@ -467,6 +467,55 @@ test('GET /api/tripit/trips caps TripIt pagination to protect server resources',
   });
 });
 
+test('GET /api/tripit/trips does not advance last sync when pagination is truncated', async () => {
+  const sessionId = 'session-truncated-sync';
+  const userId = 'user-truncated-sync';
+  const previousSync = '2026-03-10T10:00:00.000Z';
+  await seedActiveSession({ sessionId, userId });
+  await tokenStore.updateLastTripSyncAt({
+    sessionRef: sessionId,
+    userId,
+    syncedAt: previousSync
+  });
+
+  await withServer(async (baseUrl) => {
+    const originalFetch = global.fetch;
+
+    global.fetch = async (url, options = {}) => {
+      if (typeof url === 'string' && url.startsWith('https://api.tripit.com/')) {
+        const parsedUrl = new URL(url);
+        const pageNum = Number(parsedUrl.searchParams.get('page_num'));
+
+        return createJsonResponse({
+          page_num: String(pageNum),
+          max_page: '9',
+          page_size: '1',
+          Trip: [{ id: `trip-truncated-${pageNum}`, start_date: '2026-04-01', end_date: '2026-04-02' }]
+        });
+      }
+
+      return originalFetch(url, options);
+    };
+
+    try {
+      const response = await fetch(`${baseUrl}/api/tripit/trips`, {
+        headers: {
+          Cookie: `${TRIPIT_SESSION_COOKIE_NAME}=${sessionId}`,
+          'x-onthego-user-ref': userId
+        }
+      });
+
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get('x-onthego-tripit-pages-truncated'), 'true');
+
+      const updatedToken = await tokenStore.getActiveAccessToken(sessionId, userId);
+      assert.equal(updatedToken.last_trip_sync_at, previousSync);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+});
+
 
 test('GET /api/tripit/connect parses TripIt OAuth error codes into safe payloads', async () => {
   await withServer(async (baseUrl) => {
