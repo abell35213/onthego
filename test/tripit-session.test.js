@@ -144,6 +144,32 @@ test('GET /api/tripit/status includes the last sync timestamp for the authentica
   });
 });
 
+test('GET /api/tripit/status falls back to session lookup when the client user header is stale', async () => {
+  const sessionId = 'active-session-stale-header';
+  await seedActiveSession({
+    sessionId,
+    userId: 'actual-user',
+    tripitUserRef: 'tripit-actual-user'
+  });
+
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/tripit/status`, {
+      headers: {
+        Cookie: `${TRIPIT_SESSION_COOKIE_NAME}=${sessionId}`,
+        'x-onthego-user-ref': 'stale-user'
+      }
+    });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      connected: true,
+      lastSync: null,
+      accountLabel: 'tripit-actual-user'
+    });
+    assert.equal(getCookieHeader(response), '');
+  });
+});
+
 
 test('POST /api/tripit/disconnect revokes the cookie-backed session and expires the cookie', async () => {
   const sessionId = 'session-to-remove';

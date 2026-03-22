@@ -945,9 +945,13 @@ app.get('/api/tripit/status', async (req, res) => {
         return res.json({ connected: false, lastSync: null, accountLabel: null });
     }
 
-    const accessToken = userId
-        ? await tripitTokenStore.getActiveAccessToken(sessionId, userId)
-        : await tripitTokenStore.getActiveAccessTokenBySession(sessionId);
+    let accessToken = null;
+    if (userId) {
+        accessToken = await tripitTokenStore.getActiveAccessToken(sessionId, userId);
+    }
+    if (!accessToken) {
+        accessToken = await tripitTokenStore.getActiveAccessTokenBySession(sessionId);
+    }
 
     if (!accessToken) {
         clearTripItSession(res);
