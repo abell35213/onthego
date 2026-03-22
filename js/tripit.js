@@ -98,8 +98,8 @@
 
         const city = firstNonEmptyString(
             trip.primary_location_city,
-            trip.primary_location,
             address?.city,
+            trip.primary_location,
             lodging?.city,
             trip.destination_city
         );
