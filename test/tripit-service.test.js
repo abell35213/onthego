@@ -83,6 +83,30 @@ test('TripItService.normalizeResponse returns empty metadata when no trips exist
     });
 });
 
+test('TripItService.normalizeResponse prefers structured PrimaryLocationAddress city over primary_location', () => {
+    const payload = {
+        Trip: {
+            id: '999',
+            display_name: 'NYC Sync',
+            start_date: '2026-05-10',
+            end_date: '2026-05-11',
+            primary_location: 'New York, NY',
+            PrimaryLocationAddress: {
+                city: 'New York',
+                state: 'NY',
+                country: 'USA'
+            }
+        }
+    };
+
+    const result = TripItService.normalizeResponse(payload);
+
+    assert.equal(result.trips.length, 1);
+    assert.equal(result.trips[0].primaryLocation.city, 'New York');
+    assert.equal(result.trips[0].primaryLocation.state, 'NY');
+    assert.equal(result.trips[0].primaryLocation.label, 'New York, NY');
+});
+
 
 test('TripItService.fetchTrips preserves stable error codes from the server', async () => {
     const originalFetch = global.fetch;
